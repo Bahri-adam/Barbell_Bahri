@@ -83,6 +83,10 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .bt-region .bt-fill-inner.over{background:var(--gold)}
 .bt-region .bt-label{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.04em}
 .bt-region .bt-count{font-size:10px;font-family:var(--fm);color:var(--tx2)}
+.rest-days-row{display:flex;align-items:center;gap:3px}
+.rd-label{font-size:9px;color:var(--tx3);margin-right:4px}
+.rd-btn{width:26px;height:26px;border-radius:4px;border:1px solid var(--b2);background:var(--s2);color:var(--tx3);font-size:10px;font-weight:600;cursor:pointer;padding:0}
+.rd-btn.on{background:var(--red);border-color:var(--red);color:#fff}
 .prev .rec{color:var(--grn2)}
 .rec-hint{font-size:9px;color:var(--tx3);font-style:italic}
 .deload-banner{background:linear-gradient(90deg,rgba(230,57,70,.15),rgba(230,57,70,.05));border:1px solid rgba(230,57,70,.3);border-radius:8px;padding:10px 14px;margin:0 12px 10px;font-size:12px;color:var(--tx2)}
@@ -397,15 +401,21 @@ select{color-scheme:dark}
     <div class="sc"><div class="sv" id="SS">0</div><div class="sl">Sessions</div></div>
     <div class="sc"><div class="sv" id="SST">0</div><div class="sl">Sets</div></div>
     <div class="sc"><div class="sv" id="SV">0</div><div class="sl">Volume</div></div>
-    <div class="sc"><div class="sv" id="SK">0</div><div class="sl">Streak</div></div>
+    <div class="sc"><div class="sv" id="SK">0</div><div class="sl">Wk streak</div></div>
   </div>
   <div class="body-tracker" id="BT">
-    <div class="bt-hdr" style="display:flex;justify-content:space-between;align-items:center">
+    <div class="bt-hdr" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <span>Weekly Muscle Coverage</span>
-      <select class="rest-day-sel" id="RDS" onchange="setRestDay(this.value)" style="font-size:10px;background:var(--s2);border:1px solid var(--b2);border-radius:4px;color:var(--tx2);padding:4px 8px">
-        <option value="mon">Rest Mon</option><option value="tue">Rest Tue</option><option value="wed">Rest Wed</option>
-        <option value="thu">Rest Thu</option><option value="fri" selected>Rest Fri</option><option value="sat">Rest Sat</option><option value="sun">Rest Sun</option>
-      </select>
+      <div class="rest-days-row" id="RDROW">
+        <span class="rd-label">Rest:</span>
+        <button class="rd-btn" data-dk="mon" onclick="toggleRestDay('mon')">M</button>
+        <button class="rd-btn" data-dk="tue" onclick="toggleRestDay('tue')">T</button>
+        <button class="rd-btn" data-dk="wed" onclick="toggleRestDay('wed')">W</button>
+        <button class="rd-btn" data-dk="thu" onclick="toggleRestDay('thu')">T</button>
+        <button class="rd-btn" data-dk="fri" onclick="toggleRestDay('fri')">F</button>
+        <button class="rd-btn" data-dk="sat" onclick="toggleRestDay('sat')">S</button>
+        <button class="rd-btn" data-dk="sun" onclick="toggleRestDay('sun')">S</button>
+      </div>
     </div>
     <div class="bt-body" id="BTB"></div>
   </div>
@@ -457,9 +467,17 @@ select{color-scheme:dark}
       <h3>Connect Google Sheets</h3>
       <div class="step"><div class="stn">1</div><div class="sttx">Go to <code>script.google.com</code> → New Project → paste the <code>Code.gs</code> file (delete default code first)</div></div>
       <div class="step"><div class="stn">2</div><div class="sttx">Click <strong>Deploy → New Deployment → Web App</strong>. Execute as: <code>Me</code>. Access: <code>Anyone</code></div></div>
-      <div class="step"><div class="stn">3</div><div class="sttx">Copy the Web App URL, paste below, hit Save</div></div>
+      <div class="step"><div class="stn">3</div><div class="sttx">Create a blank Google Sheet first. Then <strong>Extensions → Apps Script</strong>, paste <code>Code.gs</code>, deploy as Web App. Copy the URL, paste below, hit Save.</div></div>
       <input class="urlinp" id="SUI" placeholder="https://script.google.com/macros/s/...">
       <br><button class="savebtn" onclick="saveURL()">SAVE &amp; CONNECT</button>
+    </div>
+    <div class="expcard" style="margin-top:12px">
+      <div class="ecttl">Sync All Logs to Sheets</div>
+      <div class="ecdesc">Send all your past workout data to Google Sheets. Use this after connecting to backfill existing logs. New workouts auto-sync when you finish.</div>
+      <button class="expbtn p" onclick="syncAllToSheets()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        SYNC ALL TO SHEETS
+      </button>
     </div>
     <div class="expcard">
       <div class="ecttl">CSV Export</div>
@@ -618,14 +636,29 @@ function getBodyPartFromMuscle(m){
 const BODY_PART_OPTIONS=[{v:'chest',l:'Chest'},{v:'back',l:'Back'},{v:'quads',l:'Quads'},{v:'hamstrings',l:'Hamstrings'},{v:'calves',l:'Calves'},{v:'glutes',l:'Glutes'},{v:'biceps',l:'Biceps'},{v:'triceps',l:'Triceps'},{v:'delts',l:'Delts'}];
 
 function getDayProgram(dk){
-  const rd=ST.restDay||'fri';
-  if(dk===rd) return {key:dk,name:P[dk].name,rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
-  let base; 
-  if(rd==='fri') base=P[dk]; else if(dk==='fri') base=P[rd]; else base=P[dk];
+  const rds=new Set(ST.restDays||['fri']);
+  if(rds.has(dk)) return {key:dk,name:P[dk].name,rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
+  const base=P[dk];
   const added=(ST.addedExercises||{})[dk]||[];
   const merged=base.exercises.concat(added.map(a=>({id:'ae_'+a.name.replace(/\s/g,'_'),name:a.name,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Run perfect reps. Full ROM.',mech:'Custom.',bodyPart:a.bodyPart||'other',isAdded:true})));
   return {...base,exercises:merged};
 }
+function toggleRestDay(dk){
+  const rds=ST.restDays||['fri'];
+  const i=rds.indexOf(dk);
+  if(i>=0){if(rds.length<=1)return;rds.splice(i,1)}else rds.push(dk);
+  rds.sort((a,b)=>DO.indexOf(a)-DO.indexOf(b));
+  ST.restDays=rds;
+  saveST();
+  renderRestDayBtns();
+  renderHome();
+  renderBodyTracker();
+}
+function renderRestDayBtns(){
+  const rds=new Set(ST.restDays||['fri']);
+  DO.forEach(dk=>{const b=document.querySelector('.rd-btn[data-dk="'+dk+'"]');if(b)b.classList.toggle('on',rds.has(dk))});
+}
+function setRestDay(rd){ST.restDays=[rd];saveST();renderRestDayBtns();renderHome();renderBodyTracker();}
 
 // Exercise library
 let EL=[
@@ -722,10 +755,10 @@ const HL=[
 // ═══════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════
-const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbwNERAyigEbDrEJkKfccHSY9zTvHeqZrlcqcfNeS-klun9f_2Mt1d6FuZ0CI5EkRBRQ-g/exec';
+const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbxYF1ZykhmNM3gxDP5fQFOBRd94bl12_jtdSj9KxiowcmLqdLPrk7KnqIdunLTmk3ob/exec';
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'prs',swt:null,sws:'week',swtab:'lib',isAddEx:false,
-  cueCollapsed:{},restDay:'fri',weekOverride:{},workoutsSinceBackupReminder:0,
+  cueCollapsed:{},restDays:['fri'],weekOverride:{},workoutsSinceBackupReminder:0,
   profile:{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}
 };
 let CHS={};
@@ -733,7 +766,7 @@ let CHS={};
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDay=p.restDay||'fri';ST.weekOverride=p.weekOverride||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}}catch(e){ST.url=SHEETS_URL}
+  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekOverride=p.weekOverride||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('adamCustomEx');
@@ -744,7 +777,7 @@ function loadST(){
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveST(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDay:ST.restDay,weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
+function saveST(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
 function saveCustomEx(){localStorage.setItem('adamCustomEx',JSON.stringify(EL.filter(e=>e.custom)))}
 
@@ -793,12 +826,14 @@ function renderHome(){
   document.getElementById('BL').textContent=bp.name;
   document.getElementById('WD').textContent='W'+ST.wk;
   renderProfile();
-  const sess=new Set(ST.logs.map(l=>l.date+l.dk)).size;
-  const vol=ST.logs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
+  const weekLogs=ST.logs.filter(l=>l.wk===ST.wk);
+  const sess=new Set(weekLogs.map(l=>l.date+l.dk)).size;
+  const setsCount=weekLogs.length;
+  const vol=weekLogs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
   document.getElementById('SS').textContent=sess;
-  document.getElementById('SST').textContent=ST.logs.length;
+  document.getElementById('SST').textContent=setsCount;
   document.getElementById('SV').textContent=vol>1000?(vol/1000).toFixed(1)+'K':vol;
-  document.getElementById('SK').textContent=calcStreak();
+  document.getElementById('SK').textContent=calcWeekStreak(ST.wk);
   // Week strip
   const ws=document.getElementById('WS');ws.innerHTML='';
   for(let w=1;w<=24;w++){
@@ -834,6 +869,11 @@ function calcStreak(){
   for(const d of dates){if(Math.round((sd-new Date(d))/86400000)===s)s++;else break}
   return s;
 }
+function calcWeekStreak(upToWk){
+  let s=0;
+  for(let w=upToWk;w>=1;w--){if(ST.logs.some(l=>l.wk===w))s++;else break}
+  return s;
+}
 
 // Prescribed sets per body part (from program, current week structure)
 function getPrescribedSets(){
@@ -858,11 +898,9 @@ function getActualSets(wk){
   });
   return out;
 }
-function setRestDay(rd){ST.restDay=rd;saveST();renderHome();renderBodyTracker();}
 function renderBodyTracker(){
   const btb=document.getElementById('BTB');
-  const rds=document.getElementById('RDS');
-  if(rds)rds.value=ST.restDay||'fri';
+  renderRestDayBtns();
   if(!btb)return;
   const pres=getPrescribedSets();
   const actu=getActualSets(ST.wk);
@@ -947,13 +985,14 @@ function renderWO(){
 
     const setsHtml=sets.map((s,si)=>{
       const ps=prev[si];
-      const rec=getRec(ex.displayName,ST.aday,si);
+      const rec=getRec(ex.displayName,ST.aday,si)||getProgOverloadRec(ex.displayName,ST.aday,si);
+      const isDeload=!!getRec(ex.displayName,ST.aday,si);
       const isLast=si===sets.length-1;
       const canDel=sets.length>1;
       let footer='';
       if(ps||rec){footer='<div class="prev" id="pv-'+ex.id+'-'+si+'">';
         if(ps)footer+=`Prev: <span class="pv">${ps.w?ps.w+'×':''}${ps.r}</span>${ps.e1?` · e1RM <span class="pv">${ps.e1}</span>`:''}`;
-        if(rec)footer+=`${ps?' · ':''}Rec: <span class="pv rec">${rec.w}×${rec.r}</span> <span class="rec-hint">(deload)</span>`;
+        if(rec)footer+=`${ps?' · ':''}Rec: <span class="pv rec">${rec.w}×${rec.r}</span> <span class="rec-hint">${isDeload?'(deload)':'(+overload)'}</span>`;
         footer+='</div>';
       }
       return `<div class="srow" id="sr-${ex.id}-${si}">
@@ -1381,7 +1420,7 @@ function getPrev(exName,dk){
   const last=rows.filter(r=>r.date===lastDate).sort((a,b)=>a.sn-b.sn);
   return last.map(r=>({w:r.w||'',r:r.r||'',e1:r.e1rm||null}));
 }
-// Deload recommended weight (65–70% of previous working weight) — science-backed
+// Deload recommended weight (65–70% of previous) — science-backed
 function getRec(exName,dk,setIdx){
   const wk=ST.logWk||ST.wk;
   const pct=DELOAD_PCT[wk];
@@ -1395,6 +1434,21 @@ function getRec(exName,dk,setIdx){
   const recW=Math.round(pw*pct/5)*5;
   const recR=pr<=8?pr:pr+2;
   return {w:recW,r:recR};
+}
+// Progressive overload: suggest +2.5–5 lbs (science: gradual overload)
+function getProgOverloadRec(exName,dk,setIdx){
+  const wk=ST.logWk||ST.wk;
+  if(DELOAD_PCT[wk]) return null; // deload has its own rec
+  const prev=getPrev(exName,dk);
+  if(!prev.length) return null;
+  const p=prev[setIdx]||prev[prev.length-1];
+  const pw=parseFloat(p.w);
+  if(!pw||isNaN(pw)) return null;
+  const pr=parseInt(p.r,10)||8;
+  const bp=getBodyPart(exName);
+  const inc=bp&&['quads','hamstrings','calves','glutes'].includes(bp)?5:2.5;
+  const recW=Math.round((pw+inc)/2.5)*2.5;
+  return {w:recW,r:pr};
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1542,6 +1596,15 @@ function saveURL(){
   setSS(v?'conn':'off');
   renderES();
 }
+async function syncAllToSheets(){
+  if(!ST.url){alert('Connect to Google Sheets first (paste URL and Save).');return}
+  setSS('sync');
+  const rows=ST.logs.map(l=>({ts:l.ts||'',date:l.date||'',dk:l.dk||'',dn:l.dn||'',wk:l.wk||'',bl:l.bl||'',ex:l.ex||'',sn:l.sn||'',w:l.w||'',r:l.r||'',e1rm:l.e1rm||''}));
+  const r=await sheetsPOST({action:'fullSync',sheet:'Logs',rows});
+  setSS(r?'conn':'err');
+  if(r)alert('Synced '+rows.length+' logs to Google Sheets.');
+  else alert('Sync failed. Check your URL and that Code.gs is deployed.');
+}
 
 function expCSV(){
   const header=['date','day','week','block','exercise','set','weight','reps','e1rm'];
@@ -1577,7 +1640,7 @@ function expCSV(){
 function expJSON(){
   const payload={
     meta:{app:'ADAM Powerbuilding',v:'3',exportedAt:new Date().toISOString()},
-    state:{wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDay:ST.restDay,weekOverride:ST.weekOverride},
+    state:{wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays,weekOverride:ST.weekOverride},
     logs:ST.logs,
     customExercises:EL.filter(e=>e.custom)
   };
@@ -1602,7 +1665,7 @@ function impJSON(ev){
         ST.bl=data.state.bl||ST.bl;
         ST.url=data.state.url||ST.url;
         ST.ovr=data.state.ovr||ST.ovr;
-        ST.restDay=data.state.restDay||ST.restDay;
+        ST.restDays=Array.isArray(data.state.restDays)?data.state.restDays:ST.restDays;
         ST.weekOverride=data.state.weekOverride||ST.weekOverride;
         saveST();
       }
@@ -1905,6 +1968,7 @@ function renderHIST(ab){
 // ═══════════════════════════════════════════════════════════
 loadST();
 renderHome();
+renderBodyTracker();
 renderAN();
 renderES();
 

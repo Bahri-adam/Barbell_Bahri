@@ -2,15 +2,16 @@
  * Barbell Bahri — Google Sheets Web App (backup from phone)
  * 
  * Setup:
- * 1. Go to script.google.com → New Project
- * 2. Delete the default myFunction() and paste this entire file
+ * 1. Create a new Google Sheet (drive.google.com)
+ * 2. Extensions → Apps Script → delete default code, paste this entire file
  * 3. Deploy → New Deployment → Web App
  *    - Execute as: Me
  *    - Who has access: Anyone
  * 4. Copy the Web App URL
  * 5. In Barbell Bahri app: Data tab → paste URL → SAVE & CONNECT
+ * 6. Tap "Sync All to Sheets" to send your past logs
  * 
- * Your phone will send workout logs here each time you finish a workout.
+ * New workouts auto-sync when you finish. The script writes to a "Logs" sheet.
  */
 
 function doPost(e) {
@@ -32,6 +33,16 @@ function doPost(e) {
         });
       }
       return _ok({ appended: rows.length });
+    }
+
+    if (body.action === 'fullSync') {
+      const rows = body.rows || [];
+      sh.clear();
+      sh.appendRow(['ts', 'date', 'dk', 'dn', 'wk', 'bl', 'ex', 'sn', 'w', 'r', 'e1rm']);
+      rows.forEach(function(r) {
+        sh.appendRow([r.ts || '', r.date || '', r.dk || '', r.dn || '', r.wk || '', r.bl || '', r.ex || '', r.sn || '', r.w || '', r.r || '', r.e1rm || '']);
+      });
+      return _ok({ synced: rows.length });
     }
 
     return _ok({ noop: true });
