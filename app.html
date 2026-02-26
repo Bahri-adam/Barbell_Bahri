@@ -12,6 +12,21 @@
 <link rel="apple-touch-icon" href="icon-512.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyAgmKyUnlOMt33n2feFzuxsWZV12tqBJX8",
+  authDomain:"powerbuilding-53b92.firebaseapp.com",
+  databaseURL:"https://powerbuilding-53b92-default-rtdb.firebaseio.com",
+  projectId:"powerbuilding-53b92",
+  storageBucket:"powerbuilding-53b92.firebasestorage.app",
+  messagingSenderId:"119203640605",
+  appId:"1:119203640605:web:19111d5adf43a30327ddf4"
+});
+const fbDB=firebase.database();
+const FB_ROOT='barbell-bahri';
+</script>
 <style>
 :root{--bg:#0a0e14;--bg2:#0f1419;--s1:#151b23;--s2:#1c2430;--s3:#252f3d;--b1:#2a3544;--b2:#364556;--red:#e63946;--red-dim:rgba(230,57,70,.25);--blue:#457b9d;--blue2:#6ec1e3;--gold:#f4a261;--grn:#2a9d8f;--grn2:#52b788;--tx:#e8ecf1;--tx2:#a8b3c4;--tx3:#6b7a8f;--fd:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;--fm:'Roboto Mono',monospace;--sh:0 4px 16px rgba(0,0,0,.4);--sh2:0 2px 10px rgba(0,0,0,.3);--glass:rgba(21,27,35,.85)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -803,9 +818,9 @@ function loadST(){
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveST(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
+function saveST(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}));fbSaveSettings()}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
-function saveCustomEx(){localStorage.setItem('adamCustomEx',JSON.stringify(EL.filter(e=>e.custom)))}
+function saveCustomEx(){localStorage.setItem('adamCustomEx',JSON.stringify(EL.filter(e=>e.custom)));fbSaveCustomEx()}
 
 // ═══════════════════════════════════════════════════════════
 // SHEETS SYNC
@@ -1545,6 +1560,7 @@ function finWO(){
 
   if(newRows.length){
     sheetsPOST({action:'append',sheet:'Logs',rows:newRows});
+    fbSaveLogs(newRows);
   }
 
   // Check if all non-rest days have been logged this week → show weekly review
@@ -1695,8 +1711,9 @@ async function syncAllToSheets(){
   const rows=ST.logs.map(l=>({ts:l.ts||'',date:l.date||'',dk:l.dk||'',dn:l.dn||'',wk:l.wk||'',bl:l.bl||'',ex:l.ex||'',sn:l.sn||'',w:l.w||'',r:l.r||'',e1rm:l.e1rm||'',rpe:l.rpe||'',dur:l.dur||''}));
   const r=await sheetsPOST({action:'fullSync',sheet:'Logs',rows});
   setSS(r?'conn':'err');
-  if(r)alert('Synced '+rows.length+' logs to Google Sheets.');
-  else alert('Sync failed. Check your URL and that Code.gs is deployed.');
+  fbSaveAllLogs();
+  if(r)alert('Synced '+rows.length+' logs to Google Sheets + Firebase.');
+  else alert('Sync failed for Sheets (data still saved to Firebase). Check your Sheets URL and Code.gs deployment.');
 }
 
 function expCSV(){
@@ -2106,6 +2123,120 @@ function renderHIST(ab){
 }
 
 // ═══════════════════════════════════════════════════════════
+// FIREBASE SYNC
+// ═══════════════════════════════════════════════════════════
+function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
+
+function fbSaveSettings(){
+  try{
+    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
+    fbRef('settings').set(data);
+  }catch(e){console.warn('FB settings write failed:',e)}
+}
+
+function fbSaveLogs(rows){
+  try{
+    if(!rows||!rows.length)return;
+    const updates={};
+    rows.forEach(r=>{if(r.id)updates[r.id]=r});
+    fbRef('logs').update(updates);
+  }catch(e){console.warn('FB logs write failed:',e)}
+}
+
+function fbSaveAllLogs(){
+  try{
+    const updates={};
+    ST.logs.forEach(r=>{if(r.id)updates[r.id]=r});
+    fbRef('logs').set(updates);
+  }catch(e){console.warn('FB full logs write failed:',e)}
+}
+
+function fbSaveCustomEx(){
+  try{
+    const customs=EL.filter(e=>e.custom);
+    fbRef('customExercises').set({items:customs,_updatedAt:firebase.database.ServerValue.TIMESTAMP});
+  }catch(e){console.warn('FB custom ex write failed:',e)}
+}
+
+async function fbPullAll(){
+  try{
+    const snap=await fbRef('').once('value');
+    const data=snap.val();
+    if(!data)return;
+    let changed=false;
+
+    // Merge settings (Firebase wins if newer)
+    if(data.settings){
+      const fb=data.settings;
+      const keys=['wk','bl','ovr','restDays','weekOverride','addedExercises','profile'];
+      keys.forEach(k=>{if(fb[k]!==undefined){ST[k]=fb[k];changed=true}});
+      if(fb.url)ST.url=fb.url;
+    }
+
+    // Merge logs (union by id)
+    if(data.logs){
+      const localIds=new Set(ST.logs.map(l=>l.id));
+      const fbLogs=Object.values(data.logs);
+      let added=0;
+      fbLogs.forEach(l=>{
+        if(l&&l.id&&!localIds.has(l.id)){ST.logs.push(l);added++}
+      });
+      if(added>0){saveLogs();changed=true}
+    }
+
+    // Merge custom exercises
+    if(data.customExercises&&Array.isArray(data.customExercises.items)){
+      data.customExercises.items.forEach(e=>{
+        if(e&&e.n&&!EL.find(x=>x.n===e.n)){EL.push({n:e.n,m:e.m||'Custom',custom:true})}
+      });
+      saveCustomEx();
+    }
+
+    if(changed){
+      saveST();
+      renderHome();
+      renderBodyTracker();
+    }
+  }catch(e){console.warn('FB pull failed (offline?):',e)}
+}
+
+function fbListenForChanges(){
+  try{
+    let firstLoad=true;
+    fbRef('').on('value',snap=>{
+      if(firstLoad){firstLoad=false;return}
+      const data=snap.val();
+      if(!data)return;
+
+      if(data.settings){
+        const fb=data.settings;
+        ['wk','bl','ovr','restDays','weekOverride','addedExercises','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
+        if(fb.url)ST.url=fb.url;
+        saveST();
+      }
+
+      if(data.logs){
+        const localIds=new Set(ST.logs.map(l=>l.id));
+        Object.values(data.logs).forEach(l=>{
+          if(l&&l.id&&!localIds.has(l.id))ST.logs.push(l);
+        });
+        saveLogs();
+      }
+
+      if(data.customExercises&&Array.isArray(data.customExercises.items)){
+        data.customExercises.items.forEach(e=>{
+          if(e&&e.n&&!EL.find(x=>x.n===e.n))EL.push({n:e.n,m:e.m||'Custom',custom:true});
+        });
+        saveCustomEx();
+      }
+
+      renderHome();
+      renderBodyTracker();
+    });
+  }catch(e){console.warn('FB listener failed:',e)}
+}
+
+// ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
 loadST();
@@ -2113,6 +2244,14 @@ renderHome();
 renderBodyTracker();
 renderAN();
 renderES();
+
+// Firebase: pull data then listen for changes
+fbPullAll().then(()=>{
+  renderHome();
+  renderBodyTracker();
+  renderAN();
+  fbListenForChanges();
+});
 
 // PWA: register service worker
 if('serviceWorker' in navigator){
