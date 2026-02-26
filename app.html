@@ -781,7 +781,7 @@ const HL=[
 // ═══════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════
-const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbxYF1ZykhmNM3gxDP5fQFOBRd94bl12_jtdSj9KxiowcmLqdLPrk7KnqIdunLTmk3ob/exec';
+const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbyKSyFyEdTkZhfnMrKF66zPUNn8Lf5ppYz5bAZviRzGAcN8YGZx5-hAEvIN03wTW5Ex/exec';
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
   cueCollapsed:{},restDays:['fri'],weekOverride:{},workoutsSinceBackupReminder:0,
@@ -812,7 +812,12 @@ function saveCustomEx(){localStorage.setItem('adamCustomEx',JSON.stringify(EL.fi
 // ═══════════════════════════════════════════════════════════
 async function sheetsPOST(payload){
   if(!ST.url)return null;setSS('sync');
-  try{const r=await fetch(ST.url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const d=await r.json();if(d.success){setSS('conn');return d.data}setSS('err');return null}catch(e){setSS('err');return null}
+  try{
+    const r=await fetch(ST.url,{method:'POST',redirect:'follow',body:JSON.stringify(payload)});
+    const txt=await r.text();
+    try{const d=JSON.parse(txt);if(d.success){setSS('conn');return d.data}}catch(e){}
+    setSS('err');return null;
+  }catch(e){console.error('Sheets sync error:',e);setSS('err');return null}
 }
 function setSS(s){
   const dot=document.getElementById('SD'),msg=document.getElementById('SM');if(!dot)return;
