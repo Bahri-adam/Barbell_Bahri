@@ -821,9 +821,12 @@ function loadST(){
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveST(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}));fbSaveSettings()}
+function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
+function saveST(){saveSTLocal();fbSaveSettings()}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
+function saveLogsLocal(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
 function saveCustomEx(){localStorage.setItem('adamCustomEx',JSON.stringify(EL.filter(e=>e.custom)));fbSaveCustomEx()}
+function saveCustomExLocal(){localStorage.setItem('adamCustomEx',JSON.stringify(EL.filter(e=>e.custom)))}
 
 // ═══════════════════════════════════════════════════════════
 // SHEETS SYNC
@@ -2188,7 +2191,7 @@ async function fbPullAll(){
       fbLogs.forEach(l=>{
         if(l&&l.id&&!localIds.has(l.id)){ST.logs.push(l);added++}
       });
-      if(added>0){saveLogs();changed=true}
+      if(added>0){saveLogsLocal();changed=true}
     }
 
     // Merge custom exercises
@@ -2196,11 +2199,11 @@ async function fbPullAll(){
       data.customExercises.items.forEach(e=>{
         if(e&&e.n&&!EL.find(x=>x.n===e.n)){EL.push({n:e.n,m:e.m||'Custom',custom:true})}
       });
-      saveCustomEx();
+      saveCustomExLocal();
     }
 
     if(changed){
-      saveST();
+      saveSTLocal();
       renderHome();
       renderBodyTracker();
     }
@@ -2219,26 +2222,28 @@ function fbListenForChanges(){
         const fb=data.settings;
         ['wk','bl','ovr','restDays','weekOverride','addedExercises','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
         if(fb.url)ST.url=fb.url;
-        saveST();
+        saveSTLocal();
       }
 
       if(data.logs){
         const localIds=new Set(ST.logs.map(l=>l.id));
+        let added=0;
         Object.values(data.logs).forEach(l=>{
-          if(l&&l.id&&!localIds.has(l.id))ST.logs.push(l);
+          if(l&&l.id&&!localIds.has(l.id)){ST.logs.push(l);added++}
         });
-        saveLogs();
+        if(added>0)saveLogsLocal();
       }
 
       if(data.customExercises&&Array.isArray(data.customExercises.items)){
         data.customExercises.items.forEach(e=>{
           if(e&&e.n&&!EL.find(x=>x.n===e.n))EL.push({n:e.n,m:e.m||'Custom',custom:true});
         });
-        saveCustomEx();
+        saveCustomExLocal();
       }
 
       renderHome();
       renderBodyTracker();
+      renderAN();
     });
   }catch(e){console.warn('FB listener failed:',e)}
 }
