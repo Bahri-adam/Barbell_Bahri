@@ -1,0 +1,24 @@
+{
+  "name": "ADAM — Powerbuilding",
+  "short_name": "ADAM",
+  "description": "Powerbuilding workout program — track sets, rest timer, analytics",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080808",
+  "theme_color": "#e63946",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
