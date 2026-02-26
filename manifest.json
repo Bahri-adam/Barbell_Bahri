@@ -1,19 +1,13 @@
 {
-  "name": "ADAM — Powerbuilding",
-  "short_name": "ADAM",
+  "name": "Barbell Bahri",
+  "short_name": "Barbell Bahri",
   "description": "Powerbuilding workout program — track sets, rest timer, analytics",
   "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#080808",
+  "background_color": "#0a0e14",
   "theme_color": "#e63946",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
