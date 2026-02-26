@@ -16,31 +16,31 @@
 
 function doPost(e) {
   try {
-    const body = JSON.parse(e.postData.contents);
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheetName = body.sheet || 'Logs';
-    const sh = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
+    var body = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheetName = body.sheet || 'Logs';
+    var sh = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
+    var HEADERS = ['ts', 'date', 'dk', 'dn', 'wk', 'bl', 'ex', 'sn', 'w', 'r', 'e1rm', 'rpe', 'dur_min'];
 
     if (body.action === 'append') {
-      const rows = body.rows || [];
+      var rows = body.rows || [];
       if (rows.length) {
-        // Create headers if sheet is empty
         if (sh.getLastRow() === 0) {
-          sh.appendRow(['ts', 'date', 'dk', 'dn', 'wk', 'bl', 'ex', 'sn', 'w', 'r', 'e1rm']);
+          sh.appendRow(HEADERS);
         }
         rows.forEach(function(r) {
-          sh.appendRow([r.ts, r.date, r.dk, r.dn, r.wk, r.bl, r.ex, r.sn, r.w, r.r, r.e1rm]);
+          sh.appendRow([r.ts, r.date, r.dk, r.dn, r.wk, r.bl, r.ex, r.sn, r.w, r.r, r.e1rm, r.rpe || '', r.dur || '']);
         });
       }
       return _ok({ appended: rows.length });
     }
 
     if (body.action === 'fullSync') {
-      const rows = body.rows || [];
+      var rows = body.rows || [];
       sh.clear();
-      sh.appendRow(['ts', 'date', 'dk', 'dn', 'wk', 'bl', 'ex', 'sn', 'w', 'r', 'e1rm']);
+      sh.appendRow(HEADERS);
       rows.forEach(function(r) {
-        sh.appendRow([r.ts || '', r.date || '', r.dk || '', r.dn || '', r.wk || '', r.bl || '', r.ex || '', r.sn || '', r.w || '', r.r || '', r.e1rm || '']);
+        sh.appendRow([r.ts || '', r.date || '', r.dk || '', r.dn || '', r.wk || '', r.bl || '', r.ex || '', r.sn || '', r.w || '', r.r || '', r.e1rm || '', r.rpe || '', r.dur || '']);
       });
       return _ok({ synced: rows.length });
     }

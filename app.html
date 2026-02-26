@@ -87,6 +87,8 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .rd-label{font-size:9px;color:var(--tx3);margin-right:4px}
 .rd-btn{width:26px;height:26px;border-radius:4px;border:1px solid var(--b2);background:var(--s2);color:var(--tx3);font-size:10px;font-weight:600;cursor:pointer;padding:0}
 .rd-btn.on{background:var(--red);border-color:var(--red);color:#fff}
+.rpe-ig{max-width:44px}
+.rpe-inp{text-align:center;font-size:12px!important}
 .prev .rec{color:var(--grn2)}
 .rec-hint{font-size:9px;color:var(--tx3);font-style:italic}
 .deload-banner{background:linear-gradient(90deg,rgba(230,57,70,.15),rgba(230,57,70,.05));border:1px solid rgba(230,57,70,.3);border-radius:8px;padding:10px 14px;margin:0 12px 10px;font-size:12px;color:var(--tx2)}
@@ -247,6 +249,25 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .hsets{font-family:var(--fm);font-size:11px;color:var(--tx2);line-height:1.7}
 .empty{text-align:center;padding:48px 20px;color:var(--tx3);font-size:13px;line-height:1.7}
 .eico{font-size:36px;margin-bottom:10px}
+.perf-card{background:var(--s1);border:1px solid var(--b1);border-radius:6px;padding:12px 14px;margin-bottom:8px}
+.perf-ex{font-family:var(--fd);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.perf-row{display:flex;justify-content:space-between;font-size:11px;color:var(--tx2);padding:2px 0}
+.perf-delta{font-weight:600}
+.perf-delta.up{color:var(--grn2)}
+.perf-delta.down{color:var(--red)}
+.perf-delta.flat{color:var(--tx3)}
+.perf-summary{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:14px 16px;margin-bottom:12px;font-size:12px;line-height:1.7}
+.perf-summary strong{color:var(--tx)}
+.review-overlay{position:fixed;inset:0;background:rgba(10,14,20,.95);z-index:350;display:none;align-items:center;justify-content:center;padding:16px}
+.review-overlay.on{display:flex}
+.review-card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:24px 20px;max-width:380px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.6)}
+.review-title{font-family:var(--fd);font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.review-sub{font-size:11px;color:var(--tx3);margin-bottom:16px}
+.review-stat{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b1);font-size:12px}
+.review-stat:last-child{border-bottom:none}
+.review-val{font-family:var(--fm);font-weight:600;color:var(--tx)}
+.review-coach{background:rgba(42,157,143,.1);border:1px solid rgba(42,157,143,.25);border-radius:6px;padding:10px 12px;font-size:11px;color:var(--grn2);line-height:1.6;margin-top:14px}
+.review-close{width:100%;padding:14px;margin-top:16px;background:var(--red);border:none;border-radius:6px;color:#fff;font-family:var(--fd);font-size:16px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 
 /* DATA PAGE */
 .expbody{padding:16px}
@@ -372,6 +393,11 @@ select{color-scheme:dark}
       <button class="use-custom-btn" onclick="saveEditLog()">SAVE CHANGES</button>
     </div>
   </div>
+</div>
+
+<!-- WEEKLY REVIEW -->
+<div class="review-overlay" id="WREV">
+  <div class="review-card" id="WREVC"></div>
 </div>
 
 <!-- CONFIRM DIALOG -->
@@ -757,7 +783,7 @@ const HL=[
 // ═══════════════════════════════════════════════════════════
 const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbxYF1ZykhmNM3gxDP5fQFOBRd94bl12_jtdSj9KxiowcmLqdLPrk7KnqIdunLTmk3ob/exec';
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
-  aws:{},awExs:[],ri:null,atab:'prs',swt:null,sws:'week',swtab:'lib',isAddEx:false,
+  aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
   cueCollapsed:{},restDays:['fri'],weekOverride:{},workoutsSinceBackupReminder:0,
   profile:{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}
 };
@@ -944,8 +970,9 @@ function openWO(dk){
     return {...ex, displayName: ovr||ex.name, templateIdx: i};
   });
   ST.awExs.forEach(ex=>{
-    ST.aws[ex.id]=Array.from({length:ex.sets},()=>({w:'',r:'',done:false}));
+    ST.aws[ex.id]=Array.from({length:ex.sets},()=>({w:'',r:'',rpe:'',done:false}));
   });
+  ST.woStartTime=Date.now();
   document.getElementById('WT').textContent=d.name;
   document.getElementById('WF').textContent=d.focus;
   ST.logWk=ST.wk;
@@ -1002,6 +1029,9 @@ function renderWO(){
         </div>
         <div class="ig"><div class="ilbl">REPS</div>
           <input type="number" inputmode="decimal" class="sinp${s.r?' ok':''}" id="ir-${ex.id}-${si}" value="${s.r}" placeholder="${rec?rec.r:(ps?ps.r:'')}" onchange="upS('${ex.id}',${si},'r',this.value)" onfocus="this.select()">
+        </div>
+        <div class="ig rpe-ig"><div class="ilbl">RPE</div>
+          <input type="number" inputmode="decimal" class="sinp rpe-inp${s.rpe?' ok':''}" id="ie-${ex.id}-${si}" value="${s.rpe}" placeholder="—" min="1" max="10" step="0.5" onchange="upS('${ex.id}',${si},'rpe',this.value)" onfocus="this.select()">
         </div>
         <button class="ckbtn${s.done?' on':''}" onclick="ckS('${ex.id}',${si},${ex.rest},'${ex.displayName.replace(/'/g,"\\'")}')">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1119,7 +1149,7 @@ function ckS(id,si,rest,dn){
 }
 function addS(id){
   if(!ST.aws[id])return;
-  ST.aws[id].push({w:'',r:'',done:false});
+  ST.aws[id].push({w:'',r:'',rpe:'',done:false});
   renderWO();
   // Scroll to the new set
   setTimeout(()=>{
@@ -1484,6 +1514,8 @@ function finWO(){
       if(r<=0) return;
 
       const e1rm=Math.round(w*(1+r/30));
+      const rpe=s.rpe?parseFloat(s.rpe):null;
+      const dur=ST.woStartTime?Math.round((Date.now()-ST.woStartTime)/60000):null;
       const row={
         id:'l'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
         ts:new Date().toISOString(),
@@ -1493,7 +1525,9 @@ function finWO(){
         ex:ex.displayName,
         sn:idx+1,
         w, r,
-        e1rm
+        e1rm,
+        rpe,
+        dur
       };
       ST.logs.push(row);
       newRows.push(row);
@@ -1504,16 +1538,70 @@ function finWO(){
   saveLogs();
   renderHome();
 
-  // Try sync (non-blocking UI)
   if(newRows.length){
-    sheetsPOST({
-      action:'append',
-      sheet:'Logs',
-      rows:newRows
-    });
+    sheetsPOST({action:'append',sheet:'Logs',rows:newRows});
   }
 
+  // Check if all non-rest days have been logged this week → show weekly review
+  const rds=new Set(ST.restDays||['fri']);
+  const workDays=DO.filter(d=>!rds.has(d));
+  const loggedDays=new Set(ST.logs.filter(l=>l.wk===(ST.logWk||ST.wk)).map(l=>l.dk));
+  const allDone=workDays.every(d=>loggedDays.has(d));
+
   showPg('home');
+  if(allDone && workDays.length>0) setTimeout(()=>showWeeklyReview(ST.logWk||ST.wk),300);
+}
+
+function showWeeklyReview(wk){
+  const weekLogs=ST.logs.filter(l=>l.wk===wk);
+  if(!weekLogs.length) return;
+  const prevWk=wk>1?wk-1:null;
+  const prevLogs=prevWk?ST.logs.filter(l=>l.wk===prevWk):[];
+  const sess=new Set(weekLogs.map(l=>l.date+l.dk)).size;
+  const sets=weekLogs.length;
+  const vol=weekLogs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
+  const prevVol=prevLogs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
+  const actu=getActualSets(wk);
+  const targ=WEEKLY_TARGETS;
+  const labels={quads:'Quads',hamstrings:'Hams',calves:'Calves',glutes:'Glutes',chest:'Chest',back:'Back',biceps:'Biceps',triceps:'Triceps',delts:'Delts'};
+  // PRs this week
+  const best={};weekLogs.forEach(l=>{if(l.e1rm&&(!best[l.ex]||l.e1rm>best[l.ex].e1rm))best[l.ex]=l});
+  const prevBest={};prevLogs.forEach(l=>{if(l.e1rm&&(!prevBest[l.ex]||l.e1rm>prevBest[l.ex].e1rm))prevBest[l.ex]=l});
+  let prs=0;
+  Object.keys(best).forEach(ex=>{if(!prevBest[ex]||best[ex].e1rm>prevBest[ex].e1rm)prs++});
+  // Targets
+  let targHtml='';
+  for(const bp of Object.keys(targ)){
+    const a=actu[bp]||0, t=targ[bp].target;
+    targHtml+=`<div class="review-stat"><span>${labels[bp]||bp}</span><span class="review-val" style="color:${a>=t?'var(--grn2)':'var(--red)'}">${a}/${t}</span></div>`;
+  }
+  // Coaching note
+  const bp=getBlockPhase(wk);
+  let coach='';
+  if(DLOADS.has(wk)) coach='Deload week complete. Anabolic signaling is rebounding — expect to feel strongest next week (supercompensation).';
+  else if(prs>=3) coach='Excellent week — '+prs+' exercises hit new estimated PRs. Progressive overload is working. Keep pushing.';
+  else if(prevVol&&vol>prevVol*1.05) coach='Volume increased '+(Math.round((vol/prevVol-1)*100))+'% from last week. Monitor recovery — if fatigue accumulates, a deload may help.';
+  else if(prevVol&&vol<prevVol*.9) coach='Volume dropped vs last week. If intentional (deload approach), that\'s fine. Otherwise, check training consistency.';
+  else coach='Solid week of training. Stay consistent with progressive overload and nutrition.';
+  const bwt=getBodyWeightForWeek(wk);
+  const prevBwt=prevWk?getBodyWeightForWeek(prevWk):null;
+  const bwDelta=prevBwt&&bwt?(bwt-prevBwt).toFixed(1):null;
+  const c=document.getElementById('WREVC');
+  c.innerHTML=`
+    <div class="review-title">Week ${wk} Complete</div>
+    <div class="review-sub">${bp.name} · ${bp.phase}</div>
+    <div class="review-stat"><span>Sessions</span><span class="review-val">${sess}</span></div>
+    <div class="review-stat"><span>Total sets</span><span class="review-val">${sets}</span></div>
+    <div class="review-stat"><span>Volume</span><span class="review-val">${vol>1000?(vol/1000).toFixed(1)+'K':vol} lbs</span></div>
+    ${prevVol?`<div class="review-stat"><span>Vol vs last week</span><span class="review-val" style="color:${vol>=prevVol?'var(--grn2)':'var(--gold)'}">${vol>=prevVol?'+':''}${Math.round((vol/prevVol-1)*100)}%</span></div>`:''}
+    <div class="review-stat"><span>New PRs</span><span class="review-val">${prs}</span></div>
+    ${bwt?`<div class="review-stat"><span>Body weight</span><span class="review-val">${bwt} lbs${bwDelta?' ('+(parseFloat(bwDelta)>=0?'+':'')+bwDelta+')':''}</span></div>`:''}
+    <div style="margin-top:12px;font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Muscle coverage</div>
+    ${targHtml}
+    <div class="review-coach">${coach}</div>
+    <button class="review-close" onclick="document.getElementById('WREV').classList.remove('on')">CLOSE</button>
+  `;
+  document.getElementById('WREV').classList.add('on');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1599,7 +1687,7 @@ function saveURL(){
 async function syncAllToSheets(){
   if(!ST.url){alert('Connect to Google Sheets first (paste URL and Save).');return}
   setSS('sync');
-  const rows=ST.logs.map(l=>({ts:l.ts||'',date:l.date||'',dk:l.dk||'',dn:l.dn||'',wk:l.wk||'',bl:l.bl||'',ex:l.ex||'',sn:l.sn||'',w:l.w||'',r:l.r||'',e1rm:l.e1rm||''}));
+  const rows=ST.logs.map(l=>({ts:l.ts||'',date:l.date||'',dk:l.dk||'',dn:l.dn||'',wk:l.wk||'',bl:l.bl||'',ex:l.ex||'',sn:l.sn||'',w:l.w||'',r:l.r||'',e1rm:l.e1rm||'',rpe:l.rpe||'',dur:l.dur||''}));
   const r=await sheetsPOST({action:'fullSync',sheet:'Logs',rows});
   setSS(r?'conn':'err');
   if(r)alert('Synced '+rows.length+' logs to Google Sheets.');
@@ -1607,7 +1695,7 @@ async function syncAllToSheets(){
 }
 
 function expCSV(){
-  const header=['date','day','week','block','exercise','set','weight','reps','e1rm'];
+  const header=['date','day','week','block','exercise','set','weight','reps','e1rm','rpe','dur_min'];
   const lines=[header.join(',')];
 
   ST.logs
@@ -1623,7 +1711,9 @@ function expCSV(){
         l.sn,
         l.w,
         l.r,
-        l.e1rm
+        l.e1rm,
+        l.rpe||'',
+        l.dur||''
       ];
       lines.push(row.join(','));
     });
@@ -1769,8 +1859,8 @@ function copyCGS(){
 // ANALYTICS
 // ═══════════════════════════════════════════════════════════
 function renderAN(){
-  // Tabs: PRs / Volume / History
   const tabs=[
+    {k:'perf',t:'Performance'},
     {k:'prs',t:'PRs'},
     {k:'vol',t:'Volume'},
     {k:'hist',t:'History'}
@@ -1793,13 +1883,60 @@ function renderAN(){
     return;
   }
 
+  if(ST.atab==='perf') return renderPERF(ab);
   if(ST.atab==='prs') return renderPRs(ab);
   if(ST.atab==='vol') return renderVOL(ab);
   return renderHIST(ab);
 }
 
+function renderPERF(ab){
+  const wk=ST.wk;
+  const thisWkLogs=ST.logs.filter(l=>l.wk===wk);
+  const prevWk=wk>1?wk-1:null;
+  const prevWkLogs=prevWk?ST.logs.filter(l=>l.wk===prevWk):[];
+  if(!thisWkLogs.length&&!prevWkLogs.length){ab.innerHTML='<div class="empty"><div class="eico">📊</div>No data for W'+wk+' yet. Complete workouts to see performance comparison.</div>';return}
+  function bestE1RM(logs){const m={};logs.forEach(l=>{if(l.e1rm&&(!m[l.ex]||l.e1rm>m[l.ex].e1rm))m[l.ex]=l});return m}
+  function totalVol(logs){return logs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0)}
+  const thisBest=bestE1RM(thisWkLogs), prevBest=bestE1RM(prevWkLogs);
+  const allEx=[...new Set([...Object.keys(thisBest),...Object.keys(prevBest)])].sort();
+  const thisVol=totalVol(thisWkLogs), prevVol=totalVol(prevWkLogs);
+  const thisSess=new Set(thisWkLogs.map(l=>l.date+l.dk)).size;
+  const prevSess=prevWk?new Set(prevWkLogs.map(l=>l.date+l.dk)).size:0;
+  let ups=0,downs=0,flats=0;
+  let html=`<div class="perf-summary">
+    <div style="font-family:var(--fd);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">W${wk} vs W${prevWk||'—'}</div>
+    <div class="perf-row"><span>Sessions</span><strong>${thisSess} ${prevWk?'(prev: '+prevSess+')':''}</strong></div>
+    <div class="perf-row"><span>Sets</span><strong>${thisWkLogs.length} ${prevWk?'(prev: '+prevWkLogs.length+')':''}</strong></div>
+    <div class="perf-row"><span>Volume</span><strong>${thisVol>1000?(thisVol/1000).toFixed(1)+'K':thisVol} lbs ${prevWk&&prevVol?'(prev: '+(prevVol>1000?(prevVol/1000).toFixed(1)+'K':prevVol)+')':''}</strong></div>
+  </div>`;
+  allEx.forEach(ex=>{
+    const curr=thisBest[ex], prev=prevBest[ex];
+    const ce=curr?curr.e1rm:null, pe=prev?prev.e1rm:null;
+    let delta='—',cls='flat';
+    if(ce&&pe){const d=ce-pe;delta=(d>0?'+':'')+d+' lbs';cls=d>0?'up':d<0?'down':'flat';if(d>0)ups++;else if(d<0)downs++;else flats++}
+    else if(ce&&!pe){delta='NEW';cls='up';ups++}
+    html+=`<div class="perf-card">
+      <div class="perf-ex">${ex}</div>
+      <div class="perf-row"><span>This week e1RM</span><span>${ce||'—'}</span></div>
+      <div class="perf-row"><span>Last week e1RM</span><span>${pe||'—'}</span></div>
+      <div class="perf-row"><span>Change</span><span class="perf-delta ${cls}">${delta}</span></div>
+    </div>`;
+  });
+  const total=ups+downs+flats;
+  let verdict='';
+  if(total>0){
+    if(ups>=total*.6)verdict='Strong week — majority of lifts improving. Progressive overload on track.';
+    else if(downs>=total*.5)verdict='Performance dipped on multiple exercises. Check sleep, nutrition, and consider if a deload is due.';
+    else verdict='Mixed performance — some lifts up, some down. Normal variation. Stay consistent.';
+  }
+  html=`<div class="perf-summary" style="border-left:3px solid ${ups>downs?'var(--grn2)':'var(--gold)'};margin-bottom:14px">
+    <strong>${ups}</strong> exercises improved · <strong>${downs}</strong> declined · <strong>${flats}</strong> same<br>
+    <span style="font-size:11px;color:var(--tx3)">${verdict}</span>
+  </div>`+html;
+  ab.innerHTML=html;
+}
+
 function renderPRs(ab){
-  // PR = highest estimated 1RM per exercise
   const best={};
   ST.logs.forEach(l=>{
     if(!l.ex) return;
