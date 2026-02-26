@@ -49,6 +49,10 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .hbi{text-align:right}
 .hbl{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.12em}
 .hwn{font-family:var(--fd);font-size:38px;font-weight:900;color:var(--red);line-height:1}
+.athlete-profile{background:var(--s1);border:1px solid var(--b1);margin:12px 14px;padding:12px 14px;border-radius:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:12px;box-shadow:var(--sh2)}
+.athlete-profile .ap-row{display:flex;flex-direction:column;gap:2px}
+.athlete-profile .ap-label{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em}
+.athlete-profile .ap-val{background:var(--s2);border:1px solid var(--b2);border-radius:4px;padding:8px 10px;color:var(--tx);font-family:var(--fb);font-size:13px}
 .stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--b2);border-bottom:1px solid var(--b2);margin:0 12px;border-radius:10px;overflow:hidden;box-shadow:var(--sh2)}
 .sc{background:var(--s1);padding:14px 8px;text-align:center}
 .sv{font-family:var(--fd);font-size:22px;font-weight:700;color:var(--red);line-height:1}
@@ -71,12 +75,6 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .dlast{font-size:10px;color:var(--tx3);margin-top:5px;font-family:var(--fm)}
 .rcard{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:13px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh2)}
 .body-tracker{background:var(--s1);border:1px solid var(--b1);border-radius:12px;margin:12px 14px;padding:14px 16px;box-shadow:var(--sh2)}
-.insight-card{background:linear-gradient(135deg,var(--s1) 0%,rgba(69,123,157,.08) 100%);border:1px solid var(--b1);border-radius:12px;margin:0 14px 12px;padding:16px 18px;box-shadow:var(--sh2);border-left:3px solid var(--blue)}
-.insight-card .ic-title{font-size:10px;color:var(--blue2);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}
-.insight-card .ic-text{font-size:15px;color:var(--tx);line-height:1.5;font-weight:500}
-.backup-banner{background:linear-gradient(135deg,rgba(244,162,97,.12) 0%,var(--s1) 100%);border:1px solid rgba(244,162,97,.3);border-radius:10px;margin:0 14px 12px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh2)}
-.backup-banner .bb-text{font-size:13px;color:var(--tx2);flex:1;line-height:1.4}
-.backup-banner .bb-btn{padding:10px 16px;background:var(--gold);border:none;border-radius:6px;color:var(--bg);font-weight:700;font-size:12px;cursor:pointer;font-family:var(--fb);white-space:nowrap}
 .bt-hdr{font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
 .bt-body{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
 .bt-region{flex:1;min-width:70px;max-width:90px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:default}
@@ -85,6 +83,16 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .bt-region .bt-fill-inner.over{background:var(--gold)}
 .bt-region .bt-label{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.04em}
 .bt-region .bt-count{font-size:10px;font-family:var(--fm);color:var(--tx2)}
+.prev .rec{color:var(--grn2)}
+.rec-hint{font-size:9px;color:var(--tx3);font-style:italic}
+.deload-banner{background:linear-gradient(90deg,rgba(230,57,70,.15),rgba(230,57,70,.05));border:1px solid rgba(230,57,70,.3);border-radius:8px;padding:10px 14px;margin:0 12px 10px;font-size:12px;color:var(--tx2)}
+.deload-banner strong{color:var(--red)}
+.wt-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:11px;border-bottom:1px solid var(--b1)}
+.wt-row:last-child{border-bottom:none}
+.wt-name{font-weight:600;color:var(--tx2)}
+.wt-status.lagging{color:var(--red)}
+.wt-status.maintained{color:var(--grn2)}
+.wt-status.reduced{color:var(--gold)}
 .rlabel{font-family:var(--fd);font-size:17px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em}
 
 /* WORKOUT */
@@ -322,8 +330,21 @@ select{color-scheme:dark}
 
     <!-- CUSTOM TAB -->
     <div id="tabCustomContent" style="display:none">
-      <div style="font-size:12px;color:var(--tx3);margin-bottom:10px;line-height:1.5">Type any exercise name — it'll be saved to your library automatically.</div>
+      <div style="font-size:12px;color:var(--tx3);margin-bottom:10px;line-height:1.5">Type any exercise name — it'll be saved to your library. Pick the body part it targets.</div>
       <input class="custom-ex-input" id="customExInput" placeholder="e.g. Pendulum Squat, Hack Squat Machine..." oninput="updateCustomBtn()">
+      <label style="font-size:11px;color:var(--tx3);text-transform:uppercase;display:block;margin-top:10px;margin-bottom:6px">Body part</label>
+      <select class="custom-ex-input" id="customExBodyPart" onchange="updateCustomBtn()" style="margin-bottom:12px">
+        <option value="">Select body part...</option>
+        <option value="chest">Chest</option>
+        <option value="back">Back</option>
+        <option value="quads">Quads</option>
+        <option value="hamstrings">Hamstrings</option>
+        <option value="calves">Calves</option>
+        <option value="glutes">Glutes</option>
+        <option value="biceps">Biceps</option>
+        <option value="triceps">Triceps</option>
+        <option value="delts">Delts</option>
+      </select>
       <button class="use-custom-btn" id="useCustomBtn" onclick="applyCustom()" style="opacity:.4;pointer-events:none">USE THIS EXERCISE</button>
     </div>
   </div>
@@ -367,16 +388,16 @@ select{color-scheme:dark}
     <div><div class="hname">Barbell<em>.</em> Bahri</div><div class="htag">Powerbuilding Program</div></div>
     <div class="hbi"><div class="hbl" id="BL">Block 1 — Hypertrophy</div><div class="hwn" id="WD">W1</div></div>
   </div>
+  <div class="athlete-profile" id="AP">
+    <div class="ap-row"><span class="ap-label">Name</span><input type="text" class="ap-val" id="AP_NAME" placeholder="Adam Bahri" onchange="saveProfile('name',this.value)"></div>
+    <div class="ap-row"><span class="ap-label">Age</span><input type="number" class="ap-val" id="AP_AGE" placeholder="22" onchange="saveProfile('age',parseInt(this.value))"></div>
+    <div class="ap-row"><span class="ap-label">Body weight (lbs)</span><input type="number" class="ap-val" id="AP_BW" placeholder="225" title="For current week — tap week pill to log different weeks" onchange="saveProfileBW(ST.wk,parseFloat(this.value))"></div>
+  </div>
   <div class="stats-strip">
     <div class="sc"><div class="sv" id="SS">0</div><div class="sl">Sessions</div></div>
     <div class="sc"><div class="sv" id="SST">0</div><div class="sl">Sets</div></div>
     <div class="sc"><div class="sv" id="SV">0</div><div class="sl">Volume</div></div>
     <div class="sc"><div class="sv" id="SK">0</div><div class="sl">Streak</div></div>
-  </div>
-  <div class="insight-card" id="INSIGHT" style="display:none"><div class="ic-title">Today's Insight</div><div class="ic-text" id="INSIGHT_T"></div></div>
-  <div class="backup-banner" id="BACKUP_BAN" style="display:none">
-    <div class="bb-text">Your data lives only on this device. Connect Google Sheets for auto-backup—or export now to save to Files/iCloud.</div>
-    <button class="bb-btn" onclick="showPg('ex')">Backup</button>
   </div>
   <div class="body-tracker" id="BT">
     <div class="bt-hdr" style="display:flex;justify-content:space-between;align-items:center">
@@ -398,13 +419,14 @@ select{color-scheme:dark}
     <div class="wo-row">
       <button class="bk" onclick="showPg('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
       <div class="wo-t" id="WT">Workout</div>
-      <select class="wo-wk-sel" id="WWS" onchange="ST.logWk=parseInt(this.value)" title="Log as week"
+      <select class="wo-wk-sel" id="WWS" onchange="ST.logWk=parseInt(this.value);renderWO();const db=document.getElementById('WODLB');if(db){db.style.display=DLOADS.has(ST.logWk)?'block':'none';if(DLOADS.has(ST.logWk)){const pct=Math.round((DELOAD_PCT[ST.logWk]||.65)*100);db.innerHTML='<strong>★ DELOAD WEEK (W'+ST.logWk+')</strong> — Use ~'+pct+'% of working weights, ~50% of sets. Resets volume sensitivity — this is when you grow.'}}" title="Log as week"
         style="background:var(--s2);border:1px solid var(--b2);border-radius:3px;padding:6px 10px;font-family:var(--fm);font-size:12px;color:var(--tx2);min-width:52px">
         <!-- filled by JS -->
       </select>
     </div>
     <div class="wo-f" id="WF"></div>
   </div>
+  <div class="deload-banner" id="WODLB" style="display:none"></div>
   <div class="wo-summary" id="WOSUM"></div>
   <div id="WC"></div>
   <div class="add-ex-bar" onclick="openAddEx()">
@@ -545,6 +567,17 @@ const P={
 };
 const DO=['mon','tue','wed','thu','fri','sat','sun'];
 const DLOADS=new Set([3,6,9,12,15,18,21,24]);
+// Periodization roadmap — which weeks are deload and at what %
+const DELOAD_PCT={3:.65,6:.65,9:.65,12:.70,15:.65,18:.65,21:.65,24:.65};
+// Block phases (W1–9 Block 1, W10–15 Block 2, W16–24 Block 3)
+function getBlockPhase(wk){
+  if(wk>=24) return {block:0,name:'Macrocycle Complete',phase:'★ ACTIVE RECOVERY WEEK ★'};
+  if(wk<=9) return {block:1,name:'Block 1 — Hypertrophy',phase:wk<=2?'Break-In':wk===3||wk===6||wk===9?'★ DELOAD ★':wk<=5?'Full Volume':wk<=8?'Push Phase':'Assessment'};
+  if(wk<=15) return {block:2,name:'Block 2 — Strength',phase:wk===10||wk===11?'Introduction':wk===12||wk===15?'★ DELOAD ★':'Peak'};
+  return {block:3,name:'Block 3 — Peak Hypertrophy',phase:wk===16||wk===17||wk===18?'Reload':wk===21?'★ DELOAD ★':wk>=22?'Accumulation Peak':'Volume Push'};
+}
+// Weekly set targets per muscle (from program design notes)
+const WEEKLY_TARGETS={quads:{target:32,status:'lagging',days:'Mon/Thu/Sun'},hamstrings:{target:24,status:'lagging',days:'Mon/Thu/Sun'},calves:{target:21,status:'lagging',days:'Mon/Thu/Sun'},back:{target:20,status:'maintained',days:'Tue'},biceps:{target:20,status:'maintained',days:'Wed/Sat'},triceps:{target:20,status:'maintained',days:'Wed/Sat'},chest:{target:14,status:'reduced',days:'Tue/Sat'},delts:{target:16,status:'maintained',days:'Wed/Sat'}};
 
 // Body part mapping (exercise name substring or exact → body part)
 const BODY_MAP=[
@@ -565,14 +598,33 @@ function getBodyPart(exName){
   }
   return 'other';
 }
+// Map EL.m (muscle) or explicit body part to tracker key
+const MUSCLE_TO_BP={'quads':'quads','hamstrings':'hamstrings','calves':'calves','glutes':'glutes','chest':'chest','back':'back','biceps':'biceps','triceps':'triceps','delts':'delts'};
+function getBodyPartFromMuscle(m){
+  if(!m)return 'other';
+  const x=(m||'').toLowerCase();
+  for(const [bp] of Object.entries(MUSCLE_TO_BP)){if(x.includes(bp))return bp}
+  if(x.includes('quad')||x.includes('rectus'))return 'quads';
+  if(x.includes('ham')||x.includes('bicep fem'))return 'hamstrings';
+  if(x.includes('calf')||x.includes('gastroc')||x.includes('soleus'))return 'calves';
+  if(x.includes('glute')||x.includes('hip abd'))return 'glutes';
+  if(x.includes('pec')||x.includes('upper'))return 'chest';
+  if(x.includes('lat')||x.includes('rhomb')||x.includes('trap'))return 'back';
+  if(x.includes('bicep')||x.includes('brachialis'))return 'biceps';
+  if(x.includes('tricep'))return 'triceps';
+  if(x.includes('delt')||x.includes('shoulder'))return 'delts';
+  return 'other';
+}
+const BODY_PART_OPTIONS=[{v:'chest',l:'Chest'},{v:'back',l:'Back'},{v:'quads',l:'Quads'},{v:'hamstrings',l:'Hamstrings'},{v:'calves',l:'Calves'},{v:'glutes',l:'Glutes'},{v:'biceps',l:'Biceps'},{v:'triceps',l:'Triceps'},{v:'delts',l:'Delts'}];
 
-// Get day program (respects custom rest day)
 function getDayProgram(dk){
   const rd=ST.restDay||'fri';
   if(dk===rd) return {key:dk,name:P[dk].name,rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
-  if(rd==='fri') return P[dk];
-  if(dk==='fri') return P[rd]; // swap: fri gets the workout from the custom rest day
-  return P[dk];
+  let base; 
+  if(rd==='fri') base=P[dk]; else if(dk==='fri') base=P[rd]; else base=P[dk];
+  const added=(ST.addedExercises||{})[dk]||[];
+  const merged=base.exercises.concat(added.map(a=>({id:'ae_'+a.name.replace(/\s/g,'_'),name:a.name,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Run perfect reps. Full ROM.',mech:'Custom.',bodyPart:a.bodyPart||'other',isAdded:true})));
+  return {...base,exercises:merged};
 }
 
 // Exercise library
@@ -670,32 +722,29 @@ const HL=[
 // ═══════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════
+const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbwNERAyigEbDrEJkKfccHSY9zTvHeqZrlcqcfNeS-klun9f_2Mt1d6FuZ0CI5EkRBRQ-g/exec';
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
-  // active workout: array of {id, name, sets:5, reps:'6-8', rest:180, type:'h', cue:'...', mech:'...', isCustom:false}
-  // + sets state: {exId: [{w,r,done}]}
-  aws:{},          // sets state per exId
-  awExs:[],        // current ordered exercise list (mutable during session)
-  ri:null,atab:'prs',swt:null,sws:'week',swtab:'lib',isAddEx:false,
-  cueCollapsed:{}, // {exId: true/false}
-  restDay:'fri',   // which day is rest
-  weekOverride:{}, // {dk: wk} move workout to different week
-  workoutsSinceBackupReminder:0
+  aws:{},awExs:[],ri:null,atab:'prs',swt:null,sws:'week',swtab:'lib',isAddEx:false,
+  cueCollapsed:{},restDay:'fri',weekOverride:{},workoutsSinceBackupReminder:0,
+  profile:{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}
 };
 let CHS={};
 
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||'';ST.ovr=p.ovr||{};ST.restDay=p.restDay||'fri';ST.weekOverride=p.weekOverride||{};ST.workoutsSinceBackupReminder=p.workoutsSinceBackupReminder||0}}catch(e){}
+  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDay=p.restDay||'fri';ST.weekOverride=p.weekOverride||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('adamCustomEx');
     if(ce){const arr=JSON.parse(ce);arr.forEach(e=>{if(!EL.find(x=>x.n===e.n))EL.push(e)})}
   }catch(e){}
   try{const l=localStorage.getItem('adamlogs');if(l){ST.logs=JSON.parse(l)}else{ST.logs=HL.map((h,i)=>({...h,id:'h'+i,ts:h.date+'T12:00:00Z',e1rm:h.w&&h.r?Math.round(h.w*(1+h.r/30)):null}));saveLogs()}}catch(e){ST.logs=[]}
-  if(ST.url){document.getElementById('SUI').value=ST.url;setSS('conn')}
+  if(!ST.url)ST.url=SHEETS_URL;
+  if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
+  if(ST.url)setSS('conn')
 }
-function saveST(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDay:ST.restDay,weekOverride:ST.weekOverride,workoutsSinceBackupReminder:ST.workoutsSinceBackupReminder||0}))}
+function saveST(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDay:ST.restDay,weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
 function saveCustomEx(){localStorage.setItem('adamCustomEx',JSON.stringify(EL.filter(e=>e.custom)))}
 
@@ -721,7 +770,7 @@ function showPg(p){
   document.querySelectorAll('.nb').forEach(x=>x.classList.remove('on'));
   document.getElementById('pg-'+p).classList.add('on');
   const nb=document.getElementById('nb-'+p);if(nb)nb.classList.add('on');
-  if(p==='home'){renderHome();renderBodyTracker();renderInsight();renderBackupBanner();}
+  if(p==='home'){renderHome();renderBodyTracker();}
   if(p==='an')renderAN();
   if(p==='ex')renderES();
   window.scrollTo(0,0);
@@ -730,10 +779,20 @@ function showPg(p){
 // ═══════════════════════════════════════════════════════════
 // HOME
 // ═══════════════════════════════════════════════════════════
+function saveProfile(k,v){if(!ST.profile)ST.profile={};ST.profile[k]=v;saveST()}
+function saveProfileBW(wk,v){if(!ST.profile)ST.profile={};if(!ST.profile.bodyweightByWeek)ST.profile.bodyweightByWeek={};ST.profile.bodyweightByWeek[wk]=v;ST.profile.bodyweight=v;saveST();const ap=document.getElementById('AP_BW');if(ap)ap.value=v}
+function getBodyWeightForWeek(wk){return (ST.profile?.bodyweightByWeek||{})[wk]||ST.profile?.bodyweight||225}
+function renderProfile(){
+  const n=document.getElementById('AP_NAME'),a=document.getElementById('AP_AGE'),b=document.getElementById('AP_BW');
+  if(n)n.value=ST.profile?.name||'';
+  if(a)a.value=ST.profile?.age||'';
+  if(b)b.value=getBodyWeightForWeek(ST.wk);
+}
 function renderHome(){
-  const bls={1:'Block 1 — Hypertrophy',2:'Block 2 — Strength',3:'Block 3 — Peak'};
-  document.getElementById('BL').textContent=bls[ST.bl]||'Block 1';
+  const bp=getBlockPhase(ST.wk);
+  document.getElementById('BL').textContent=bp.name;
   document.getElementById('WD').textContent='W'+ST.wk;
+  renderProfile();
   const sess=new Set(ST.logs.map(l=>l.date+l.dk)).size;
   const vol=ST.logs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
   document.getElementById('SS').textContent=sess;
@@ -746,7 +805,7 @@ function renderHome(){
     const p=document.createElement('button');
     p.className='wpill'+(w===ST.wk?' on':'')+(DLOADS.has(w)?' dl':'');
     p.textContent=DLOADS.has(w)?`W${w}🔄`:`W${w}`;
-    const ww=w;p.onclick=()=>{ST.wk=ww;saveST();renderHome()};
+    const ww=w;p.onclick=()=>{ST.wk=ww;saveST();renderHome();renderBodyTracker()};
     ws.appendChild(p);
   }
   setTimeout(()=>{const a=ws.querySelector('.wpill.on');if(a)a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'})},50);
@@ -783,7 +842,7 @@ function getPrescribedSets(){
     const d=getDayProgram(dk);
     if(d.rest)return;
     (d.exercises||[]).forEach(ex=>{
-      const bp=getBodyPart(ex.name);
+      const bp=(ex.bodyPart&&out[ex.bodyPart]!==undefined)?ex.bodyPart:getBodyPart(ex.name);
       if(bp&&out[bp]!==undefined)out[bp]+=ex.sets||0;
     });
   });
@@ -798,30 +857,6 @@ function getActualSets(wk){
     if(bp&&out[bp]!==undefined)out[bp]++;
   });
   return out;
-}
-function getInsight(){
-  if(!ST.logs.length)return null;
-  const best={}; ST.logs.forEach(l=>{if(l.ex&&l.e1rm&&(!best[l.ex]||l.e1rm>best[l.ex]))best[l.ex]=l.e1rm});
-  const top=Object.entries(best).sort((a,b)=>b[1]-a[1]).slice(0,3);
-  if(top.length){const [ex,e1rm]=top[0];const prev=ST.logs.filter(l=>l.ex===ex).sort((a,b)=>a.date.localeCompare(b.date));const first=prev[0]?.e1rm;if(first&&e1rm>first)return `${ex} is up ${Math.round(((e1rm-first)/first)*100)}% since you started—keep pushing.`;}
-  const pres=getPrescribedSets();const actu=getActualSets(ST.wk);
-  const low=Object.entries(pres).filter(([k,v])=>v>0&&(actu[k]||0)<v*0.5).map(([k])=>k);
-  if(low.length)return `Focus today: ${low.slice(0,2).map(k=>({quads:'legs',hamstrings:'hams',calves:'calves',glutes:'glutes',chest:'chest',back:'back',biceps:'biceps',triceps:'triceps',delts:'delts'}[k])).join(' & ')} need more volume this week.`;
-  const streak=calcStreak();if(streak>=3)return `${streak}-day streak. You're locked in.`;
-  const today=new Date().toISOString().split('T')[0];const lastDates=[...new Set(ST.logs.map(l=>l.date))].sort().reverse();
-  const daysSince=lastDates[0]?Math.round((new Date(today)-new Date(lastDates[0]))/86400000):999;
-  if(daysSince>2)return `Last session was ${daysSince} days ago. Time to get back at it.`;
-  return `You've logged ${ST.logs.length} sets. Every rep counts.`;
-}
-function renderInsight(){
-  const el=document.getElementById('INSIGHT');const txt=document.getElementById('INSIGHT_T');
-  if(!el||!txt)return;
-  const msg=getInsight();if(!msg){el.style.display='none';return}
-  txt.textContent=msg;el.style.display='block';
-}
-function renderBackupBanner(){
-  const el=document.getElementById('BACKUP_BAN');if(!el)return;
-  el.style.display=ST.url?'none':'flex';
 }
 function setRestDay(rd){ST.restDay=rd;saveST();renderHome();renderBodyTracker();}
 function renderBodyTracker(){
@@ -844,6 +879,16 @@ function renderBodyTracker(){
       <div class="bt-count">${a}/${p}</div>
     </div>`;
   }
+  const targ=WEEKLY_TARGETS;
+  let wtHtml='';
+  for(const bp of Object.keys(targ)){
+    const actBp=actu[bp]||0;
+    const t=targ[bp].target;
+    const status=targ[bp].status;
+    const rec=actBp>=t?'✓':actBp>0?`${t-actBp} to go`:'—';
+    wtHtml+=`<div class="wt-row"><span class="wt-name">${labels[bp]}</span><span>${actBp}/${t}</span><span class="wt-status ${status}">${rec}</span></div>`;
+  }
+  html+='<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--b1);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Weekly targets</div>'+wtHtml;
   btb.innerHTML=html||'<div style="font-size:12px;color:var(--tx3);padding:8px 0">Complete workouts to see progress</div>';
 }
 
@@ -866,6 +911,8 @@ function openWO(dk){
   document.getElementById('WT').textContent=d.name;
   document.getElementById('WF').textContent=d.focus;
   ST.logWk=ST.wk;
+  const dlBanner=document.getElementById('WODLB');
+  if(dlBanner){dlBanner.style.display=DLOADS.has(ST.wk)?'block':'none';if(DLOADS.has(ST.wk)){const pct=Math.round((DELOAD_PCT[ST.wk]||.65)*100);dlBanner.innerHTML=`<strong>★ DELOAD WEEK (W${ST.wk})</strong> — Use ~${pct}% of working weights, ~50% of sets. Resets volume sensitivity — this is when you grow.`}}
   const wws=document.getElementById('WWS');
   if(wws){wws.innerHTML=Array.from({length:24},(_,i)=>`<option value="${i+1}" ${i+1===ST.wk?'selected':''}>W${i+1}</option>`).join('');wws.value=ST.wk}
   renderWO();
@@ -900,16 +947,22 @@ function renderWO(){
 
     const setsHtml=sets.map((s,si)=>{
       const ps=prev[si];
+      const rec=getRec(ex.displayName,ST.aday,si);
       const isLast=si===sets.length-1;
-      // Show delete button on all rows but only if >1 set total
       const canDel=sets.length>1;
+      let footer='';
+      if(ps||rec){footer='<div class="prev" id="pv-'+ex.id+'-'+si+'">';
+        if(ps)footer+=`Prev: <span class="pv">${ps.w?ps.w+'×':''}${ps.r}</span>${ps.e1?` · e1RM <span class="pv">${ps.e1}</span>`:''}`;
+        if(rec)footer+=`${ps?' · ':''}Rec: <span class="pv rec">${rec.w}×${rec.r}</span> <span class="rec-hint">(deload)</span>`;
+        footer+='</div>';
+      }
       return `<div class="srow" id="sr-${ex.id}-${si}">
         <div class="snum">${si+1}</div>
         <div class="ig"><div class="ilbl">LBS</div>
-          <input type="number" inputmode="decimal" class="sinp${s.w?' ok':''}" id="iw-${ex.id}-${si}" value="${s.w}" placeholder="${ps?ps.w:''}" onchange="upS('${ex.id}',${si},'w',this.value)" onfocus="this.select()">
+          <input type="number" inputmode="decimal" class="sinp${s.w?' ok':''}" id="iw-${ex.id}-${si}" value="${s.w}" placeholder="${rec?rec.w:(ps?ps.w:'')}" onchange="upS('${ex.id}',${si},'w',this.value)" onfocus="this.select()">
         </div>
         <div class="ig"><div class="ilbl">REPS</div>
-          <input type="number" inputmode="decimal" class="sinp${s.r?' ok':''}" id="ir-${ex.id}-${si}" value="${s.r}" placeholder="${ps?ps.r:''}" onchange="upS('${ex.id}',${si},'r',this.value)" onfocus="this.select()">
+          <input type="number" inputmode="decimal" class="sinp${s.r?' ok':''}" id="ir-${ex.id}-${si}" value="${s.r}" placeholder="${rec?rec.r:(ps?ps.r:'')}" onchange="upS('${ex.id}',${si},'r',this.value)" onfocus="this.select()">
         </div>
         <button class="ckbtn${s.done?' on':''}" onclick="ckS('${ex.id}',${si},${ex.rest},'${ex.displayName.replace(/'/g,"\\'")}')">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -918,7 +971,7 @@ function renderWO(){
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>`:'<div style="width:30px;flex-shrink:0"></div>'}
       </div>
-      ${ps?`<div class="prev" id="pv-${ex.id}-${si}">Prev: <span class="pv">${ps.w?ps.w+'×':''}${ps.r}</span>${ps.e1?` · e1RM <span class="pv">${ps.e1}</span>`:''}</div>`:''}`;
+      ${footer}`;
     }).join('');
 
     const canMoveUp=exIdx>0;
@@ -1057,6 +1110,8 @@ function openAddEx(){
   document.getElementById('SWC').textContent='Choose from library or type a custom name';
   document.getElementById('SWScope').style.display='none';
   document.getElementById('SWQ').value='';
+  document.getElementById('customExInput').value='';
+  document.getElementById('customExBodyPart').value='';
   setSWTab('lib');
   renderSWL();
   document.getElementById('SWO').classList.add('on');
@@ -1188,15 +1243,16 @@ function renderSWL(){
       </div>
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--tx3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     `;
-    el.onclick=()=>applySW(it.n);
+    el.onclick=()=>applySW(it.n,false,getBodyPartFromMuscle(it.m));
     box.appendChild(el);
   });
 }
 
 function updateCustomBtn(){
   const v=(document.getElementById('customExInput').value||'').trim();
+  const bp=(document.getElementById('customExBodyPart').value||'').trim();
   const btn=document.getElementById('useCustomBtn');
-  const ok=v.length>=3;
+  const ok=v.length>=3 && bp.length>0;
   btn.style.opacity=ok?1:.4;
   btn.style.pointerEvents=ok?'auto':'none';
 }
@@ -1212,9 +1268,9 @@ function applyCustom(){
   applySW(v,true);
 }
 
-function applySW(newName,isCustom=false){
+function applySW(newName,isCustom=false,bodyPart=null){
   if(ST.isAddEx){
-    // Add new exercise card to current workout
+    const bp=bodyPart||(isCustom?null:(()=>{const el=EL.find(e=>e.n===newName);return el?getBodyPartFromMuscle(el.m):getBodyPart(newName)})());
     const id=genId();
     const ex={
       id,
@@ -1227,11 +1283,16 @@ function applySW(newName,isCustom=false){
       cue:'Run perfect reps. Full ROM. Control the eccentric.',
       mech:'Custom selection.',
       isCustom:!!isCustom,
-      templateIdx:-1
+      templateIdx:-1,
+      bodyPart:bp||'other',
+      isAdded:true
     };
     ST.awExs.push(ex);
     ST.aws[id]=Array.from({length:ex.sets},()=>({w:'',r:'',done:false}));
     closeSW();
+    document.getElementById('customExInput').value='';
+    document.getElementById('customExBodyPart').value='';
+    updateCustomBtn();
     renderWO();
     setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),50);
     return;
@@ -1314,21 +1375,26 @@ function stopRest(){
 // PREVIOUS SET LOOKUP
 // ═══════════════════════════════════════════════════════════
 function getPrev(exName,dk){
-  // Previous session for same day+exercise (most recent date)
-  const rows=ST.logs
-    .filter(l=>l.dk===dk && l.ex===exName && l.w!=null && l.r!=null)
-    .sort((a,b)=> (a.date<b.date?1:-1));
-
+  const rows=ST.logs.filter(l=>l.dk===dk && l.ex===exName && l.w!=null && l.r!=null).sort((a,b)=>(a.date<b.date?1:-1));
   if(!rows.length) return [];
-  // Group by date, pick newest date
   const lastDate=rows[0].date;
   const last=rows.filter(r=>r.date===lastDate).sort((a,b)=>a.sn-b.sn);
-
-  return last.map(r=>({
-    w:r.w||'',
-    r:r.r||'',
-    e1:r.e1rm||null
-  }));
+  return last.map(r=>({w:r.w||'',r:r.r||'',e1:r.e1rm||null}));
+}
+// Deload recommended weight (65–70% of previous working weight) — science-backed
+function getRec(exName,dk,setIdx){
+  const wk=ST.logWk||ST.wk;
+  const pct=DELOAD_PCT[wk];
+  if(!pct) return null;
+  const prev=getPrev(exName,dk);
+  if(!prev.length) return null;
+  const p=prev[setIdx]||prev[prev.length-1];
+  const pw=parseFloat(p.w);
+  if(!pw||isNaN(pw)) return null;
+  const pr=parseInt(p.r,10)||8;
+  const recW=Math.round(pw*pct/5)*5;
+  const recR=pr<=8?pr:pr+2;
+  return {w:recW,r:recR};
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1340,6 +1406,14 @@ function finWO(){
   const date=today.toISOString().split('T')[0];
   const dk=ST.aday;
   const dn=P[dk]?.name||dk;
+
+  // Persist added exercises for denominator / muscle coverage
+  const addedExs=ST.awExs.filter(ex=>ex.templateIdx===-1||ex.isAdded===true);
+  if(addedExs.length){
+    ST.addedExercises=ST.addedExercises||{};
+    ST.addedExercises[dk]=addedExs.map(ex=>({name:ex.displayName||ex.name,sets:ex.sets||3,bodyPart:ex.bodyPart||getBodyPart(ex.displayName||ex.name)||'other'}));
+    saveST();
+  }
 
   let added=0;
   const newRows=[];
@@ -1386,16 +1460,6 @@ function finWO(){
   }
 
   showPg('home');
-  renderInsight();renderBackupBanner();
-
-  // Backup reminder: every 3 workouts if not connected
-  if(!ST.url&&newRows.length){
-    ST.workoutsSinceBackupReminder=(ST.workoutsSinceBackupReminder||0)+1;
-    saveST();
-    if(ST.workoutsSinceBackupReminder>=3){
-      showConf('Backup your data?','Your logs are only on this device. Connect Google Sheets for auto-backup, or export a JSON to save to Files/iCloud.',()=>{ST.workoutsSinceBackupReminder=0;saveST();showPg('ex');},'Go to Backup');
-    }
-  }else if(ST.url)ST.workoutsSinceBackupReminder=0;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1474,11 +1538,9 @@ function saveEditLog(){
 function saveURL(){
   const v=(document.getElementById('SUI').value||'').trim();
   ST.url=v;
-  if(v)ST.workoutsSinceBackupReminder=0;
   saveST();
   setSS(v?'conn':'off');
   renderES();
-  renderBackupBanner();
 }
 
 function expCSV(){
