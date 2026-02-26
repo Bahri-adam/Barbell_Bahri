@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 firebase.initializeApp({
@@ -26,6 +27,8 @@ firebase.initializeApp({
 });
 const fbDB=firebase.database();
 const FB_ROOT='barbell-bahri';
+let fbReady=false;
+firebase.auth().signInAnonymously().then(()=>{fbReady=true;console.log('Firebase auth OK')}).catch(e=>console.warn('Firebase auth failed:',e));
 </script>
 <style>
 :root{--bg:#0a0e14;--bg2:#0f1419;--s1:#151b23;--s2:#1c2430;--s3:#252f3d;--b1:#2a3544;--b2:#364556;--red:#e63946;--red-dim:rgba(230,57,70,.25);--blue:#457b9d;--blue2:#6ec1e3;--gold:#f4a261;--grn:#2a9d8f;--grn2:#52b788;--tx:#e8ecf1;--tx2:#a8b3c4;--tx3:#6b7a8f;--fd:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;--fm:'Roboto Mono',monospace;--sh:0 4px 16px rgba(0,0,0,.4);--sh2:0 2px 10px rgba(0,0,0,.3);--glass:rgba(21,27,35,.85)}
@@ -2128,6 +2131,7 @@ function renderHIST(ab){
 function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
 
 function fbSaveSettings(){
+  if(!fbReady)return;
   try{
     const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
     fbRef('settings').set(data);
@@ -2135,6 +2139,7 @@ function fbSaveSettings(){
 }
 
 function fbSaveLogs(rows){
+  if(!fbReady)return;
   try{
     if(!rows||!rows.length)return;
     const updates={};
@@ -2144,6 +2149,7 @@ function fbSaveLogs(rows){
 }
 
 function fbSaveAllLogs(){
+  if(!fbReady)return;
   try{
     const updates={};
     ST.logs.forEach(r=>{if(r.id)updates[r.id]=r});
@@ -2152,6 +2158,7 @@ function fbSaveAllLogs(){
 }
 
 function fbSaveCustomEx(){
+  if(!fbReady)return;
   try{
     const customs=EL.filter(e=>e.custom);
     fbRef('customExercises').set({items:customs,_updatedAt:firebase.database.ServerValue.TIMESTAMP});
@@ -2245,12 +2252,17 @@ renderBodyTracker();
 renderAN();
 renderES();
 
-// Firebase: pull data then listen for changes
-fbPullAll().then(()=>{
-  renderHome();
-  renderBodyTracker();
-  renderAN();
-  fbListenForChanges();
+// Firebase: wait for auth, then pull data and listen for changes
+firebase.auth().onAuthStateChanged(user=>{
+  if(user){
+    fbReady=true;
+    fbPullAll().then(()=>{
+      renderHome();
+      renderBodyTracker();
+      renderAN();
+      fbListenForChanges();
+    });
+  }
 });
 
 // PWA: register service worker
