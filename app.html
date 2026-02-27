@@ -808,12 +808,16 @@ function getBlockPhase(wk){
   if(wk<=15) return {block:2,name:'Block 2 — Strength',phase:wk===10||wk===11?'Introduction':wk===12||wk===15?'★ DELOAD ★':'Peak'};
   return {block:3,name:'Block 3 — Peak Hypertrophy',phase:wk===16||wk===17||wk===18?'Reload':wk===21?'★ DELOAD ★':wk>=22?'Accumulation Peak':'Volume Push'};
 }
-// Weekly set targets per muscle (from program design notes)
-const WEEKLY_TARGETS={quads:{target:32,status:'lagging',days:'Mon/Thu/Sun'},hamstrings:{target:24,status:'lagging',days:'Mon/Thu/Sun'},calves:{target:21,status:'lagging',days:'Mon/Thu/Sun'},back:{target:20,status:'maintained',days:'Tue'},biceps:{target:20,status:'maintained',days:'Wed/Sat'},triceps:{target:20,status:'maintained',days:'Wed/Sat'},chest:{target:14,status:'reduced',days:'Tue/Sat'},delts:{target:16,status:'maintained',days:'Wed/Sat'}};
+// Stimulus targets (research: 8–14 effective sets = growth zone; 18+ = diminishing returns)
+const STIMULUS_TARGET={quads:10,hamstrings:8,calves:6,glutes:6,chest:8,back:10,biceps:8,triceps:8,delts:8};
+const STIMULUS_CEILING={quads:18,hamstrings:16,calves:14,glutes:12,chest:16,back:18,biceps:14,triceps:14,delts:14};
+const VOLUME_CEILINGS={quads:22,hamstrings:20,calves:18,glutes:14,chest:18,back:20,biceps:18,triceps:18,delts:18};
+const WEEKLY_TARGETS={quads:{target:16,ceiling:22,status:'lagging',days:'Mon/Thu/Sun'},hamstrings:{target:14,ceiling:20,status:'lagging',days:'Mon/Thu/Sun'},calves:{target:12,ceiling:18,status:'lagging',days:'Mon/Thu/Sun'},glutes:{target:10,ceiling:14},back:{target:14,ceiling:20,status:'maintained',days:'Tue'},biceps:{target:12,ceiling:18,status:'maintained',days:'Wed/Sat'},triceps:{target:12,ceiling:18,status:'maintained',days:'Wed/Sat'},chest:{target:12,ceiling:18,status:'reduced',days:'Tue/Sat'},delts:{target:12,ceiling:18,status:'maintained',days:'Wed/Sat'}};
 
 // ═══════════════════════════════════════════════════════════
-// HYPERTROPHY SCIENCE ENGINE (Schoenfeld causality model)
-// Exercise → primary muscles with weights + length bias
+// HYPERTROPHY SCIENCE ENGINE (Performance-driven, not RPE-dependent)
+// Stimulus = tension × volume × proximity (estimated from e1RM)
+// Fatigue = volume load × intensity × systemic cost
 // ═══════════════════════════════════════════════════════════
 const MUSCLE_MODEL=[{keys:['Bench','Press'],muscles:{chest:.6,triceps:.25,delts:.15},len:1},
   {keys:['Incline'],muscles:{chest:.55,triceps:.2,delts:.25},len:1.05},
@@ -848,39 +852,261 @@ function getLengthBias(exName){
   }
   return 1;
 }
-// Hard set: RIR≤3 (RPE≥7) OR reps≥12 near failure (RPE≥8) OR drop set
+// Epley e1RM
+function calcE1RM(w,r){return w&&r?Math.round(w*(1+r/30)):null}
+// Best e1RM for exercise in last N weeks (for intensity-ratio / RIR estimation)
+function getBestE1RMForExercise(exName,weeksBack,optWk){
+  const refWk=optWk!=null?optWk:(ST.wk||1);
+  const cutoff=Math.max(1,refWk-weeksBack);
+  const logs=ST.logs.filter(l=>l.ex===exName&&l.e1rm&&l.wk>=cutoff).sort((a,b)=>b.e1rm-a.e1rm);
+  return logs[0]?.e1rm||null;
+}
+// Predicted reps at weight from Epley: reps = 30*(e1rm/w - 1). Estimated RIR = predicted - actual
+function estimateRIR(l,bestE1RM){
+  const w=parseFloat(l.w),r=parseInt(l.r,10);
+  if(!w||!r)return null;
+  const e1rm=bestE1RM||l.e1rm||calcE1RM(w,r);
+  if(!e1rm||e1rm<w)return 0;
+  const predReps=30*(e1rm/w-1);
+  const rir=Math.max(0,Math.round(predReps-r));
+  return rir;
+}
+// Proximity factor from estimated RIR (no RPE needed)
+function proximityFromEstimatedRIR(rir){
+  if(rir==null)return 0.5;
+  if(rir<=1)return 1.1;
+  if(rir<=3)return 1.0;
+  if(rir<=5)return 0.8;
+  return 0.5;
+}
+// Effective reps: last-5-reps model — EffectiveReps = max(0, 5 - RIR)
+function getEffectiveReps(rir){
+  if(rir==null)return 0;
+  return Math.max(0,Math.min(5,5-rir));
+}
+// RPE fallback when e1RM data insufficient (for backward compat)
 function isHardSet(l){
   const rpe=l.rpe!=null?parseFloat(l.rpe):null;
   const r=l.r!=null?parseInt(l.r,10):0;
-  if(rpe!=null&&!isNaN(rpe)&&rpe>=7) return true;
-  if(r>=12&&rpe!=null&&!isNaN(rpe)&&rpe>=8) return true;
+  if(rpe!=null&&!isNaN(rpe)&&rpe>=7)return true;
+  if(r>=12&&rpe!=null&&!isNaN(rpe)&&rpe>=8)return true;
   const ex=(l.ex||'').toLowerCase();
-  if(ex.includes('drop')||ex.includes('myo-reps')) return true;
+  if(ex.includes('drop')||ex.includes('myo-reps'))return true;
   return false;
 }
-// Epley e1RM
-function calcE1RM(w,r){return w&&r?Math.round(w*(1+r/30)):null}
-// Rep range bucket: 0=strength 3-6, 1=hypertrophy 6-12, 2=mid 12-20, 3=metabolic 20+
-function getRepBucket(r){return r<=6?0:r<=12?1:r<=20?2:3}
-// Weekly hard sets per muscle (engine lever)
-function getWeeklyHardSets(wk){
+// Per-set stimulus: MuscleContribution × EffectiveReps × LengthBias × TensionFactor
+function getSetStimulusUnits(l,bestE1RM){
+  const mw=getMuscleWeights(l.ex);
+  const lb=getLengthBias(l.ex);
+  const rir=estimateRIR(l,bestE1RM);
+  const effReps=getEffectiveReps(rir);
+  const prox=proximityFromEstimatedRIR(rir);
+  const w=parseFloat(l.w),e1rm=bestE1RM||l.e1rm||calcE1RM(w,parseInt(l.r,10)||8);
+  const intensityRatio=e1rm?w/e1rm:0.8;
+  const tensionFactor=intensityRatio>=0.92?1.1:intensityRatio>=0.85?1.0:intensityRatio>=0.75?0.9:0.7;
+  const units=(effReps/5)*prox*tensionFactor;
   const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
-  const logs=ST.logs.filter(l=>l.wk===wk&&isHardSet(l));
-  logs.forEach(l=>{
-    const mw=getMuscleWeights(l.ex);
-    Object.keys(mw).forEach(m=>{if(out[m]!=null)out[m]+=mw[m];});
-  });
+  Object.keys(mw).forEach(m=>{if(out[m]!=null)out[m]=(mw[m]||0)*lb*units;});
   return out;
 }
-// Weekly stimulus (heuristic: HardSet × MuscleWeight × LengthBias)
+// Fatigue multipliers: barbell compounds 1.3, machine compounds 1.0, isolation 0.7
+const MACHINE_COMPOUND_KEYS=['leg press','leg extension','hack squat','belt squat','pendulum','pec deck','lat pulldown','machine row','leg curl','hip abductor','seated leg','lying leg','calf raise','cable fly','cable curl','cable pushdown'];
+function isMachineCompound(exName){
+  const n=(exName||'').toLowerCase();
+  return MACHINE_COMPOUND_KEYS.some(k=>n.includes(k));
+}
+function getFatigueMultiplier(exName){
+  if(isCompound(exName)&&!isMachineCompound(exName))return 1.3;
+  if(isCompound(exName)||isMachineCompound(exName))return 1.0;
+  return 0.7;
+}
+function getSetFatigueCost(l,bestE1RM){
+  const w=parseFloat(l.w)||0,r=parseInt(l.r,10)||0;
+  const e1rm=bestE1RM||l.e1rm||calcE1RM(w,r);
+  const volLoad=w*r;
+  const intensityRatio=e1rm?w/e1rm:0.8;
+  const mult=getFatigueMultiplier(l.ex);
+  return volLoad*mult*intensityRatio;
+}
+// Rep range bucket: 0=strength 3-6, 1=hypertrophy 6-12, 2=mid 12-20, 3=metabolic 20+
+function getRepBucket(r){return r<=6?0:r<=12?1:r<=20?2:3}
+// Weekly stimulus per muscle (EffectiveReps × proximity × tension — primary hypertrophy driver)
 function getWeeklyStimulus(wk){
   const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
   const logs=ST.logs.filter(l=>l.wk===wk);
   logs.forEach(l=>{
-    if(!isHardSet(l))return;
+    const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
+    const su=getSetStimulusUnits(l,bestE1RM);
+    Object.keys(su).forEach(m=>{if(out[m]!=null)out[m]+=su[m];});
+  });
+  return out;
+}
+// Local fatigue per muscle (volume load × intensity × multiplier × muscle contribution)
+function getLocalFatiguePerMuscle(wk){
+  const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
+  const logs=ST.logs.filter(l=>l.wk===wk);
+  logs.forEach(l=>{
+    const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
+    const cost=getSetFatigueCost(l,bestE1RM);
     const mw=getMuscleWeights(l.ex);
-    const lb=getLengthBias(l.ex);
-    Object.keys(mw).forEach(m=>{if(out[m]!=null)out[m]+=mw[m]*lb;});
+    Object.keys(mw).forEach(m=>{if(out[m]!=null)out[m]+=cost*(mw[m]||0);});
+  });
+  return out;
+}
+// Weekly fatigue (raw — sum of all set costs). Used for internal ratio calc.
+function getWeeklyFatigue(wk){
+  let total=0;
+  const logs=ST.logs.filter(l=>l.wk===wk);
+  logs.forEach(l=>{
+    const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
+    total+=getSetFatigueCost(l,bestE1RM);
+  });
+  return total;
+}
+// Normalized fatigue score 0–100 (bounded, comparable across athletes/weeks)
+// Components: volume_load_z, mean_intensity, proximity, failure_rate, optional sleep/stress
+// Thresholds: 0–39 low, 40–64 moderate, 65–79 high, 80–100 very high
+function getNormalizedFatigueScore(wk){
+  const logs=ST.logs.filter(l=>l.wk===wk);
+  if(!logs.length)return 0;
+  const volByWk={};
+  for(let w=Math.max(1,wk-4);w<=wk;w++)volByWk[w]=ST.logs.filter(l=>l.wk===w).reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
+  const wks=Object.keys(volByWk).map(Number).sort((a,b)=>a-b).filter(w=>volByWk[w]>0);
+  const thisVol=volByWk[wk]||0;
+  const mean=wks.length?wks.reduce((s,w)=>s+volByWk[w],0)/wks.length:thisVol;
+  const variance=wks.length>1?wks.reduce((s,w)=>s+Math.pow(volByWk[w]-mean,2),0)/(wks.length-1):0;
+  const std=Math.sqrt(variance)||1;
+  const volZ=std>0?(thisVol-mean)/std:0;
+  const volume_load_z=Math.max(0,Math.min(1,(Math.max(-2,Math.min(2,volZ))+2)/4));
+
+  let intensitySum=0,intensityCnt=0;
+  const topByEx={};
+  logs.forEach(l=>{
+    const e1rm=l.e1rm||getBestE1RMForExercise(l.ex,4,wk)||calcE1RM(parseFloat(l.w),parseInt(l.r,10)||8);
+    if(!e1rm||!l.w)return;
+    const pct=(l.w/e1rm)*100;
+    if(!topByEx[l.ex]||l.w>topByEx[l.ex].w){topByEx[l.ex]={w:l.w,pct};}
+  });
+  Object.values(topByEx).forEach(t=>{intensitySum+=t.pct;intensityCnt++;});
+  const meanIntensityPct=intensityCnt?intensitySum/intensityCnt:75;
+  const mean_intensity=Math.max(0,Math.min(1,(meanIntensityPct-60)/30));
+
+  let rirAtOrBelow1=0,rir0=0,totalWithRir=0;
+  logs.forEach(l=>{
+    const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
+    const rir=estimateRIR(l,bestE1RM);
+    if(rir!=null){totalWithRir++;if(rir<=1)rirAtOrBelow1++;if(rir<=0)rir0++;}
+  });
+  const proximity=totalWithRir?Math.max(0,Math.min(1,(rirAtOrBelow1/totalWithRir)/0.4)):0;
+  const failure_rate=totalWithRir?Math.max(0,Math.min(1,(rir0/totalWithRir)/0.1)):0;
+
+  const sleepStress=0;
+  const fatigue=100*(0.35*volume_load_z+0.25*mean_intensity+0.2*proximity+0.15*failure_rate+0.05*sleepStress);
+  return Math.round(Math.max(0,Math.min(100,fatigue)));
+}
+// Total effective sets (RIR≤2) and hard sets (RIR≤4) for volume gate
+function getTotalEffectiveSets(wk){
+  let total=0;
+  ST.logs.filter(l=>l.wk===wk).forEach(l=>{
+    const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
+    const rir=estimateRIR(l,bestE1RM);
+    const effReps=getEffectiveReps(rir);
+    const mw=getMuscleWeights(l.ex);
+    const contrib=Object.keys(mw).reduce((s,m)=>s+(mw[m]||0),0)||1;
+    if(effReps>=2)total+=contrib;
+  });
+  return Math.round(total*10)/10;
+}
+function getTotalHardSets(wk){
+  let total=0;
+  ST.logs.filter(l=>l.wk===wk).forEach(l=>{
+    const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
+    const rir=estimateRIR(l,bestE1RM);
+    const effReps=getEffectiveReps(rir);
+    const mw=getMuscleWeights(l.ex);
+    const contrib=Object.keys(mw).reduce((s,m)=>s+(mw[m]||0),0)||1;
+    if(effReps>=2||(bestE1RM==null&&isHardSet(l)))total+=contrib;
+  });
+  return Math.round(total*10)/10;
+}
+function getMedianRIR(wk){
+  const rirs=[];
+  ST.logs.filter(l=>l.wk===wk).forEach(l=>{
+    const rir=estimateRIR(l,getBestE1RMForExercise(l.ex,4,wk));
+    if(rir!=null)rirs.push(rir);
+  });
+  if(!rirs.length)return null;
+  rirs.sort((a,b)=>a-b);
+  return rirs[Math.floor(rirs.length/2)];
+}
+// Effective reps per muscle (last-5-reps model: Σ max(0, 5−RIR) × muscle weight)
+function getEffectiveRepsPerMuscle(wk){
+  const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
+  const logs=ST.logs.filter(l=>l.wk===wk);
+  logs.forEach(l=>{
+    const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
+    const rir=estimateRIR(l,bestE1RM);
+    const effReps=getEffectiveReps(rir);
+    const mw=getMuscleWeights(l.ex);
+    Object.keys(mw).forEach(m=>{if(out[m]!=null)out[m]+=effReps*(mw[m]||0);});
+  });
+  return out;
+}
+// e1RM trend for primary compounds (3–4 week slope, % change)
+function getE1RMTrend(wk){
+  const compounds=ST.logs.filter(l=>isCompound(l.ex)&&l.e1rm);
+  if(compounds.length<4)return{slope:0,pctChange:0,trend:'unknown'};
+  const byEx={};
+  compounds.forEach(l=>{
+    if(!byEx[l.ex])byEx[l.ex]={};
+    const w=l.wk;
+    if(!byEx[l.ex][w]||l.e1rm>byEx[l.ex][w])byEx[l.ex][w]=l.e1rm;
+  });
+  const wks=[...new Set(compounds.map(l=>l.wk))].filter(w=>w>=Math.max(1,wk-4)&&w<=wk).sort((a,b)=>a-b);
+  if(wks.length<2)return{slope:0,pctChange:0,trend:'unknown'};
+  const avgByWk={};
+  wks.forEach(w=>{
+    const vals=Object.values(byEx).map(ex=>ex[w]).filter(Boolean);
+    avgByWk[w]=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
+  });
+  const first=avgByWk[wks[0]],last=avgByWk[wks[wks.length-1]];
+  const pctChange=first>0?((last-first)/first)*100:0;
+  return{slope:(last-first)/(wks.length-1),pctChange,trend:pctChange>1?'up':pctChange<-2?'down':'flat'};
+}
+// Stimulus-to-fatigue ratio per muscle — key adaptive signal. High = room to expand. Low = reduce.
+function getStimulusToFatigueRatio(wk){
+  const stimulus=getWeeklyStimulus(wk);
+  const localFatigue=getLocalFatiguePerMuscle(wk);
+  const out={};
+  ['quads','hamstrings','calves','glutes','chest','back','biceps','triceps','delts'].forEach(m=>{
+    const s=stimulus[m]||0;
+    const f=Math.max(1,localFatigue[m]||1);
+    out[m]=s/f;
+  });
+  return out;
+}
+// Core metrics — the 4 foundations. systemicFatigue = normalized 0–100 for display/thresholds
+function getCoreMetrics(wk){
+  const stimulus=getWeeklyStimulus(wk);
+  const effectiveReps=getEffectiveRepsPerMuscle(wk);
+  const localFatigue=getLocalFatiguePerMuscle(wk);
+  const systemicFatigue=getNormalizedFatigueScore(wk);
+  const e1rmTrend=getE1RMTrend(wk);
+  const ratio=getStimulusToFatigueRatio(wk);
+  return{stimulus,effectiveReps,localFatigue,systemicFatigue,e1rmTrend,ratio};
+}
+// Backward compat: hard sets (used by some UI)
+function getWeeklyHardSets(wk){
+  const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
+  const logs=ST.logs.filter(l=>l.wk===wk);
+  logs.forEach(l=>{
+    const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
+    const rir=estimateRIR(l,bestE1RM);
+    const effReps=getEffectiveReps(rir);
+    const isStimulating=effReps>=2||(bestE1RM==null&&isHardSet(l));
+    if(!isStimulating)return;
+    const mw=getMuscleWeights(l.ex);
+    Object.keys(mw).forEach(m=>{if(out[m]!=null)out[m]+=mw[m];});
   });
   return out;
 }
@@ -899,20 +1125,135 @@ function getPerformanceTrend(exName,nExposures){
   const slope=den?num/den:0;
   return {slope,trend:slope>2?'up':slope<-2?'down':'flat',best:pts[pts.length-1]?.[1]};
 }
-// Fatigue flags: missed reps, high RPE + performance down
+// Gated decision tree: data sufficiency → understimulated → deload/overreached → stall systemic → stall local → progressing
+// Volume gate: if effective sets < 30, cannot label systemic overreach from training alone
+const MIN_HARD_SETS_FOR_DATA=30;
+const MIN_EFFECTIVE_SETS_OVERREACH=30;
+const UNDERSTIM_MIN_EFF_SETS=6;
+const STALL_LOCAL_FATIGUE_CAP=75;
+const STALL_SYSTEMIC_FATIGUE_CAP=80;
+function getGlobalState(wk){
+  const weeksLogged=ST.logs.length?new Set(ST.logs.map(l=>l.wk)).size:0;
+  const hardSetsThisWeek=getTotalHardSets(wk);
+  const effectiveSetsThisWeek=getTotalEffectiveSets(wk);
+  const fatigue=getNormalizedFatigueScore(wk);
+  const stalled=getStalledLifts(wk);
+  const stalledCount=stalled.length;
+  const volByWk={},e1rmByWk={};
+  for(let w=Math.max(1,wk-4);w<=wk;w++){
+    const logs=ST.logs.filter(l=>l.wk===w);
+    volByWk[w]=logs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
+    const compounds=logs.filter(l=>isCompound(l.ex)&&l.e1rm);
+    e1rmByWk[w]=compounds.length?compounds.reduce((s,l)=>s+l.e1rm,0)/compounds.length:0;
+  }
+  const wks=Object.keys(volByWk).map(Number).sort((a,b)=>a-b);
+  const e1rmTrend=wks.length>=3?(e1rmByWk[wks[wks.length-1]]-e1rmByWk[wks[0]])/Math.max(1,e1rmByWk[wks[0]])*100:0;
+  const e1rmFlat=Math.abs(e1rmTrend)<1;
+  const e1rmDown=e1rmTrend<-2;
+  const perfDown=wks.length>=2&&e1rmByWk[wks[wks.length-1]]<e1rmByWk[wks[wks.length-2]]*0.95;
+  const perfDown2Weeks=wks.length>=3&&e1rmByWk[wks[wks.length-1]]<e1rmByWk[wks[wks.length-3]]*0.95;
+  const medianRIR=getMedianRIR(wk);
+  const proximityQuality=getProximityQuality(wk);
+  const effRepsPerMuscle=getEffectiveRepsPerMuscle(wk);
+  const minEffPerTargetMuscle=Math.min(...['quads','chest','back'].map(m=>effRepsPerMuscle[m]||0).filter(v=>v>=0),999);
+  const junkVolume=wks.length>=4&&volByWk[wks[wks.length-1]]>volByWk[wks[0]]*1.2&&e1rmFlat;
+
+  let globalState='insufficient_data',globalResponse='lock',verdict='DATA_INSUFFICIENT';
+
+  if(weeksLogged<2||hardSetsThisWeek<MIN_HARD_SETS_FOR_DATA){
+    globalState='insufficient_data';globalResponse='lock';verdict='DATA_INSUFFICIENT';
+  }else if(effectiveSetsThisWeek<MIN_EFFECTIVE_SETS_OVERREACH&&fatigue<65){
+    if(minEffPerTargetMuscle<UNDERSTIM_MIN_EFF_SETS&&(proximityQuality==='low'||(medianRIR!=null&&medianRIR>=3))){
+      globalState='understimulated';globalResponse='expand';verdict='UNDERSTIMULATED';
+    }else{
+      globalState='plateau';globalResponse='maintain';verdict='PROGRESSING';
+    }
+  }else if(effectiveSetsThisWeek<25){
+    globalState='plateau';globalResponse='maintain';verdict='PROGRESSING';
+  }else if(fatigue>=80||(fatigue>=70&&perfDown2Weeks)){
+    globalState='regressing';globalResponse='deload';verdict='DELOAD_RECOMMENDED';
+  }else if(fatigue>=65&&(e1rmFlat||e1rmDown||perfDown)){
+    globalState='overreaching';globalResponse='reduce';verdict='OVERREACHED';
+  }else if(stalledCount>=2&&fatigue<STALL_SYSTEMIC_FATIGUE_CAP){
+    globalState='plateau_systemic';globalResponse='reduce';verdict='STALL_SYSTEMIC';
+  }else if(stalledCount===1&&fatigue<STALL_LOCAL_FATIGUE_CAP){
+    globalState='plateau_local';globalResponse='maintain';verdict='STALL_LOCAL';
+  }else if(stalledCount>=1&&fatigue>=STALL_LOCAL_FATIGUE_CAP){
+    globalState='overreaching';globalResponse='reduce';verdict='OVERREACHED';
+  }else if(junkVolume&&fatigue>=65){
+    globalState='overreaching';globalResponse='reduce';verdict='OVERREACHED';
+  }else if(e1rmTrend>1){
+    globalState='improving';globalResponse='expand';verdict='PROGRESSING';
+  }else{
+    globalState='plateau';globalResponse='maintain';verdict='PROGRESSING';
+  }
+
+  const canExpand=globalResponse==='expand';
+  const mustReduce=globalResponse==='reduce'||globalResponse==='deload';
+  const programLocked=globalResponse==='lock';
+  return{weeksLogged,globalState,globalResponse,canExpand,mustReduce,programLocked,junkVolume,e1rmTrend:e1rmDown?'down':e1rmFlat?'flat':'up',globalFatigueIndex:fatigue/50,stalledCount,verdict,fatigue};
+}
+// Detect under-effort: low stimulus from low proximity (RIR high), not low volume
+function getProximityQuality(wk){
+  const logs=ST.logs.filter(l=>l.wk===wk);
+  if(!logs.length)return'unknown';
+  let lowProx=0,total=0;
+  logs.forEach(l=>{
+    const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
+    const rir=estimateRIR(l,bestE1RM);
+    if(rir!=null){total++;if(rir>4)lowProx++;}
+  });
+  if(total<5)return'unknown';
+  const pctLow=lowProx/total;
+  return pctLow>=0.6?'low':pctLow>=0.3?'moderate':'adequate';
+}
+// Legacy alias
+function getAdaptationState(wk){
+  const g=getGlobalState(wk);
+  return{e1rmTrend:g.e1rmTrend,fatigueRising:g.globalFatigueIndex>1.1,junkVolume:g.junkVolume,canAddVolume:g.canExpand};
+}
+// Fatigue flags: performance-based + legacy RPE
 function getFatigueFlags(wk){
   const weekLogs=ST.logs.filter(l=>l.wk===wk);
   const prevWk=ST.logs.filter(l=>l.wk===wk-1);
-  let missedReps=0,highRPE=0;
+  let highRPE=0;
   weekLogs.forEach(l=>{if(l.rpe>=9.5)highRPE++;});
   const e1rmNow={},e1rmPrev={};
   weekLogs.filter(l=>l.e1rm&&isCompound(l.ex)).forEach(l=>{if(!e1rmNow[l.ex]||l.e1rm>e1rmNow[l.ex])e1rmNow[l.ex]=l.e1rm;});
   prevWk.filter(l=>l.e1rm&&isCompound(l.ex)).forEach(l=>{if(!e1rmPrev[l.ex]||l.e1rm>e1rmPrev[l.ex])e1rmPrev[l.ex]=l.e1rm;});
   let perfDown=false;
   Object.keys(e1rmNow).forEach(ex=>{if(e1rmPrev[ex]&&e1rmNow[ex]<e1rmPrev[ex]*0.95)perfDown=true;});
-  return {highRPE,perfDown};
+  const weeklyFatigue=getWeeklyFatigue(wk);
+  const prevFatigue=getWeeklyFatigue(wk-1);
+  const fatigueUp20=prevFatigue>0&&weeklyFatigue>=prevFatigue*1.2;
+  return {highRPE,perfDown,weeklyFatigue,fatigueUp20};
 }
 
+// Session stimulus for muscle: prior sets for this muscle in same session (set-equivalents)
+function getSessionStimulusForMuscle(allExs,exIdx,muscle){
+  let priorSets=0;
+  for(let i=0;i<exIdx;i++){
+    const ex=allExs[i];
+    const m=getMuscleWeights(ex.name||ex.displayName);
+    const contrib=m[muscle];
+    if(contrib!=null)priorSets+=(contrib||0)*(ex.sets||3);
+  }
+  return priorSets;
+}
+// Sessions per week for a muscle group (from program)
+function getSessionsPerMusclePerWeek(sched){
+  const daysWithMuscle={};
+  DO.forEach(dk=>{
+    const mapped=sched[dk]||dk;
+    if(mapped==='rest')return;
+    const d=P[mapped];
+    if(!d)return;
+    const bps=new Set();
+    (d.exercises||[]).forEach(ex=>{const bp=getBodyPart(ex.name);if(bp)bps.add(bp);});
+    bps.forEach(bp=>{daysWithMuscle[bp]=(daysWithMuscle[bp]||0)+1;});
+  });
+  return daysWithMuscle;
+}
 // Body part mapping (exercise name substring or exact → body part)
 const BODY_MAP=[
   {parts:['quads'],keys:['Squat','Leg Press','Leg Extension','Belt Squat','Pendulum','Bulgarian Split']},
@@ -1268,14 +1609,13 @@ function renderPRBoard(){
   ).join('');
   prb.innerHTML=`<div class="pr-hdr"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> PRs This Week</div><div class="pr-list">${items}</div>`;
 }
+// Uses normalized fatigue 0–100. Thresholds: 0–39 low, 40–64 moderate, 65–79 high, 80–100 very high
 function detectOverreaching(){
   const wk=ST.wk;
   const signals=[];
-  let fatigueScore=0;
+  const fatigueScore=getNormalizedFatigueScore(wk);
 
-  const weekRange=[];
-  for(let w=Math.max(1,wk-3);w<=wk;w++)weekRange.push(w);
-
+  const weekRange=[]; for(let w=Math.max(1,wk-3);w<=wk;w++)weekRange.push(w);
   const weekData=weekRange.map(w=>{
     const logs=ST.logs.filter(l=>l.wk===w);
     const rpes=logs.filter(l=>l.rpe).map(l=>l.rpe);
@@ -1286,69 +1626,28 @@ function detectOverreaching(){
     const rpe10Sets=logs.filter(l=>l.rpe>=10).length;
     return {wk:w,logs,avgRPE,avgCompoundRPE,vol,rpe10Sets,sets:logs.length};
   });
-
   const recent=weekData.filter(d=>d.sets>0);
   if(recent.length<2)return {signals,fatigueScore,recommendation:null};
 
   const highRPEweeks=recent.filter(d=>d.avgCompoundRPE&&d.avgCompoundRPE>=9);
-  if(highRPEweeks.length>=2){
-    fatigueScore+=30;
-    signals.push({type:'high_compound_rpe',severity:'high',msg:`Compound RPE averaging ${highRPEweeks[highRPEweeks.length-1].avgCompoundRPE.toFixed(1)} over ${highRPEweeks.length} recent weeks — CNS fatigue accumulating. Schoenfeld warns persistent failure training drops IGF-1 and blunts testosterone over 16 weeks.`});
-  }
-
+  if(highRPEweeks.length>=2)signals.push({type:'high_compound_rpe',severity:'high',msg:`Compound RPE averaging ${highRPEweeks[highRPEweeks.length-1].avgCompoundRPE.toFixed(1)} — CNS fatigue accumulating.`});
   const failureSets=recent.reduce((s,d)=>s+d.rpe10Sets,0);
-  if(failureSets>=6){
-    fatigueScore+=20;
-    signals.push({type:'failure_sets',severity:'high',msg:`${failureSets} sets to failure (RPE 10) in recent weeks. Reserve RPE 10 for the last set of isolation exercises only — compounds should stay RPE 7-8.5 for sustainable progress.`});
-  }
-
+  if(failureSets>=6)signals.push({type:'failure_sets',severity:'high',msg:`${failureSets} sets to failure. Cap compounds at RPE 8.5.`});
   if(recent.length>=3){
     const volTrend=recent.map(d=>d.vol);
     const e1rmByWeek={};
-    recent.forEach(d=>{
-      d.logs.forEach(l=>{
-        if(!l.e1rm||!isCompound(l.ex))return;
-        if(!e1rmByWeek[d.wk])e1rmByWeek[d.wk]=[];
-        e1rmByWeek[d.wk].push(l.e1rm);
-      });
-    });
-    const avgE1rm=Object.keys(e1rmByWeek).sort().map(w=>{
-      const vals=e1rmByWeek[w];return vals.reduce((a,b)=>a+b,0)/vals.length;
-    });
-    if(volTrend.length>=3&&avgE1rm.length>=3){
-      const volUp=volTrend[volTrend.length-1]>volTrend[0]*1.1;
-      const e1rmFlat=Math.abs(avgE1rm[avgE1rm.length-1]-avgE1rm[0])<5;
-      if(volUp&&e1rmFlat){
-        fatigueScore+=25;
-        signals.push({type:'vol_no_strength',severity:'medium',msg:`Volume increased ${Math.round((volTrend[volTrend.length-1]/volTrend[0]-1)*100)}% over ${recent.length} weeks but compound e1RM is flat — you may be accumulating junk volume. Consider reducing sets and increasing intensity.`});
-      }
-    }
+    recent.forEach(d=>{d.logs.forEach(l=>{if(!l.e1rm||!isCompound(l.ex))return;if(!e1rmByWeek[d.wk])e1rmByWeek[d.wk]=[];e1rmByWeek[d.wk].push(l.e1rm);});});
+    const avgE1rm=Object.keys(e1rmByWeek).sort().map(w=>e1rmByWeek[w].reduce((a,b)=>a+b,0)/e1rmByWeek[w].length);
+    if(volTrend.length>=3&&avgE1rm.length>=3&&volTrend[volTrend.length-1]>volTrend[0]*1.1&&Math.abs(avgE1rm[avgE1rm.length-1]-avgE1rm[0])<5)
+      signals.push({type:'vol_no_strength',severity:'medium',msg:'Volume up but e1RM flat — junk volume risk. Reduce sets, increase intensity.'});
   }
-
-  const avgRPEs=recent.filter(d=>d.avgRPE).map(d=>d.avgRPE);
-  if(avgRPEs.length>=2){
-    const rising=avgRPEs.every((v,i)=>i===0||v>=avgRPEs[i-1]-0.2);
-    if(rising&&avgRPEs[avgRPEs.length-1]>=8.5){
-      fatigueScore+=15;
-      signals.push({type:'rising_rpe',severity:'medium',msg:`Average RPE trending up (${avgRPEs.map(v=>v.toFixed(1)).join(' → ')}) — same weights feeling harder is a classic overreaching signal. Auto-regulate: drop working weights 10% this week.`});
-    }
-  }
-
   const stalledCount=getStalledLifts().length;
-  if(stalledCount>=3){
-    fatigueScore+=10;
-    signals.push({type:'multi_stall',severity:'medium',msg:`${stalledCount} exercises stalled at the same weight — widespread stalling suggests systemic fatigue rather than exercise-specific. A strategic deload may be needed.`});
-  }
+  if(stalledCount>=3)signals.push({type:'multi_stall',severity:'medium',msg:`${stalledCount} exercises stalled — consider deload.`});
 
   let recommendation=null;
-  if(fatigueScore>=50){
-    recommendation='Take a deload week: reduce all weights to 60-65% and halve your sets. Sleep 8+ hours. This resets accumulated fatigue and primes you for a rebound.';
-  }else if(fatigueScore>=30){
-    recommendation='Auto-regulate down this week: drop compound weights 10%, keep isolation at current loads, and cap all sets at RPE 8. Monitor recovery.';
-  }else if(fatigueScore>=15){
-    recommendation='You\'re managing fatigue adequately. Keep compounds at RPE 7-8.5 and reserve failure for isolation finishers only.';
-  }
-
+  if(fatigueScore>=80)recommendation='Deload week: 40–60% sets, 60–70% load, RIR 3–5 target. No failure sets.';
+  else if(fatigueScore>=65)recommendation='Reduce volume 10–25%. Drop compound weights ~10%, cap RPE 8.';
+  else if(fatigueScore>=40)recommendation='Manageable. Keep compounds RPE 7–8.5.';
   return {signals,fatigueScore,recommendation};
 }
 
@@ -1382,7 +1681,7 @@ function getAlternativesForBodyPart(bp,excludeName,favorLengthened){
   return list.map(e=>e.n).slice(0,5);
 }
 
-function getSmartTipForExercise(ex,idx,allExs,dk,wk,stalledMap,actual,fatigueScore,isDeload,priorDaysCount,withinDayAcc){
+function getSmartTipForExercise(ex,idx,allExs,dk,wk,stalledMap,actual,fatigueScore,isDeload,priorDaysCount,ctx){
   const tips=[]; let modulation=null; const swapOptions=[];
   const exName=ex.displayName||ex.name;
   const bp=getBodyPart(ex.name);
@@ -1391,28 +1690,47 @@ function getSmartTipForExercise(ex,idx,allExs,dk,wk,stalledMap,actual,fatigueSco
   const volThisWeek=(actual[bp]||0);
   const prescribedSets=ex.sets||3;
   let programVsRec=null;
-
   const targ=WEEKLY_TARGETS[bp]?.target||12;
+  const weeklySetsActual=ctx&&ctx.actual?ctx.actual[bp]:null;
+  const weeklySetsPrescribed=ctx&&ctx.prescribed?ctx.prescribed[bp]:null;
+  const weeklySets=weeklySetsActual!= null?weeklySetsActual:(weeklySetsPrescribed!=null?weeklySetsPrescribed:null);
+  const weeklyStimulus=(ctx&&ctx.weeklyStimulus)?ctx.weeklyStimulus[bp]:null;
+  const sessionStimulus=ctx&&ctx.getSessionStimulus?ctx.getSessionStimulus(bp,idx):0;
+  const sessionsPerMuscle=ctx&&ctx.sessionsPerMuscle?ctx.sessionsPerMuscle[bp]:1;
+  const sessionTarget=sessionsPerMuscle>0?targ/sessionsPerMuscle:12;
+  const weeklyOver110=weeklySets!=null&&targ>0&&weeklySets>=targ*1.1;
+  const sessionSaturated=sessionStimulus>=sessionTarget*0.7;
 
-  // Cross-day: this muscle was trained on N prior days this week
+  // Cross-day: 3rd+ session — use data: only drop if rolling stimulus high
   if(priorDaysCount>0&&bp!=='other'){
     if(priorDaysCount>=2&&!isDeload){
-      tips.push({type:'cross_day',msg:`${bp} trained ${priorDaysCount}× already this week. This session = accumulation. Reduce stimulus: fewer sets or lighter weight.`});
-      if(!modulation)modulation={action:'DROP_SET',suggestion:`−1–2 sets (3rd+ session)`,reason:'Cross-day fatigue'};
-      programVsRec={program:prescribedSets,recommended:Math.max(1,prescribedSets-2),reason:'3rd session this week'};
-    }else if(priorDaysCount===1&&prevSameMuscle.length>0){
-      tips.push({type:'cross_day',msg:`${bp} hit earlier this week + same muscle before you in session. Double pre-fatigue — dial back.`});
-      if(!modulation)modulation={action:'DROP_SET',suggestion:'−1–2 sets or −10%',reason:'Cross-day + within-session'};
-      programVsRec={program:prescribedSets,recommended:Math.max(1,prescribedSets-1),reason:'Prior day + pre-fatigue'};
+      const stimulusHigh=weeklySets!=null&&weeklySets>=targ*0.9;
+      if(stimulusHigh||weeklyOver110){
+        tips.push({type:'cross_day',msg:`${bp} trained ${priorDaysCount}× already. Stimulus ${stimulusHigh?'on target':'over target'}. This session = accumulation — pump intent or reduce sets.`});
+        if(!modulation)modulation={action:'DROP_SET',suggestion:weeklyOver110?'−1–2 sets':'pump focus, shorter rest',reason:'3rd+ session'};
+        if(weeklyOver110)programVsRec={program:prescribedSets,recommended:Math.max(1,prescribedSets-2),reason:'3rd session, over target'};
+      }else{
+        tips.push({type:'cross_day',msg:`${bp} trained ${priorDaysCount}× already. Stimulus still under target — keep sets, push progression.`});
+        if(!modulation)modulation={action:'GO_FULL',suggestion:'All sets — stimulus below target',reason:'3rd session under target'};
+      }
+    }else if(priorDaysCount===1&&prevSameMuscle.length>0&&!isDeload){
+      tips.push({type:'cross_day',msg:`${bp} hit earlier this week + same muscle before you. Double pre-fatigue — pump intent or −10% weight.`});
+      if(!modulation)modulation={action:'DROP_SET',suggestion:weeklyOver110?'−1 set':'pump focus',reason:'Cross-day + within-session'};
+      if(weeklyOver110&&!programVsRec)programVsRec={program:prescribedSets,recommended:Math.max(1,prescribedSets-1),reason:'Pre-fatigue + over target'};
     }
   }
 
-  // Within-session: same muscle earlier today (pre-fatigue)
+  // Within-session: pre-fatigue — only drop sets if weekly ≥110% target (prevents over-cutting)
   if(prevSameMuscle.length>0&&!isDeload){
     const prevNames=prevSameMuscle.map(e=>e.displayName||e.name).join(', ');
-    tips.push({type:'same_muscle',msg:`${bp} already trained (${prevNames}) — drop 1–2 sets or reduce weight 10%. Pre-fatigued muscle needs less volume (Wernbom).`});
-    if(!modulation)modulation={action:'DROP_SET',suggestion:'−1–2 sets or −10% weight',reason:'Same muscle earlier in session'};
-    if(!programVsRec)programVsRec={program:prescribedSets,recommended:Math.max(1,prescribedSets-1),reason:'Pre-fatigue from '+prevNames.split(', ')[0]};
+    if(sessionSaturated){
+      tips.push({type:'same_muscle',msg:`${bp} already trained (${prevNames}) — session stimulus ≥70% of target. ${weeklyOver110?'Drop 1–2 sets.':'Shift to pump intent, controlled tempo.'}`});
+      if(!modulation)modulation={action:weeklyOver110?'DROP_SET':'DROP_WEIGHT',suggestion:weeklyOver110?'−1–2 sets':'−10% or pump',reason:'Stimulus saturation'};
+      if(weeklyOver110&&!programVsRec)programVsRec={program:prescribedSets,recommended:Math.max(1,prescribedSets-1),reason:'Pre-fatigue + weekly over target'};
+    }else{
+      tips.push({type:'same_muscle',msg:`${bp} already trained (${prevNames}). Pre-fatigued — consider −10% weight or shorter rest; keep sets if under target.`});
+      if(!modulation&&weeklyOver110)modulation={action:'DROP_SET',suggestion:'−1 set',reason:'Pre-fatigue + over target'};
+    }
   }
 
   // Upcoming: you're about to hit same muscle again — heads up for later exercises
@@ -1445,15 +1763,22 @@ function getSmartTipForExercise(ex,idx,allExs,dk,wk,stalledMap,actual,fatigueSco
     programVsRec={program:prescribedSets,recommended:prescribedSets+1,reason:'Volume priority'};
   }
 
-  // Fatigue
-  if(fatigueScore>=30&&(ex.type==='h'||isCompound(ex.name))){
+  // Fatigue (normalized 0–100; 65+ = high)
+  if(fatigueScore>=65&&(ex.type==='h'||isCompound(ex.name))){
     tips.push({type:'fatigue',msg:'High fatigue. Drop compound weight 10% or cap RPE 8.'});
     modulation=modulation||{action:'DROP_WEIGHT',suggestion:'−10% or RPE 8 cap',reason:'Fatigue management'};
   }
 
-  const favorLen=!modulation||modulation.action!=='DROP_WEIGHT';
-  const alts=getAlternativesForBodyPart(bp,ex.name,favorLen);
-  if(alts.length)swapOptions.push(...alts);
+  // Swaps: only for stalled exercises, max 2 per week, only if stall persists 2+ weeks. No swaps during deload.
+  if(stalledMap[exName]&&!ctx?.isDeloadVerdict){
+    const stallWeeks=stalledMap[exName].weeks||0;
+    const swapBudget=ctx?.swapBudget;
+    if(stallWeeks>=2&&(swapBudget==null||swapBudget>=1)){
+      const favorLen=!modulation||modulation.action!=='DROP_WEIGHT';
+      const alts=getAlternativesForBodyPart(bp,ex.name,favorLen).slice(0,2);
+      if(alts.length){swapOptions.push(...alts);if(ctx?.consumeSwap)ctx.consumeSwap();}
+    }
+  }
 
   return {tips,modulation,swapOptions,programVsRec};
 }
@@ -1463,66 +1788,108 @@ function computeSmartRecommendations(wk){
   const targ=WEEKLY_TARGETS;
   const actual=getActualSets(wk);
   const prescribed=getPrescribedSets();
-  const stalled=getStalledLifts();
+  const stalled=getStalledLifts(wk);
   const {signals,fatigueScore,recommendation:fatigueRec}=detectOverreaching();
   const isDeload=DLOADS.has(wk);
   const bp=getBlockPhase(wk);
+
+  // STEP 1 — GLOBAL STATE + CORE METRICS (4 foundations: e1RM trend, effective reps, stimulus, fatigue)
+  const global=getGlobalState(wk);
+  const core=getCoreMetrics(wk);
+  const hardSets=getWeeklyHardSets(wk);
+  const hasRPE=ST.logs.some(l=>l.wk===wk&&l.rpe!=null);
+  const dose=hasRPE?hardSets:actual;
+  const fatigueFlags=getFatigueFlags(wk);
+  const proximityQuality=getProximityQuality(wk);
 
   let recs=[];
   let weekVerdict='';
   let dayPlan=[];
 
   if(isDeload){
-    weekVerdict='Deload week (Schoenfeld: every 4–6 weeks). Use 60–70% of working weights, ~50% of sets. This resets volume sensitivity — supercompensation follows.';
+    weekVerdict='Deload week (Schoenfeld: every 4–6 weeks). Use 60–70% of working weights, ~50% of sets.';
     recs.push({type:'info',title:'Deload protocol','Schoenfeld 2017':`Reduce load to ${Math.round((DELOAD_PCT[wk]||.65)*100)}%, halve sets. Focus on technique and ROM.`});
-  }else if(fatigueScore>=50){
-    weekVerdict=fatigueRec||'High fatigue detected. Consider an extra deload this week even if not scheduled.';
-    recs.push({type:'warn',title:'Recovery priority',reason:fatigueRec});
-  }else if(fatigueScore>=25){
-    recs.push({type:'caution',title:'Auto-regulate',reason:'Drop compound weights ~10%. Cap sets at RPE 8. Same volume, lower intensity.'});
+  }else{
+  const fatigueNorm=fatigueScore;
+  if(fatigueNorm>=80){
+    weekVerdict='Deload week: 40–60% sets, 60–70% load, RIR 3–5. No failure sets.';
+    recs.push({type:'deload_plan',title:'Deload protocol',reason:'Sets: 40–60% of last week. Load: 60–70%. RIR target 3–5. Remove failure sets.',deloadTemplate:true});
+  }else if(fatigueNorm>=65){
+    weekVerdict=fatigueRec||'Reduce volume 10–25%. Drop compound weights ~10%, cap RPE 8.';
+    recs.push({type:'caution',title:'Auto-regulate',reason:'Reduce volume 10–25%. Drop compound weights ~10%, cap RPE 8.'});
+  }
   }
 
-  // Engine: use hard sets when RPE data exists; fallback to raw sets
-  const hardSets=getWeeklyHardSets(wk);
-  const hasRPE=ST.logs.some(l=>l.wk===wk&&l.rpe!=null);
-  const dose=hasRPE?hardSets:actual;
-  const fatigueFlags=getFatigueFlags(wk);
-
-  groups.forEach(g=>{
-    const act=dose[g]||0;
-    const actRaw=actual[g]||0;
-    const tar=targ[g]?.target||prescribed[g]||12;
-    if(act<tar&&!isDeload){
-      const add=Math.ceil(tar-act);
-      const status=targ[g]?.status||'';
-      let reason='';
-      if(fatigueFlags.perfDown||fatigueFlags.highRPE>=3){
-        reason=`Performance down or high RPE. Hold volume this week — push progression next week.`;
-        recs.push({type:'hold_volume',muscle:g,current:act,target:tar,reason});
-      }else if(status==='lagging'){
-        reason=`Lagging muscle — 10–20 hard sets/week for growth (Schoenfeld). You're at ${act}${hasRPE?' hard':''} sets. Add ~${add} sets.`;
-        recs.push({type:'add_volume',muscle:g,current:act,target:tar,add,reason});
-      }else{
-        reason=`Below target. Add ~${add} sets to hit ${tar}.`;
-        recs.push({type:'add_volume',muscle:g,current:act,target:tar,add,reason});
-      }
+  // STEP 2 — GLOBAL RESPONSE (blocks local expansion when reduce/deload/lock)
+  if(global.programLocked){
+    weekVerdict=weekVerdict||'Insufficient data. Follow program as prescribed. Collect 2 weeks and 30+ hard sets before adaptive recommendations.';
+    recs.push({type:'info',title:'Data collection',reason:'30+ hard sets/week and 2+ weeks logged before volume changes.'});
+  }else if(global.mustReduce&&!recs.some(r=>r.type==='deload_plan')){
+    if(global.junkVolume){
+      recs.push({type:'junk_volume',title:'Junk volume',reason:'Volume up, e1RM flat 4 weeks. Reduce total sets 15–25%, keep intensity. No muscle-level adds.'});
+    }else if(global.stalledCount>=2){
+      recs.push({type:'systemic_reduce',title:'Primary lifts stalled',reason:'Reduce total systemic load 10–20%. Do not add volume elsewhere.'});
+    }else if(global.e1rmTrend==='down'){
+      recs.push({type:'reduce_volume',title:'Strength declining',reason:'Compound e1RM down. Reduce volume 10–20%.'});
+    }else{
+      recs.push({type:'reduce_volume',title:'Fatigue elevated',reason:'Reduce volume 10–25% before expanding.'});
     }
-  });
+  }
+
+  // STEP 3 — LOCAL (stimulus-driven: use stimulus score, effective reps, S:F ratio)
+  if(!global.programLocked){
+    groups.forEach(g=>{
+      const actStimulus=core.stimulus[g]||0;
+      const actSets=dose[g]||0;
+      const tarStimulus=STIMULUS_TARGET[g]||8;
+      const ceilStimulus=STIMULUS_CEILING[g]||14;
+      const effReps=core.effectiveReps[g]||0;
+      const s2f=core.ratio[g]||0;
+      const severelyOver=actStimulus>ceilStimulus*1.3;
+      const overCeiling=actStimulus>ceilStimulus;
+      const underTarget=actStimulus<tarStimulus;
+
+      if(overCeiling&&!isDeload){
+        const reduceOnlyIf=(fatigueFlags.perfDown||fatigueScore>=65)&&(global.e1rmTrend==='flat'||global.e1rmTrend==='down');
+        if(reduceOnlyIf||fatigueScore>=65){
+          recs.push({type:'over_ceiling',muscle:g,current:actStimulus,ceiling:ceilStimulus,reason:severelyOver?`${g} stimulus ${actStimulus.toFixed(1)} >> ceiling ${ceilStimulus}. Reduce 25–40%.`:`${g} stimulus ${actStimulus.toFixed(1)} over ceiling + fatigue. −3–5 sets.`});
+        }
+      }
+      if(underTarget&&actStimulus<ceilStimulus&&!isDeload){
+        if(global.mustReduce){
+          recs.push({type:'hold_volume',muscle:g,current:actStimulus,target:tarStimulus,reason:'Global: reduce. Hold volume.'});
+        }else if(proximityQuality==='low'&&actSets>0){
+          recs.push({type:'proximity_priority',muscle:g,current:actStimulus,target:tarStimulus,reason:`Low proximity. Increase intensity or train closer to failure — not more sets. Stimulus = ${actStimulus.toFixed(1)}.`});
+        }else if(fatigueFlags.perfDown||fatigueFlags.highRPE>=3){
+          recs.push({type:'hold_volume',muscle:g,current:actStimulus,target:tarStimulus,reason:'Performance down or high RPE. Hold volume.'});
+        }else if(global.canExpand){
+          const gap=tarStimulus-actStimulus;
+          const add=Math.max(1,Math.min(3,Math.ceil(gap/2)));
+          recs.push({type:'add_volume',muscle:g,current:actStimulus,target:tarStimulus,add,reason:`Stimulus ${actStimulus.toFixed(1)} < target ${tarStimulus}. Add ~${add} quality sets (eff reps).`});
+        }else{
+          recs.push({type:'hold_volume',muscle:g,current:actStimulus,target:tarStimulus,reason:'Maintain.'});
+        }
+      }
+    });
+  }
 
   stalled.forEach(s=>{
-    recs.push({type:'stall',ex:s.ex,weight:s.weight,since:s.since,action:'Try variation, rep scheme change (e.g. 5×5→3×8), or tempo manipulation.'});
+    recs.push({type:'stall',ex:s.ex,weight:s.weight,since:s.since,action:s.action});
   });
 
-  // Powerbuilding: ensure 3–6 rep exposure for key patterns (press, squat/hinge, pull)
   const weekLogs=ST.logs.filter(l=>l.wk===wk);
   const strengthReps=weekLogs.filter(l=>{const r=parseInt(l.r,10);return r>=1&&r<=6;});
+  const hypertrophyReps=weekLogs.filter(l=>{const r=parseInt(l.r,10);return r>=6&&r<=12;});
   const hasHeavyPress=strengthReps.some(l=>/bench|press|incline/i.test(l.ex)&&isCompound(l.ex));
   const hasHeavySquat=strengthReps.some(l=>/squat|leg press|belt/i.test(l.ex));
   const hasHeavyPull=strengthReps.some(l=>/pull|row|rdl|deadlift/i.test(l.ex)&&isCompound(l.ex));
+  const allCompoundsHypertrophy=weekLogs.filter(l=>isCompound(l.ex)).length?weekLogs.filter(l=>isCompound(l.ex)).every(l=>{const r=parseInt(l.r,10);return r>=6&&r<=12;}):false;
   if(!isDeload&&weekLogs.length>0){
-    if(!hasHeavyPress||!hasHeavySquat||!hasHeavyPull){
+    if(allCompoundsHypertrophy&&(global.e1rmTrend==='flat'||global.stalledCount>=1)){
+      recs.push({type:'powerbuilding',title:'Rep-range: add heavy exposure',reason:'Compounds all 8–12 reps and e1RM flattening. Add 1–2 sets at 3–5 reps for press, squat, pull.'});
+    }else if(!hasHeavyPress||!hasHeavySquat||!hasHeavyPull){
       const miss=[];if(!hasHeavyPress)miss.push('press');if(!hasHeavySquat)miss.push('squat/hinge');if(!hasHeavyPull)miss.push('pull');
-      recs.push({type:'powerbuilding',title:'Rep-range check',reason:`Add 1–2 heavy sets (3–6 reps) for: ${miss.join(', ')}. Powerbuilding needs strength + hypertrophy exposure.`});
+      recs.push({type:'powerbuilding',title:'Rep-range check',reason:`Add 1–2 heavy sets (3–6 reps) for: ${miss.join(', ')}.`});
     }
   }
 
@@ -1553,6 +1920,9 @@ function computeSmartRecommendations(wk){
   const stalledMap={}; stalled.forEach(s=>{stalledMap[s.ex]=s});
   const dayDetails=[];
   const priorDaysBp={};
+  const weeklyStimulus=getWeeklyStimulus(wk);
+  const sessionsPerMuscle=getSessionsPerMusclePerWeek(sched);
+  let weekSwapCount=0;
 
   DO.forEach(dk=>{
     const mapped=sched[dk]||dk;
@@ -1565,10 +1935,20 @@ function computeSmartRecommendations(wk){
     const added=(ST.addedExercises||{})[dk]||[];
     const allExs=[...(d.exercises||[]).map(e=>({...e,displayName:e.name})),...added.map(a=>({name:a.name,type:'n',sets:a.sets||3}))];
     const exTips=[];
+    const ctx={
+      weeklyStimulus,
+      sessionsPerMuscle,
+      actual,
+      prescribed,
+      getSessionStimulus:(muscle,exIdx)=>getSessionStimulusForMuscle(allExs,exIdx,muscle),
+      get swapBudget(){return Math.max(0,2-weekSwapCount);},
+      consumeSwap:()=>{weekSwapCount++;},
+      isDeloadVerdict:global.verdict==='DELOAD_RECOMMENDED'||global.globalResponse==='deload'
+    };
     allExs.forEach((ex,i)=>{
       const bp=getBodyPart(ex.name);
       const priorDaysCount=(priorDaysBp[bp]||0);
-      const {tips,modulation,swapOptions,programVsRec}=getSmartTipForExercise(ex,i,allExs,dk,wk,stalledMap,actual,fatigueScore,isDeload,priorDaysCount,{});
+      const {tips,modulation,swapOptions,programVsRec}=getSmartTipForExercise(ex,i,allExs,dk,wk,stalledMap,actual,fatigueScore,isDeload,priorDaysCount,ctx);
       exTips.push({ex:ex.name,displayName:ex.displayName||ex.name,sets:ex.sets,bp,tips,modulation,swapOptions,programVsRec});
     });
     const bpsThisDay=new Set();
@@ -1581,7 +1961,36 @@ function computeSmartRecommendations(wk){
     dayDetails.push({dk,name:DAY_NAMES[dk],focus:d.focus,mapped,exTips});
   });
 
-  return {recs,weekVerdict,dayPlan,dayDetails,isDeload,bp,weeksLogged:ST.logs.length?new Set(ST.logs.map(l=>l.wk)).size:0,hasRPE,citations:['Schoenfeld 2017 (J Sports Sci)','Wernbom 2007 (Sports Med)','Schoenfeld 2021 (AMPK/mTOR)']};
+  return {recs,weekVerdict,dayPlan,dayDetails,isDeload,bp,weeksLogged:global.weeksLogged,hasRPE,globalState:global.globalState,globalResponse:global.globalResponse,core,citations:['Schoenfeld 2017 (J Sports Sci)','Wernbom 2007 (Sports Med)','Schoenfeld 2021 (AMPK/mTOR)']};
+}
+
+// Adaptive program generator — builds alongside training, improves with verdict/stalls/deload
+const ADAM6_MUSCLES={mon:['quads','hamstrings','calves','glutes'],tue:['chest','back','delts'],wed:['biceps','triceps','delts'],thu:['quads','hamstrings','calves','glutes'],sat:['chest','biceps','triceps','delts'],sun:['quads','hamstrings','calves','glutes']};
+function getExercisesForBodyPartGen(bp,exclude,stalledSet){
+  const pool=EL.filter(e=>{const name=e.n||e.name;if(!name||name===exclude)return false;const elBp=getBodyPartFromMuscle(e.m);if(elBp!=='other')return elBp===bp;return getBodyPart(name)===bp;});
+  return pool.map(e=>{const name=e.n||e.name;const mw=getMuscleWeights(name);const lb=getLengthBias(name);const compound=Object.keys(mw||{}).filter(m=>(mw[m]||0)>0).length>1;const primary=Object.keys(mw||{}).length?Object.entries(mw).sort((a,b)=>b[1]-a[1])[0][0]:null;return{name,mw,lb,compound,primary,stalled:stalledSet&&stalledSet.has(name)};}).sort((a,b)=>{if(a.stalled&&!b.stalled)return 1;if(!a.stalled&&b.stalled)return-1;if(a.compound&&!b.compound)return-1;if(!a.compound&&b.compound)return 1;return(b.lb||1)-(a.lb||1);});
+}
+function selectExercisesForDayGen(dayMuscles,stalledMap,maxPer){
+  const exercises=[];const used=new Set();const maxEx=maxPer||2;
+  for(const muscle of dayMuscles){const stalled=stalledMap&&stalledMap[muscle]?new Set(stalledMap[muscle]):new Set();const pool=getExercisesForBodyPartGen(muscle,null,stalled).filter(e=>!used.has(e.name));let chosen=0;for(const e of pool){if(chosen>=maxEx)break;if(!e.stalled){exercises.push({name:e.name,muscle,primary:e.primary,compound:e.compound,mw:e.mw});used.add(e.name);chosen++;}}}
+  return exercises;
+}
+function generateAdaptiveProgram(wk){
+  const global=getGlobalState(wk);const verdict=global.verdict||'PROGRESSING';const stalled=getStalledLifts(wk);const isDeload=DLOADS.has(wk);
+  const stalledMap={};stalled.forEach(s=>{const bp=getBodyPart(s.ex);if(bp&&bp!=='other'){stalledMap[bp]=stalledMap[bp]||[];if(!stalledMap[bp].includes(s.ex))stalledMap[bp].push(s.ex);}});
+  const sched=getScheduleForWeek(wk);const restDays=new Set(DO.filter(dk=>sched[dk]==='rest'));if(!restDays.size)restDays.add('fri');
+  const weekProgram={days:[],archetype:'adam6',verdict,stalledMap:Object.keys(stalledMap).length?stalledMap:null,isDeload};
+  const deloadMult=isDeload?(DELOAD_PCT[wk]||0.65):1;let volumeMult=1;if(verdict==='UNDERSTIMULATED')volumeMult=1.15;else if(verdict==='OVERREACHED')volumeMult=0.85;
+  for(const dk of DO){
+    const mapped=sched[dk]||dk;if(mapped==='rest'||restDays.has(dk)){weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',exercises:[]});continue;}
+    const muscles=ADAM6_MUSCLES[mapped];if(!muscles){weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',exercises:[]});continue;}
+    const templateDay=P[mapped];const templateExMap={};if(templateDay&&templateDay.exercises)templateDay.exercises.forEach(ex=>templateExMap[ex.name]=ex);
+    const dayExs=selectExercisesForDayGen(muscles,stalledMap,2);
+    const typeOrder={h:0,n:1,s:2,d:3};dayExs.sort((a,b)=>{if(a.compound&&!b.compound)return-1;if(!a.compound&&b.compound)return 1;const ta=typeOrder[templateExMap[a.name]?.type||'n']??1;const tb=typeOrder[templateExMap[b.name]?.type||'n']??1;return ta-tb;});
+    const exercises=dayExs.map(ex=>{const t=templateExMap[ex.name];let sets=t?t.sets||3:3;if(isDeload)sets=Math.max(1,Math.round(sets*deloadMult));else if(volumeMult!==1)sets=Math.max(1,Math.round(sets*volumeMult));const isReplacement=stalledMap[ex.muscle]&&stalledMap[ex.muscle].length&&ex.primary===ex.muscle;return{name:ex.name,sets,reps:t?t.reps||'8–12':'8–12',type:t?t.type||'n':'n',muscle:ex.muscle,primary:ex.primary,swapped:!!isReplacement};});
+    weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:false,focus:templateDay?templateDay.focus:muscles.join(' + '),exercises});
+  }
+  return weekProgram;
 }
 
 function renderSmartProgram(){
@@ -1589,7 +1998,7 @@ function renderSmartProgram(){
   if(!el)return;
   if(ST.smartWk===undefined)ST.smartWk=ST.wk;
   const wk=ST.smartWk;
-  const {recs,weekVerdict,dayPlan,dayDetails,isDeload,bp,weeksLogged,hasRPE,citations}=computeSmartRecommendations(wk);
+  const {recs,weekVerdict,dayPlan,dayDetails,isDeload,bp,weeksLogged,hasRPE,globalState,globalResponse,core,citations}=computeSmartRecommendations(wk);
 
   let h='';
 
@@ -1604,10 +2013,26 @@ function renderSmartProgram(){
   h+=`<div class="smart-card"><div class="smart-hdr">${bp.name} — W${wk}</div>
     <div class="smart-phase">${bp.phase}</div>
     ${weekVerdict?`<div class="smart-verdict">${weekVerdict}</div>`:''}
-    ${weeksLogged>0?`<div class="smart-meta">Engine uses ${hasRPE?'hard sets (RPE≥7)':'raw sets'} from ${weeksLogged} week${weeksLogged!==1?'s':''} of data. ${!hasRPE?'<strong>Tip:</strong> Log RPE per set for accurate dose — hard sets = primary hypertrophy driver.' :''}</div>`:''}
+    ${weeksLogged>0?`<div class="smart-meta">Global: ${globalState||'—'} → ${globalResponse||'—'}. ${weeksLogged} week${weeksLogged!==1?'s':''} data. Engine: stimulus, fatigue, adaptation. RPE optional.</div>`:''}
     <div class="smart-disclaimer">Smart Program is <strong>separate from your prescribed program</strong>. It adapts within each session (same-body-part pre-fatigue) and week-to-week. When it says "Recommended: fewer sets" or "swap," that's our algorithm — a reference you can follow or ignore. Your program stays intact; this is the science layer.</div>
   </div>`;
 
+  if(core&&weeksLogged>=1){
+    const cm=core;
+    h+=`<div class="smart-card"><div class="smart-hdr">4 Core Metrics (foundation — not RPE)</div>
+      <div class="smart-sub">e1RM trend: ${cm.e1rmTrend?.trend||'—'} (${(cm.e1rmTrend?.pctChange||0).toFixed(1)}%). Systemic fatigue: ${(cm.systemicFatigue||0).toLocaleString()}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:8px;font-size:10px">
+        ${['quads','hamstrings','chest','back','biceps','triceps','delts'].map(m=>`
+          <div style="background:var(--s2);padding:8px;border-radius:4px">
+            <strong>${m}</strong><br/>
+            Stimulus: ${(cm.stimulus[m]||0).toFixed(1)}<br/>
+            Eff reps: ${(cm.effectiveReps[m]||0).toFixed(0)}<br/>
+            S:F ${(cm.ratio[m]||0).toFixed(2)}
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  }
   h+=`<div class="smart-card"><div class="smart-hdr">Week Overview</div>`;
   dayPlan.forEach(d=>{
     if(d.type==='rest'){
@@ -1624,8 +2049,20 @@ function renderSmartProgram(){
   }else{
     recs.forEach(r=>{
       const cl=r.type==='warn'?'warn':r.type==='caution'?'caution':r.type==='learned'?'learned':'';
-      if(r.type==='add_volume'){
-        h+=`<div class="smart-rec add ${cl}"><strong>${r.muscle}:</strong> ${r.reason} <span class="smart-note">(${r.current}→${r.target} sets)</span></div>`;
+      if(r.type==='junk_volume'){
+        h+=`<div class="smart-rec warn"><strong>⚠ ${r.title}:</strong> ${r.reason}</div>`;
+      }else if(r.type==='reduce_volume'){
+        h+=`<div class="smart-rec warn"><strong>⚠ ${r.title}:</strong> ${r.reason}</div>`;
+      }else if(r.type==='systemic_reduce'){
+        h+=`<div class="smart-rec warn"><strong>⚠ ${r.title}:</strong> ${r.reason}</div>`;
+      }else if(r.type==='proximity_priority'){
+        h+=`<div class="smart-rec info"><strong>${r.muscle}:</strong> ${r.reason}</div>`;
+      }else if(r.type==='over_ceiling'){
+        h+=`<div class="smart-rec caution"><strong>${r.muscle}:</strong> ${r.reason}</div>`;
+      }else if(r.type==='add_volume'){
+        const curTxt=typeof r.current==='number'?r.current.toFixed(1):r.current;
+        const tgtTxt=typeof r.target==='number'?r.target.toFixed(1):r.target;
+        h+=`<div class="smart-rec add ${cl}"><strong>${r.muscle}:</strong> ${r.reason} <span class="smart-note">(stimulus ${curTxt}→${tgtTxt})</span></div>`;
       }else if(r.type==='hold_volume'){
         h+=`<div class="smart-rec hold ${cl}"><strong>${r.muscle}:</strong> ${r.reason}</div>`;
       }else if(r.type==='stall'){
@@ -1639,6 +2076,19 @@ function renderSmartProgram(){
       }
     });
   }
+  h+=`</div>`;
+
+  const genProgram=generateAdaptiveProgram(wk);
+  h+=`<div class="smart-card"><div class="smart-hdr">Generated Program — Adapts With You</div>
+    <div class="smart-sub">Built from verdict (${genProgram.verdict}), stalled lifts${genProgram.stalledMap?' (swaps applied)':''}, and deload status. Improves as you log more data.</div>`;
+  genProgram.days.forEach(d=>{
+    if(d.rest){h+=`<div class="smart-day rest"><span class="smart-day-name">${d.name}</span><span class="smart-day-badge">Rest</span></div>`;return;}
+    h+=`<div class="smart-day-block"><div class="smart-day-block-hdr" onclick="this.parentElement.classList.toggle('open')">
+      <span class="smart-day-name">${d.name}</span><span class="smart-day-focus">${d.focus||''}</span><span class="smart-toggle">▼</span>
+    </div><div class="smart-day-block-body">`;
+    (d.exercises||[]).forEach((ex,i)=>h+=`<div class="smart-ex-row"><div class="smart-ex-name">${i+1}. ${ex.name} ${ex.swapped?'<span class="smart-mod swap-or-vary">SWAPPED</span>':''}</div><div style="font-size:11px;color:var(--tx2)">${ex.sets}×${ex.reps}</div></div>`);
+    h+=`</div></div>`;
+  });
   h+=`</div>`;
 
   h+=`<div class="smart-card"><div class="smart-hdr">Per-Day & Upcoming Exercise Tips</div>
@@ -1668,7 +2118,7 @@ function renderSmartProgram(){
 
   h+=`<div class="smart-card cite"><div class="smart-hdr">Science Sources</div>
     <ul class="smart-cites">${citations.map(c=>`<li>${c}</li>`).join('')}</ul>
-    <div class="smart-princ">Engine: Mechanical tension (primary) + metabolic stress (amplifier). Hard sets = RIR 1–3 or RPE 7–9. 8–20 sets/muscle/week if recoverable. Powerbuilding = 3–6 rep strength + 6–15 hypertrophy + optional 12–30 metabolic. Lengthened work favored for swaps. Pre-fatigue reduces effective dose (Wernbom).</div>
+    <div class="smart-princ">Engine: Stimulus = tension × volume × proximity (estimated from e1RM, no RPE required). Effective reps = max(0, 5−RIR). Fatigue = volume load × intensity × compound penalty. Stall logic: volume-induced vs under-stimulation vs intensity problem. Pre-fatigue: only drop sets when weekly ≥110% target. Data-driven autoregulation.</div>
   </div>`;
 
   el.innerHTML=h;
@@ -2494,22 +2944,61 @@ function getRec(exName,dk,setIdx){
   const recR=pr<=8?pr:pr+2;
   return {w:recW,r:recR};
 }
-function getStalledLifts(){
+// Objective stall logic: 4-week e1RM growth, stimulus, fatigue → stall type + action
+function getStalledLifts(optWk){
+  const wk=optWk!=null?optWk:(ST.wk||1);
   const exWeeks={};
+  const exE1rm={};
   ST.logs.forEach(l=>{
     if(!l.ex||!l.w||!l.wk)return;
     if(!exWeeks[l.ex])exWeeks[l.ex]={};
     if(!exWeeks[l.ex][l.wk]||l.w>exWeeks[l.ex][l.wk])exWeeks[l.ex][l.wk]=l.w;
+    if(l.e1rm&&isCompound(l.ex)){
+      if(!exE1rm[l.ex])exE1rm[l.ex]={};
+      if(!exE1rm[l.ex][l.wk]||l.e1rm>exE1rm[l.ex][l.wk])exE1rm[l.ex][l.wk]=l.e1rm;
+    }
   });
   const stalled=[];
+  const stimulus=getWeeklyStimulus(wk);
+  const actualSets=getActualSets(wk);
+  const fatigue=getWeeklyFatigue(wk);
+  const prevFatigue=getWeeklyFatigue(wk-1);
+  const fatigueHigh=fatigue>0&&prevFatigue>0&&fatigue>=prevFatigue*1.1;
+  const targ=WEEKLY_TARGETS;
   for(const ex of Object.keys(exWeeks)){
     const weeks=Object.keys(exWeeks[ex]).map(Number).sort((a,b)=>a-b);
     if(weeks.length<3)continue;
-    const recent=weeks.slice(-3);
+    const recent=weeks.slice(-4);
     const weights=recent.map(w=>exWeeks[ex][w]);
-    if(weights[0]===weights[1]&&weights[1]===weights[2]){
-      stalled.push({ex,weight:weights[0],weeks:recent.length,since:'W'+recent[0]});
+    const sameWeight3=weights.length>=3&&weights.slice(-3).every(v=>v===weights[weights.length-1]);
+    if(!sameWeight3)continue;
+    const weight=weights[weights.length-1];
+    const since='W'+recent[Math.max(0,recent.length-3)];
+    let stallType='simple';
+    let action='Step 1: Reduce weekly volume for this lift 15%. Step 2: Change rep bracket (3–6→6–10 or 6–10→3–6). Step 3: If still stalled 2 weeks: rotate variation. Step 4: If systemic fatigue high: deload.';
+    const e1rms=exE1rm[ex];
+    if(e1rms&&Object.keys(e1rms).length>=4){
+      const wks=Object.keys(e1rms).map(Number).sort((a,b)=>a-b).slice(-4);
+      const vals=wks.map(w=>exE1rm[ex][w]);
+      const avgE1=vals.reduce((a,b)=>a+b,0)/vals.length;
+      const growth=(vals[vals.length-1]-vals[0])/vals[0]*100;
+      const bp=getBodyPart(ex);
+      const tar=targ[bp]?.target||12;
+      const setsDone=actualSets[bp]||0;
+      if(growth<1&&setsDone>=tar*0.9&&fatigueHigh){
+        stallType='volume_induced';
+        action='Reduce volume 15–25% for 1–2 weeks. Volume-induced stall — fatigue accumulating.';
+      }else if(growth<1&&setsDone<tar*0.7){
+        stallType='under_stimulation';
+        action='Add sets or increase intensity. Under-stimulated — dose below target.';
+      }else if(growth<1&&!fatigueHigh&&setsDone>=tar*0.7){
+        stallType='intensity';
+        action='Increase load or reduce reps. Intensity problem — capacity underutilized.';
+      }else{
+        stallType='simple';
+      }
     }
+    stalled.push({ex,weight,weeks:recent.length,since,stallType,action});
   }
   return stalled;
 }

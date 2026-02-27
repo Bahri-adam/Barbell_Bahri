@@ -8,14 +8,69 @@ This document explains the structure of the codebase so you can safely modify, e
 
 ```
 Powerbuilding program/
-├── app.html          # Main app (everything lives here)
-├── index.html        # Redirects to app.html
+├── app.html            # Main app (everything lives here)
+├── smart-test.html     # Offline Smart tab test — fictional data, never touches your logs
+├── validation-test.html # Engine validation suite — 10 scenarios, output contract, scoring, stability tests
+├── index.html          # Redirects to app.html
 ├── manifest.json     # PWA manifest
 ├── sw.js             # Service worker (cache version)
 ├── Code.gs           # Google Apps Script for Sheets sync
 ├── CODEBASE.md       # This file
 └── .gitignore
 ```
+
+---
+
+## Smart Tab Test (`smart-test.html`)
+
+**Purpose:** Offline test harness for the Smart Program logic. Uses fictional athlete data — never reads or writes `localStorage`, so your real logs are untouched.
+
+**How to use:** Open `smart-test.html` in a browser. Use the Scenario dropdown to pick a fictional case (empty user, stalled lifts, high fatigue, deload, cross-day, etc.). Use the Week dropdown to view different weeks. The output mirrors the Smart tab in `app.html`.
+
+**Scenarios:**
+1. Empty — New user, no logs  
+2. Week 1 partial — Mon/Tue only, low RPE (under volume)  
+3. Week 5 full — All days, good RPE (on track)  
+4. Week 6 deload — Reduced volume  
+5. Week 8 stalled — Bench & Hack same weight 3 weeks  
+6. Week 10 high fatigue — Lots of RPE 9–10  
+7. Week 12 Sun — 3rd quad day (cross-day)  
+8. Week 5 under — 50% program (add volume)  
+9. No RPE — Tests hard-set fallback to raw sets  
+10. Vol no strength — Volume up, strength flat (learned rec)
+
+**Sync note:** The Smart logic is duplicated from `app.html`. When you change Smart behavior in `app.html`, update the matching code in `smart-test.html`.
+
+**Validation API:** `runValidationScenario(logs, wk)` and `getEngineMetrics(wk)` are exposed for `validation-test.html` to run scenarios programmatically.
+
+---
+
+## Engine Validation Suite (`validation-test.html`)
+
+**Purpose:** Validates engine correctness, consistency, stability, actionability, and safety. Loads `smart-test.html` in an iframe and runs 10 synthetic athletes.
+
+**How to use:** Run a local server (e.g. `npx serve` or `python -m http.server`) in the project folder, then open `validation-test.html` in a browser. (file:// blocks iframe cross-origin access.) Click "Run Full Validation" for the Scenario Summary Table and failing-scenario details. Click "Run Stability (Noise) Tests" to verify outputs don't flip with ±1 rep, ±2.5% load, RIR±0.5 noise.
+
+**Output contract (A–E):**
+- A) Week Verdict: PROGRESSING | STALL_LOCAL | STALL_SYSTEMIC | UNDERSTIMULATED | OVERREACHED | DELOAD_RECOMMENDED | DATA_INSUFFICIENT
+- B) 3 Key Signals (bullets)
+- C) Next Week Plan (exact edits)
+- D) Guardrails (limits)
+- E) Confidence score (0–100)
+
+**10 scenarios:**
+1. New athlete (no logs) → DATA_INSUFFICIENT  
+2. Understimulated novice → add volume + proximity  
+3. Local stall (bench only) → bench tweak, no global reduce  
+4. Systemic stall → reduce 10–20% or deload  
+5. Junk volume → reduce volume, keep intensity  
+6. 3rd quad day (Sun) → reduce day-3 or pump  
+7. Strength up, bodyweight flat → progression (engine has no nutrition)  
+8. High fatigue but progressing → hold, recovery constraints  
+9. Missing RIR data → fallback, lower confidence  
+10. Exercise swap (stall) → substitute from allowed list  
+
+**Scoring:** 40% verdict correctness, 40% plan correctness, 20% format compliance. Pass = score ≥70, verdict match, no guard violation.
 
 ---
 
@@ -49,22 +104,37 @@ Search for these exact strings to jump.
 
 ---
 
-### 2. HYPERTROPHY SCIENCE ENGINE (~814–915)
+### 2. HYPERTROPHY SCIENCE ENGINE (~814–980)
 
 **Search:** `// HYPERTROPHY SCIENCE ENGINE`
 
-Schoenfeld causality model: mechanical tension, metabolic stress, muscle damage.
+Performance-driven model: stimulus from e1RM + effective reps + proximity (no RPE required).
 
 | Function/Const | Purpose | Dependencies |
 |----------------|---------|--------------|
 | `MUSCLE_MODEL` | Maps exercise keywords → muscles + length bias | Must stay aligned with `BODY_MAP` |
 | `getMuscleWeights(exName)` | Returns `{chest:0.6, triceps:0.25, …}` | `MUSCLE_MODEL` |
 | `getLengthBias(exName)` | 0.9–1.1 for lengthened work | `MUSCLE_MODEL` |
-| `isHardSet(l)` | True if RPE≥7 OR reps≥12+RPE≥8 OR drop set | Log rows with `rpe`, `r`, `ex` |
-| `getWeeklyHardSets(wk)` | Hard sets per muscle for week | `ST.logs`, `isHardSet`, `getMuscleWeights` |
-| `getWeeklyStimulus(wk)` | Stimulus heuristic per muscle | Same |
-| `getPerformanceTrend(exName)` | e1RM slope for compounds | `ST.logs` |
-| `getFatigueFlags(wk)` | High RPE count, performance drop | `ST.logs`, `isCompound` |
+| `getBestE1RMForExercise(ex, weeksBack, optWk)` | Best e1RM in last N weeks | `ST.logs` |
+| `estimateRIR(l, bestE1RM)` | Predicted reps − actual reps (Epley) | Weight, reps, e1RM |
+| `proximityFromEstimatedRIR(rir)` | RIR → proximity factor (1.1, 1.0, 0.8, 0.5) | — |
+| `getEffectiveReps(rir)` | max(0, 5 − RIR) — last-5-reps model | — |
+| `getSetStimulusUnits(l, bestE1RM)` | MuscleContribution × EffReps × LengthBias × Tension | — |
+| `getSetFatigueCost(l, bestE1RM)` | Volume load × compound mult × intensity | `isCompound` |
+| `getWeeklyStimulus(wk)` | Sum stimulus units per muscle | `ST.logs` |
+| `getWeeklyFatigue(wk)` | Sum fatigue cost | Same |
+| `getWeeklyHardSets(wk)` | Backward compat: stimulating sets per muscle | Same |
+| `getFatigueFlags(wk)` | High RPE, perf down, fatigue trend | Same |
+| `getCoreMetrics(wk)` | **4 foundations**: stimulus, effectiveReps, localFatigue, systemicFatigue, e1rmTrend, ratio | — |
+| `getStimulusToFatigueRatio(wk)` | Per-muscle stimulus÷fatigue — key adaptive signal | — |
+| `getLocalFatiguePerMuscle(wk)` | Fatigue cost attributed to each muscle | — |
+| `getEffectiveRepsPerMuscle(wk)` | Σ max(0, 5−RIR) × muscle weight per muscle | — |
+| `getE1RMTrend(wk)` | 3–4 week slope, % change for compounds | — |
+| `STIMULUS_TARGET` / `STIMULUS_CEILING` | Per-muscle stimulus targets (replace set counts as primary) | — |
+| `getStalledLifts(optWk)` | Objective stall: volume-induced / under-stim / intensity | Same |
+| `getAdaptationState(wk)` | e1RM trend, fatigue rising, junk volume — gates add_volume | Same |
+| `VOLUME_CEILINGS` | Per-muscle ceiling (10–22 sets) — prevents junk volume | — |
+| `getFatigueMultiplier(exName)` | Barbell 1.3, machine compound 1.0, isolation 0.7 | — |
 
 **Adding a new exercise to `MUSCLE_MODEL`:** Add `{keys:['Keyword'], muscles:{muscle:weight}, len:1.05}`. More specific keys should appear earlier (they match first).
 
