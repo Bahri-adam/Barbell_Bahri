@@ -105,6 +105,13 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .rd-label{font-size:9px;color:var(--tx3);margin-right:4px}
 .rd-btn{width:26px;height:26px;border-radius:4px;border:1px solid var(--b2);background:var(--s2);color:var(--tx3);font-size:10px;font-weight:600;cursor:pointer;padding:0}
 .rd-btn.on{background:var(--red);border-color:var(--red);color:#fff}
+.sched-hint{font-size:11px;color:var(--tx3);padding:4px 16px 12px;line-height:1.4}
+.sched-row{display:flex;align-items:center;gap:10px;padding:6px 16px}
+.sched-day{width:85px;font-weight:600;color:var(--tx);font-size:13px;flex-shrink:0}
+.sched-sel{flex:1;padding:10px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--tx);font-size:12px;font-family:var(--fb);-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7a8f'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:26px}
+.sched-sel:focus{border-color:var(--blue);outline:none}
+.sched-btn{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;padding:6px 12px;color:var(--tx2);font-size:11px;font-family:var(--fb);cursor:pointer;margin:8px 14px 0;transition:border-color .2s}
+.sched-btn:hover{border-color:var(--blue);color:var(--tx)}
 .rpe-ig{max-width:44px}
 .rpe-inp{text-align:center;font-size:12px!important}
 .prev .rec{color:var(--grn2)}
@@ -430,6 +437,16 @@ select{color-scheme:dark}
   </div>
 </div>
 
+<!-- SCHEDULE EDITOR -->
+<div class="overlay" id="SCHED" style="display:none">
+  <div class="opanel" style="max-width:420px">
+    <div class="ohdr"><span>Customize Schedule</span><button class="cbtn" onclick="closeSchedule()">&times;</button></div>
+    <div class="sched-hint">Assign any workout to any day. Drag your rest day around or swap workouts freely.</div>
+    <div id="SCHED_BODY"></div>
+    <div style="padding:0 16px 16px"><button class="btn" onclick="saveSchedule()" style="width:100%">Save Schedule</button></div>
+  </div>
+</div>
+
 <!-- HOME -->
 <div class="pg on" id="pg-home">
   <div class="home-top">
@@ -463,6 +480,10 @@ select{color-scheme:dark}
     </div>
     <div class="bt-body" id="BTB"></div>
   </div>
+  <button class="sched-btn" onclick="openScheduleEditor()">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Customize Weekly Schedule
+  </button>
   <div class="wstrip" id="WS"></div>
   <div class="day-list" id="DL"></div>
 </div>
@@ -679,30 +700,71 @@ function getBodyPartFromMuscle(m){
 }
 const BODY_PART_OPTIONS=[{v:'chest',l:'Chest'},{v:'back',l:'Back'},{v:'quads',l:'Quads'},{v:'hamstrings',l:'Hamstrings'},{v:'calves',l:'Calves'},{v:'glutes',l:'Glutes'},{v:'biceps',l:'Biceps'},{v:'triceps',l:'Triceps'},{v:'delts',l:'Delts'}];
 
-function getDayProgram(dk){
+const DAY_NAMES={mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
+
+function initDayMap(){
+  if(ST.dayMap)return;
   const rds=new Set(ST.restDays||['fri']);
-  if(rds.has(dk)) return {key:dk,name:P[dk].name,rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
-  const base=P[dk];
+  ST.dayMap={};
+  DO.forEach(dk=>{ST.dayMap[dk]=rds.has(dk)?'rest':dk});
+}
+function syncRestDaysFromMap(){
+  ST.restDays=DO.filter(dk=>ST.dayMap&&ST.dayMap[dk]==='rest');
+  if(!ST.restDays.length)ST.restDays=['fri'];
+}
+
+function getDayProgram(dk){
+  initDayMap();
+  const mapped=ST.dayMap[dk]||dk;
+  if(mapped==='rest')return {key:dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
+  const base=P[mapped];
+  if(!base||base.rest)return {key:dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
   const added=(ST.addedExercises||{})[dk]||[];
   const merged=base.exercises.concat(added.map(a=>({id:'ae_'+a.name.replace(/\s/g,'_'),name:a.name,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Run perfect reps. Full ROM.',mech:'Custom.',bodyPart:a.bodyPart||'other',isAdded:true})));
-  return {...base,exercises:merged};
+  return {...base,key:dk,name:DAY_NAMES[dk],exercises:merged};
 }
 function toggleRestDay(dk){
-  const rds=ST.restDays||['fri'];
-  const i=rds.indexOf(dk);
-  if(i>=0){if(rds.length<=1)return;rds.splice(i,1)}else rds.push(dk);
-  rds.sort((a,b)=>DO.indexOf(a)-DO.indexOf(b));
-  ST.restDays=rds;
+  initDayMap();
+  if(ST.dayMap[dk]==='rest'){
+    ST.dayMap[dk]=dk;
+  }else{
+    ST.dayMap[dk]='rest';
+  }
+  syncRestDaysFromMap();
   saveST();
   renderRestDayBtns();
   renderHome();
   renderBodyTracker();
 }
 function renderRestDayBtns(){
-  const rds=new Set(ST.restDays||['fri']);
-  DO.forEach(dk=>{const b=document.querySelector('.rd-btn[data-dk="'+dk+'"]');if(b)b.classList.toggle('on',rds.has(dk))});
+  initDayMap();
+  DO.forEach(dk=>{const b=document.querySelector('.rd-btn[data-dk="'+dk+'"]');if(b)b.classList.toggle('on',ST.dayMap[dk]==='rest')});
 }
-function setRestDay(rd){ST.restDays=[rd];saveST();renderRestDayBtns();renderHome();renderBodyTracker();}
+function setRestDay(rd){initDayMap();DO.forEach(dk=>{ST.dayMap[dk]=dk===rd?'rest':ST.dayMap[dk]==='rest'&&dk!==rd?dk:ST.dayMap[dk]});syncRestDaysFromMap();saveST();renderRestDayBtns();renderHome();renderBodyTracker();}
+
+function openScheduleEditor(){
+  initDayMap();
+  const workouts=DO.filter(dk=>P[dk]&&!P[dk].rest).map(dk=>({key:dk,label:P[dk].focus}));
+  workouts.push({key:'rest',label:'Rest & Recovery'});
+  const body=document.getElementById('SCHED_BODY');
+  body.innerHTML=DO.map(dk=>{
+    const cur=ST.dayMap[dk]||dk;
+    const opts=workouts.map(o=>`<option value="${o.key}"${o.key===cur?' selected':''}>${o.label}</option>`).join('');
+    return `<div class="sched-row"><span class="sched-day">${DAY_NAMES[dk]}</span><select class="sched-sel" id="sched-${dk}">${opts}</select></div>`;
+  }).join('');
+  document.getElementById('SCHED').style.display='flex';
+}
+function saveSchedule(){
+  const newMap={};
+  DO.forEach(dk=>{newMap[dk]=document.getElementById('sched-'+dk).value});
+  ST.dayMap=newMap;
+  syncRestDaysFromMap();
+  saveST();
+  renderHome();
+  renderBodyTracker();
+  closeSchedule();
+}
+function closeSchedule(){document.getElementById('SCHED').style.display='none'}
 
 // Exercise library
 let EL=[
@@ -802,7 +864,7 @@ const HL=[
 const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbyKSyFyEdTkZhfnMrKF66zPUNn8Lf5ppYz5bAZviRzGAcN8YGZx5-hAEvIN03wTW5Ex/exec';
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
-  cueCollapsed:{},restDays:['fri'],weekOverride:{},workoutsSinceBackupReminder:0,
+  cueCollapsed:{},restDays:['fri'],dayMap:null,weekOverride:{},workoutsSinceBackupReminder:0,
   profile:{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}
 };
 let CHS={};
@@ -810,7 +872,7 @@ let CHS={};
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekOverride=p.weekOverride||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}}catch(e){ST.url=SHEETS_URL}
+  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.dayMap=p.dayMap||null;ST.weekOverride=p.weekOverride||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('adamCustomEx');
@@ -821,7 +883,7 @@ function loadST(){
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
+function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],dayMap:ST.dayMap||null,weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
 function saveST(){saveSTLocal();fbSaveSettings()}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
 function saveLogsLocal(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
@@ -1515,7 +1577,7 @@ function finWO(){
   const today=new Date();
   const date=today.toISOString().split('T')[0];
   const dk=ST.aday;
-  const dn=P[dk]?.name||dk;
+  const dn=DAY_NAMES[dk]||dk;
 
   // Persist added exercises for denominator / muscle coverage
   const addedExs=ST.awExs.filter(ex=>ex.templateIdx===-1||ex.isAdded===true);
@@ -2136,7 +2198,7 @@ function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
 function fbSaveSettings(){
   if(!fbReady)return;
   try{
-    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
+    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],dayMap:ST.dayMap||null,weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
     fbRef('settings').set(data);
   }catch(e){console.warn('FB settings write failed:',e)}
 }
@@ -2178,7 +2240,7 @@ async function fbPullAll(){
     // Merge settings (Firebase wins if newer)
     if(data.settings){
       const fb=data.settings;
-      const keys=['wk','bl','ovr','restDays','weekOverride','addedExercises','profile'];
+      const keys=['wk','bl','ovr','restDays','dayMap','weekOverride','addedExercises','profile'];
       keys.forEach(k=>{if(fb[k]!==undefined){ST[k]=fb[k];changed=true}});
       if(fb.url)ST.url=fb.url;
     }
@@ -2220,7 +2282,7 @@ function fbListenForChanges(){
 
       if(data.settings){
         const fb=data.settings;
-        ['wk','bl','ovr','restDays','weekOverride','addedExercises','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
+        ['wk','bl','ovr','restDays','dayMap','weekOverride','addedExercises','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
         if(fb.url)ST.url=fb.url;
         saveSTLocal();
       }
