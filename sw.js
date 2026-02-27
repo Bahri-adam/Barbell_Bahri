@@ -1,5 +1,5 @@
 /* ADAM Powerbuilding — Service Worker for offline support */
-const CACHE = 'barbell-v6';
+const CACHE = 'barbell-v7';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(

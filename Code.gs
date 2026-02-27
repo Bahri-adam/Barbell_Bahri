@@ -20,7 +20,7 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheetName = body.sheet || 'Logs';
     var sh = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
-    var HEADERS = ['ts', 'date', 'dk', 'dn', 'wk', 'bl', 'ex', 'sn', 'w', 'r', 'e1rm', 'rpe', 'dur_min'];
+    var HEADERS = ['ts', 'date', 'dk', 'dn', 'wk', 'bl', 'ex', 'origEx', 'sn', 'w', 'r', 'e1rm', 'rpe', 'dur_min'];
 
     if (body.action === 'append') {
       var rows = body.rows || [];
@@ -29,7 +29,7 @@ function doPost(e) {
           sh.appendRow(HEADERS);
         }
         rows.forEach(function(r) {
-          sh.appendRow([r.ts, r.date, r.dk, r.dn, r.wk, r.bl, r.ex, r.sn, r.w, r.r, r.e1rm, r.rpe || '', r.dur || '']);
+          sh.appendRow([r.ts, r.date, r.dk, r.dn, r.wk, r.bl, r.ex, r.origEx || '', r.sn, r.w, r.r, r.e1rm, r.rpe || '', r.dur || '']);
         });
       }
       return _ok({ appended: rows.length });
@@ -40,7 +40,7 @@ function doPost(e) {
       sh.clear();
       sh.appendRow(HEADERS);
       rows.forEach(function(r) {
-        sh.appendRow([r.ts || '', r.date || '', r.dk || '', r.dn || '', r.wk || '', r.bl || '', r.ex || '', r.sn || '', r.w || '', r.r || '', r.e1rm || '', r.rpe || '', r.dur || '']);
+        sh.appendRow([r.ts || '', r.date || '', r.dk || '', r.dn || '', r.wk || '', r.bl || '', r.ex || '', r.origEx || '', r.sn || '', r.w || '', r.r || '', r.e1rm || '', r.rpe || '', r.dur || '']);
       });
       return _ok({ synced: rows.length });
     }

@@ -123,6 +123,7 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .pr-ex{color:var(--tx);font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pr-val{font-family:var(--fm);color:var(--gold);font-weight:600;font-size:12px;margin-left:8px}
 .pr-delta{font-size:9px;color:var(--grn2);margin-left:6px}
+.stall-warn{background:rgba(244,162,97,.12);border:1px solid rgba(244,162,97,.3);border-radius:5px;padding:6px 8px;margin-top:6px;font-size:10px;color:var(--gold);display:flex;align-items:center;gap:5px;line-height:1.3}
 .rpe-ig{max-width:44px}
 .rpe-inp{text-align:center;font-size:12px!important}
 .prev .rec{color:var(--grn2)}
@@ -302,6 +303,33 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .perf-delta.down{color:var(--red)}
 .perf-delta.flat{color:var(--tx3)}
 .perf-summary{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:14px 16px;margin-bottom:12px;font-size:12px;line-height:1.7}
+.an-card{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:14px 16px;margin-bottom:12px}
+.an-title{font-family:var(--fd);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;color:var(--tx1)}
+.wk-row{margin-bottom:12px}
+.wk-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.wk-name{font-family:var(--fd);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.wk-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.06em}
+.wk-tag-weak{background:rgba(230,57,70,.15);color:var(--red)}
+.wk-tag-mid{background:rgba(244,162,97,.15);color:var(--gold)}
+.wk-tag-strong{background:rgba(42,157,143,.15);color:var(--green)}
+.wk-bar-bg{height:6px;background:var(--s3);border-radius:3px;overflow:hidden;margin:4px 0}
+.wk-bar-fill{height:100%;border-radius:3px;transition:width .3s}
+.wk-stats{font-size:10px;color:var(--tx3);font-family:var(--fm)}
+.wk-recs{margin:0;padding-left:16px;font-size:12px;color:var(--tx2);line-height:1.7}
+.wk-recs li{margin-bottom:4px}
+.stall-card{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:rgba(244,162,97,.08);border:1px solid rgba(244,162,97,.2);border-radius:6px;margin-bottom:6px;font-size:11px;color:var(--tx2);line-height:1.4}
+.sbw-row{background:var(--s2);border:1px solid var(--b1);border-radius:6px;padding:10px 12px;margin-bottom:8px}
+.sbw-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.sbw-name{font-family:var(--fd);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.sbw-tier{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.sbw-nums{display:flex;justify-content:space-between;font-size:11px;color:var(--tx2);margin-bottom:6px;font-family:var(--fm)}
+.sbw-tiers{display:flex;justify-content:space-between;font-size:9px;color:var(--tx3);margin-top:2px;font-family:var(--fm)}
+.sbw-t.active{font-weight:700}
+.sbw-next{font-size:10px;color:var(--tx3);margin-top:4px;font-style:italic}
+.sbw-bw-chart{display:flex;align-items:flex-end;gap:4px;height:80px;margin-top:8px}
+.sbw-bw-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
+.sbw-bw-bar{width:100%;background:var(--blue);border-radius:3px 3px 0 0;min-height:4px;margin-top:auto}
+.sbw-bw-lbl{font-size:8px;color:var(--tx3);margin-top:2px;font-family:var(--fm)}
 .perf-summary strong{color:var(--tx)}
 .review-overlay{position:fixed;inset:0;background:rgba(10,14,20,.95);z-index:350;display:none;align-items:center;justify-content:center;padding:16px}
 .review-overlay.on{display:flex}
@@ -1184,10 +1212,12 @@ function openWO(dk){
 function renderWO(){
   const wc=document.getElementById('WC');wc.innerHTML='';
   let totalSets=0,totalVol=0,completedSets=0;
+  const stalledMap={};
+  getStalledLifts().forEach(s=>{stalledMap[s.ex]=s});
 
   ST.awExs.forEach((ex,exIdx)=>{
     const sets=ST.aws[ex.id]||[];
-    const prev=getPrev(ex.displayName,ST.aday);
+    const prev=getPrev(ex.displayName,ST.aday,ex.name);
     const tc={'h':'eh','s':'es','d':'ed','n':''}[ex.type]||'';
     const bl={'h':'<span class="badge bh">HEAVY</span>','s':'<span class="badge bs">★ STRETCH</span>','d':'<span class="badge bd">↓ DROP</span>','n':''}[ex.type]||'';
 
@@ -1285,6 +1315,7 @@ function renderWO(){
             ${cueHidden?'Show cue':'Hide cue'}
           </button>
           <div class="ecue${cueHidden?' collapsed':''}">${ex.cue}</div>
+          ${stalledMap[ex.displayName]?`<div class="stall-warn"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Stalled at ${stalledMap[ex.displayName].weight} lbs since ${stalledMap[ex.displayName].since} — try a variation or rep scheme change</div>`:''}
         </div>
       </div>
       <div class="sets-w" id="sw-${ex.id}">${setsHtml}</div>
@@ -1666,8 +1697,13 @@ function stopRest(){
 // ═══════════════════════════════════════════════════════════
 // PREVIOUS SET LOOKUP
 // ═══════════════════════════════════════════════════════════
-function getPrev(exName,dk){
-  const rows=ST.logs.filter(l=>l.dk===dk && l.ex===exName && l.w!=null && l.r!=null).sort((a,b)=>(a.date<b.date?1:-1));
+function getPrev(exName,dk,origName){
+  const names=new Set([exName]);
+  if(origName)names.add(origName);
+  const ovrVals=Object.values(ST.ovr||{});
+  ST.logs.forEach(l=>{if(l.origEx&&names.has(l.origEx))names.add(l.ex)});
+  ovrVals.forEach(v=>{if(names.has(v))names.add(v)});
+  const rows=ST.logs.filter(l=>l.dk===dk && names.has(l.ex) && l.w!=null && l.r!=null).sort((a,b)=>(a.date<b.date?1:-1));
   if(!rows.length) return [];
   const lastDate=rows[0].date;
   const last=rows.filter(r=>r.date===lastDate).sort((a,b)=>a.sn-b.sn);
@@ -1687,6 +1723,25 @@ function getRec(exName,dk,setIdx){
   const recW=Math.round(pw*pct/5)*5;
   const recR=pr<=8?pr:pr+2;
   return {w:recW,r:recR};
+}
+function getStalledLifts(){
+  const exWeeks={};
+  ST.logs.forEach(l=>{
+    if(!l.ex||!l.w||!l.wk)return;
+    if(!exWeeks[l.ex])exWeeks[l.ex]={};
+    if(!exWeeks[l.ex][l.wk]||l.w>exWeeks[l.ex][l.wk])exWeeks[l.ex][l.wk]=l.w;
+  });
+  const stalled=[];
+  for(const ex of Object.keys(exWeeks)){
+    const weeks=Object.keys(exWeeks[ex]).map(Number).sort((a,b)=>a-b);
+    if(weeks.length<3)continue;
+    const recent=weeks.slice(-3);
+    const weights=recent.map(w=>exWeeks[ex][w]);
+    if(weights[0]===weights[1]&&weights[1]===weights[2]){
+      stalled.push({ex,weight:weights[0],weeks:recent.length,since:'W'+recent[0]});
+    }
+  }
+  return stalled;
 }
 // Progressive overload: suggest +2.5–5 lbs (science: gradual overload)
 function getProgOverloadRec(exName,dk,setIdx){
@@ -1746,6 +1801,7 @@ function finWO(){
         wk:ST.logWk||ST.wk,
         bl:ST.bl,
         ex:ex.displayName,
+        origEx:ex.name||ex.displayName,
         sn:idx+1,
         w, r,
         e1rm,
@@ -2086,9 +2142,11 @@ function copyCGS(){
 // ═══════════════════════════════════════════════════════════
 function renderAN(){
   const tabs=[
-    {k:'perf',t:'Performance'},
+    {k:'perf',t:'Perf'},
     {k:'prs',t:'PRs'},
     {k:'vol',t:'Volume'},
+    {k:'weak',t:'Weak Pts'},
+    {k:'strbw',t:'Str/BW'},
     {k:'hist',t:'History'}
   ];
   const ts=document.getElementById('ATS');
@@ -2112,6 +2170,8 @@ function renderAN(){
   if(ST.atab==='perf') return renderPERF(ab);
   if(ST.atab==='prs') return renderPRs(ab);
   if(ST.atab==='vol') return renderVOL(ab);
+  if(ST.atab==='weak') return renderWEAK(ab);
+  if(ST.atab==='strbw') return renderSTRBW(ab);
   return renderHIST(ab);
 }
 
@@ -2324,6 +2384,170 @@ function renderHIST(ab){
 
     ab.appendChild(g);
   });
+}
+
+// ═══════════════════════════════════════════════════════════
+// WEAK POINTS ANALYSIS
+// ═══════════════════════════════════════════════════════════
+function renderWEAK(ab){
+  const groups=['quads','hamstrings','calves','glutes','chest','back','biceps','triceps','delts'];
+  const bpData={};
+  groups.forEach(g=>{bpData[g]={sets:0,vol:0,bestE1rm:0,exCount:new Set(),weeks:new Set()}});
+
+  ST.logs.forEach(l=>{
+    const bp=getBodyPart(l.ex);
+    if(!bpData[bp])return;
+    bpData[bp].sets++;
+    bpData[bp].vol+=(l.w||0)*(l.r||0);
+    if(l.e1rm>bpData[bp].bestE1rm)bpData[bp].bestE1rm=l.e1rm;
+    bpData[bp].exCount.add(l.ex);
+    if(l.wk)bpData[bp].weeks.add(l.wk);
+  });
+
+  const avgSets=groups.reduce((s,g)=>s+bpData[g].sets,0)/groups.length;
+  const avgVol=groups.reduce((s,g)=>s+bpData[g].vol,0)/groups.length;
+
+  const scored=groups.map(g=>{
+    const d=bpData[g];
+    const setSc=avgSets>0?(d.sets/avgSets):0;
+    const volSc=avgVol>0?(d.vol/avgVol):0;
+    const score=(setSc*0.5+volSc*0.5);
+    return {group:g,sets:d.sets,vol:d.vol,bestE1rm:d.bestE1rm,exCount:d.exCount.size,weeksTrained:d.weeks.size,score};
+  }).sort((a,b)=>a.score-b.score);
+
+  const stalledList=getStalledLifts();
+
+  let h=`<div class="an-card"><div class="an-title">Muscle Group Strength Balance</div>
+    <div style="font-size:11px;color:var(--tx3);margin-bottom:10px">Lower scores = weaker relative to your other muscle groups. Based on total volume and frequency across all logged weeks.</div>`;
+
+  scored.forEach(s=>{
+    const pct=Math.round(s.score*100);
+    const barW=Math.min(100,pct);
+    const clr=pct<60?'var(--red)':pct<80?'var(--gold)':'var(--green)';
+    const tag=pct<60?'WEAK POINT':pct<80?'NEEDS WORK':'STRONG';
+    const tagClr=pct<60?'wk-tag-weak':pct<80?'wk-tag-mid':'wk-tag-strong';
+    h+=`<div class="wk-row">
+      <div class="wk-label"><span class="wk-name">${s.group}</span><span class="wk-tag ${tagClr}">${tag}</span></div>
+      <div class="wk-bar-bg"><div class="wk-bar-fill" style="width:${barW}%;background:${clr}"></div></div>
+      <div class="wk-stats">${s.sets} sets · ${(s.vol/1000).toFixed(1)}k lbs · ${s.exCount} exercises · ${s.weeksTrained} wks</div>
+    </div>`;
+  });
+  h+='</div>';
+
+  if(stalledList.length){
+    h+=`<div class="an-card"><div class="an-title">Stalled Lifts</div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">Exercises with no weight increase for 3+ consecutive weeks.</div>`;
+    stalledList.forEach(s=>{
+      h+=`<div class="stall-card"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div><strong>${s.ex}</strong> — stuck at ${s.weight} lbs since ${s.since}<br><span style="font-size:10px;color:var(--tx3)">Try: different rep range, tempo change, or swap to a variation</span></div>
+      </div>`;
+    });
+    h+='</div>';
+  }
+
+  const weakest=scored.slice(0,3);
+  h+=`<div class="an-card"><div class="an-title">Recommendations</div><ul class="wk-recs">`;
+  weakest.forEach(w=>{
+    if(w.score<0.8){
+      h+=`<li><strong>${w.group}</strong>: Add ${w.score<0.6?'2-3':'1-2'} more weekly sets. Consider adding a dedicated ${w.group} exercise on a secondary day.</li>`;
+    }
+  });
+  if(stalledList.length){
+    h+=`<li>For stalled lifts, try a <strong>deload week</strong> followed by a new rep scheme (e.g., switch from 5×5 to 3×8-10).</li>`;
+  }
+  h+=`</ul></div>`;
+
+  ab.innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// STRENGTH-TO-BODYWEIGHT ANALYSIS
+// ═══════════════════════════════════════════════════════════
+function renderSTRBW(ab){
+  const bw=ST.profile?.bodyweight||225;
+  const compoundLifts=[
+    {name:'Bench Press',patterns:['bench press','flat bench'],tier:[1.0,1.25,1.5,2.0],cat:'Upper Push'},
+    {name:'Squat',patterns:['squat','belt squat'],tier:[1.25,1.5,2.0,2.5],cat:'Lower'},
+    {name:'Deadlift',patterns:['deadlift','rdl','stiff leg'],tier:[1.5,2.0,2.5,3.0],cat:'Posterior'},
+    {name:'Overhead Press',patterns:['overhead press','ohp','military'],tier:[0.5,0.65,0.8,1.0],cat:'Upper Push'},
+    {name:'Barbell Row',patterns:['barbell row','bent over row','pendlay'],tier:[0.75,1.0,1.25,1.5],cat:'Upper Pull'},
+  ];
+  const tierLabels=['Beginner','Intermediate','Advanced','Elite'];
+  const tierClrs=['var(--tx3)','var(--blue)','var(--green)','var(--gold)'];
+
+  let h=`<div class="an-card"><div class="an-title">Strength Standards vs Bodyweight</div>
+    <div style="font-size:11px;color:var(--tx3);margin-bottom:4px">Based on your bodyweight of <strong>${bw} lbs</strong>. Tiers are science-based population percentiles.</div>
+    <div style="font-size:10px;color:var(--tx3);margin-bottom:10px">Tap your bodyweight in the profile section to update.</div>`;
+
+  let hasData=false;
+  compoundLifts.forEach(lift=>{
+    const best={e1rm:0,w:0,r:0};
+    ST.logs.forEach(l=>{
+      const n=(l.ex||'').toLowerCase();
+      if(lift.patterns.some(p=>n.includes(p))&&l.e1rm>best.e1rm){
+        best.e1rm=l.e1rm;best.w=l.w;best.r=l.r;
+      }
+    });
+    if(!best.e1rm)return;
+    hasData=true;
+
+    const ratio=best.e1rm/bw;
+    let tierIdx=0;
+    for(let i=lift.tier.length-1;i>=0;i--){if(ratio>=lift.tier[i]){tierIdx=i;break}}
+    const tierName=tierLabels[tierIdx];
+    const nextTier=tierIdx<3?lift.tier[tierIdx+1]:null;
+    const nextBw=nextTier?Math.round(nextTier*bw):null;
+    const pctMax=lift.tier[3]*bw;
+    const pctFill=Math.min(100,Math.round((best.e1rm/pctMax)*100));
+
+    h+=`<div class="sbw-row">
+      <div class="sbw-head">
+        <span class="sbw-name">${lift.name}</span>
+        <span class="sbw-tier" style="color:${tierClrs[tierIdx]}">${tierName}</span>
+      </div>
+      <div class="sbw-nums">
+        <span>Best e1RM: <strong>${best.e1rm} lbs</strong></span>
+        <span>Ratio: <strong>${ratio.toFixed(2)}×BW</strong></span>
+      </div>
+      <div class="wk-bar-bg"><div class="wk-bar-fill" style="width:${pctFill}%;background:${tierClrs[tierIdx]}"></div></div>
+      <div class="sbw-tiers">
+        ${lift.tier.map((t,i)=>`<span class="sbw-t${tierIdx===i?' active':''}" style="${tierIdx===i?'color:'+tierClrs[i]:''}">${(t).toFixed(2)}×</span>`).join('')}
+      </div>
+      ${nextBw?`<div class="sbw-next">Next tier at <strong>${nextBw} lbs</strong> e1RM (+${nextBw-best.e1rm} lbs to go)</div>`:'<div class="sbw-next" style="color:var(--gold)">You\'ve reached elite level!</div>'}
+    </div>`;
+  });
+
+  if(!hasData){
+    h+=`<div class="empty"><div class="eico">🏋️</div>No compound lift data found. Log bench press, squats, or deadlifts to see your strength ratios.</div>`;
+  }
+
+  h+='</div>';
+
+  h+=`<div class="an-card"><div class="an-title">Bodyweight Tracking</div>`;
+  const bwByWeek=ST.profile?.bodyweightByWeek||{};
+  const bwWeeks=Object.keys(bwByWeek).map(Number).sort((a,b)=>a-b);
+  if(bwWeeks.length>1){
+    const first=bwByWeek[bwWeeks[0]],last=bwByWeek[bwWeeks[bwWeeks.length-1]];
+    const delta=last-first;
+    h+=`<div style="font-size:12px;color:var(--tx2);margin-bottom:8px">
+      W${bwWeeks[0]}: ${first} lbs → W${bwWeeks[bwWeeks.length-1]}: ${last} lbs
+      <span style="color:${delta>0?'var(--green)':'var(--red)'}">(${delta>0?'+':''}${delta.toFixed(1)} lbs)</span>
+    </div>`;
+    h+=`<div class="sbw-bw-chart">`;
+    const max=Math.max(...bwWeeks.map(w=>bwByWeek[w]));
+    const min=Math.min(...bwWeeks.map(w=>bwByWeek[w]));
+    const range=max-min||1;
+    bwWeeks.forEach(w=>{
+      const pct=((bwByWeek[w]-min)/range)*80+10;
+      h+=`<div class="sbw-bw-col"><div class="sbw-bw-bar" style="height:${pct}%"></div><div class="sbw-bw-lbl">W${w}</div></div>`;
+    });
+    h+=`</div>`;
+  }else{
+    h+=`<div style="font-size:11px;color:var(--tx3)">Update your bodyweight each week in the profile section to see trends here.</div>`;
+  }
+  h+='</div>';
+
+  ab.innerHTML=h;
 }
 
 // ═══════════════════════════════════════════════════════════
