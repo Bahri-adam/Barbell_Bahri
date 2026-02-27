@@ -1995,6 +1995,7 @@ function finWO(){
   const date=today.toISOString().split('T')[0];
   const dk=ST.aday;
   const dn=DAY_NAMES[dk]||dk;
+  const wk=ST.logWk||ST.wk;
 
   // Persist added exercises for denominator / muscle coverage
   const addedExs=ST.awExs.filter(ex=>ex.templateIdx===-1||ex.isAdded===true);
@@ -2002,6 +2003,16 @@ function finWO(){
     ST.addedExercises=ST.addedExercises||{};
     ST.addedExercises[dk]=addedExs.map(ex=>({name:ex.displayName||ex.name,sets:ex.sets||3,bodyPart:ex.bodyPart||getBodyPart(ex.displayName||ex.name)||'other'}));
     saveST();
+  }
+
+  // Remove existing logs for this day+week to prevent duplication
+  const removedIds=[];
+  ST.logs=ST.logs.filter(l=>{
+    if(l.dk===dk&&l.wk===wk){removedIds.push(l.id);return false}
+    return true;
+  });
+  if(removedIds.length&&typeof fbRef==='function'){
+    try{const updates={};removedIds.forEach(id=>{if(id)updates[id]=null});fbRef('logs').update(updates)}catch(e){console.warn('FB cleanup:',e)}
   }
 
   let added=0;
@@ -2025,7 +2036,7 @@ function finWO(){
         id:'l'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
         ts:new Date().toISOString(),
         date, dk, dn,
-        wk:ST.logWk||ST.wk,
+        wk,
         bl:ST.bl,
         ex:ex.displayName,
         origEx:ex.name||ex.displayName,
@@ -2911,6 +2922,37 @@ function fbListenForChanges(){
 // INIT
 // ═══════════════════════════════════════════════════════════
 loadST();
+function dedupLogsIfNeeded(){
+  if(!ST.logs||!ST.logs.length)return;
+  const before=ST.logs.length;
+  const byDayWk={};
+  ST.logs.forEach(l=>{
+    const key=`${l.dk}|${l.wk}`;
+    if(!byDayWk[key])byDayWk[key]=[];
+    byDayWk[key].push(l);
+  });
+  const cleaned=[];
+  const removedIds=[];
+  Object.values(byDayWk).forEach(group=>{
+    const byExSet={};
+    group.sort((a,b)=>(a.ts||'').localeCompare(b.ts||''));
+    group.forEach(l=>{
+      const k=`${l.ex}|${l.sn}`;
+      if(!byExSet[k]){byExSet[k]=l}
+      else{removedIds.push(l.id)}
+    });
+    Object.values(byExSet).forEach(l=>cleaned.push(l));
+  });
+  if(cleaned.length<before){
+    ST.logs=cleaned;
+    saveLogs();
+    if(fbReady&&removedIds.length){
+      try{const updates={};removedIds.forEach(id=>{if(id)updates[id]=null});fbRef('logs').update(updates)}catch(e){}
+    }
+    console.log('Dedup: removed '+(before-cleaned.length)+' duplicate log entries');
+  }
+}
+dedupLogsIfNeeded();
 renderHome();
 renderBodyTracker();
 renderAN();
@@ -2921,6 +2963,7 @@ firebase.auth().onAuthStateChanged(user=>{
   if(user){
     fbReady=true;
     fbPullAll().then(()=>{
+      dedupLogsIfNeeded();
       renderHome();
       renderBodyTracker();
       renderAN();
