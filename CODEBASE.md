@@ -8,16 +8,22 @@ This document explains the structure of the codebase so you can safely modify, e
 
 ```
 Powerbuilding program/
-├── app.html            # Main app (everything lives here)
-├── smart-test.html     # Offline Smart tab test — fictional data, never touches your logs
-├── validation-test.html # Engine validation suite — 10 scenarios, output contract, scoring, stability tests
-├── index.html          # Redirects to app.html
-├── manifest.json     # PWA manifest
-├── sw.js             # Service worker (cache version)
-├── Code.gs           # Google Apps Script for Sheets sync
-├── CODEBASE.md       # This file
+├── app.html                 # Main app (everything lives here)
+├── ALGORITHM-WRITEUP.md     # Algorithm reference — verdict logic, stimulus, fatigue, program gen, constants
+├── CODEBASE.md              # This file — where to find everything
+├── smart-test.html          # Offline Smart tab test — fictional data, never touches your logs
+├── validation-test.html     # Engine validation suite — 10 scenarios, output contract, scoring
+├── 100-athlete-program-test.html # Program generator test — N athletes, different splits/verdicts
+├── program-gen-standalone.html   # Standalone program generator (no app dependency)
+├── programGenerator.js       # Program generator module (split, exercise selection)
+├── index.html               # Redirects to app.html
+├── manifest.json            # PWA manifest
+├── sw.js                    # Service worker (cache version)
+├── Code.gs                  # Google Apps Script for Sheets sync
 └── .gitignore
 ```
+
+**Algorithm logic:** See `ALGORITHM-WRITEUP.md` for verdict tree, stimulus/fatigue formulas, program generator, and fine-tuning notes.
 
 ---
 
@@ -76,12 +82,12 @@ Powerbuilding program/
 
 ## How to Navigate `app.html`
 
-The file is ~3500 lines. Use the section markers (`// ═══` or `// ──`) to jump. Order:
+The file is ~4050 lines. Use the section markers (`// ═══` or `// ──`) to jump. Order:
 
 1. **Lines 1–34**: `<head>`, Firebase init, Chart.js
 2. **Lines 35–420**: `<style>` — all CSS (variables, nav, cards, forms)
 3. **Lines 421–735**: HTML body — page containers, modals, nav
-4. **Lines 737–3480**: `<script>` — JavaScript
+4. **Lines 737–4050**: `<script>` — JavaScript
 
 ---
 
@@ -132,6 +138,7 @@ Performance-driven model: stimulus from e1RM + effective reps + proximity (no RP
 | `getE1RMTrend(wk)` | 3–4 week slope, % change for compounds | — |
 | `STIMULUS_TARGET` / `STIMULUS_CEILING` | Per-muscle stimulus targets (replace set counts as primary) | — |
 | `getStalledLifts(optWk)` | Objective stall: volume-induced / under-stim / intensity | Same |
+| `getGlobalState(wk)` | Verdict tree: DATA_INSUFFICIENT, UNDERSTIMULATED, DELOAD_RECOMMENDED, OVERREACHED, STALL_*, PROGRESSING | Same |
 | `getAdaptationState(wk)` | e1RM trend, fatigue rising, junk volume — gates add_volume | Same |
 | `VOLUME_CEILINGS` | Per-muscle ceiling (10–22 sets) — prevents junk volume | — |
 | `getFatigueMultiplier(exName)` | Barbell 1.3, machine compound 1.0, isolation 0.7 | — |
@@ -234,7 +241,7 @@ Performance-driven model: stimulus from e1RM + effective reps + proximity (no RP
 
 ---
 
-### 10. SMART PROGRAM (~1375–1676)
+### 10. SMART PROGRAM (~1675–2030)
 
 **Search:** `// SMART PROGRAM` or `computeSmartRecommendations`
 
@@ -246,6 +253,21 @@ Performance-driven model: stimulus from e1RM + effective reps + proximity (no RP
 | `renderSmartProgram()` | Renders Smart tab UI |
 
 **Dependencies:** `getWeeklyHardSets`, `getFatigueFlags`, `getActualSets`, `getStalledLifts`, `detectOverreaching`, `getScheduleForWeek`, `P`, `WEEKLY_TARGETS`.
+
+### 10b. ADAPTIVE PROGRAM GENERATOR (~1967–2025)
+
+**Search:** `// Adaptive program generator` or `SPLITS` or `generateAdaptiveProgram`
+
+| Item | Purpose |
+|------|---------|
+| `SPLITS` | Single source of truth: fullBody (3d), upperLower (4d), adam6 (6d). Each has `titles`, `focus` (muscles per session) |
+| `assertSplitIntegrity(splitKey)` | Enforces titles.length === focus.length |
+| `getExercisesForBodyPartGen(bp, exclude, stalledSet)` | Filter EL by body part; prefer EL.m over getBodyPart |
+| `selectExercisesForDayGen(muscles, stalledMap, maxPer)` | Pick exercises per muscle; skip stalled |
+| `generateAdaptiveProgram(wk)` | Builds week program from verdict, stalledMap, schedule; volume modulation (UNDERSTIM +15%, OVERREACH −15%) |
+| `auditGeneratedProgram(wp)` | Validates no undefined titles, focus/exercise alignment |
+
+**Algorithm details:** See `ALGORITHM-WRITEUP.md` §9.
 
 ---
 
