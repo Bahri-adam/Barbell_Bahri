@@ -1651,7 +1651,7 @@ function renderWO(){
             <div class="badges">${bl}${(isSuperset?exDone===sets.length&&exDone2===sets2.length:exDone===sets.length)&&(isSuperset?sets.length+sets2.length:sets.length)>0?'<span class="badge bpr">✓ DONE</span>':''}</div>
           </div>
           <div class="ex-actions">
-            ${!isSuperset&&exIdx<ST.awExs.length-1?`<button class="ex-act-btn ${ex.supersetWith?' on':''}" onclick="toggleSuperset(${exIdx})" title="${ex.supersetWith?'Unpair superset':'Superset with next'}">
+            ${(isSuperset||exIdx<ST.awExs.length-1)?`<button class="ex-act-btn ${ex.supersetWith?' on':''}" onclick="toggleSuperset(${exIdx})" title="${ex.supersetWith?'Unpair superset':'Superset with next'}">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v18M16 3v18M3 8h18M3 16h18"/></svg>
               ${ex.supersetWith?'Unpair':'Superset'}
             </button>`:''}
@@ -1952,9 +1952,11 @@ function moveEx(from,to){
   const ex=ST.awExs[from];
   const count=(ex.supersetWith&&next&&ex.supersetWith===next.id)?2:1;
   const items=ST.awExs.splice(from,count);
-  let insertAt=to;
-  if(to>from)insertAt=Math.max(0,to-count);
+  let insertAt;
+  if(to>from)insertAt=Math.max(0,to-count+1);
+  else insertAt=to;
   ST.awExs.splice(insertAt,0,...items);
+  saveWorkoutProgress();
   renderWO();
 }
 function moveUpEx(exIdx){
