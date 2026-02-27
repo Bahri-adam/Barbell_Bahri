@@ -353,6 +353,30 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .sbw-bw-bar{width:100%;background:var(--blue);border-radius:3px 3px 0 0;min-height:4px;margin-top:auto}
 .sbw-bw-lbl{font-size:8px;color:var(--tx3);margin-top:2px;font-family:var(--fm)}
 .fatigue-card{margin:8px 14px 0}
+.smart-body{padding:14px 16px;padding-bottom:80px}
+.smart-card{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:14px 16px;margin-bottom:12px}
+.smart-hdr{font-family:var(--fd);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;color:var(--tx1)}
+.smart-phase{font-size:11px;color:var(--tx3);margin-bottom:8px}
+.smart-verdict{font-size:12px;color:var(--tx2);line-height:1.6;margin-top:8px;padding:10px;background:var(--s2);border-radius:6px;border-left:3px solid var(--blue)}
+.smart-meta{font-size:10px;color:var(--tx3);margin-top:6px}
+.smart-day{display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;border-radius:5px;font-size:12px}
+.smart-day.rest{background:var(--s2);color:var(--tx3)}
+.smart-day.workout{background:var(--s2);border-left:3px solid var(--blue)}
+.smart-day-name{font-weight:600;min-width:70px;color:var(--tx1)}
+.smart-day-focus{flex:1;font-size:11px;color:var(--tx2)}
+.smart-day-done{color:var(--grn2);font-weight:700}
+.smart-day-ex{font-size:10px;color:var(--tx3)}
+.smart-rec{font-size:12px;color:var(--tx2);line-height:1.6;padding:8px 10px;margin-bottom:6px;border-radius:5px;background:var(--s2)}
+.smart-rec.add{border-left:3px solid var(--gold)}
+.smart-rec.stall{border-left:3px solid var(--gold)}
+.smart-rec.warn{border-left:3px solid var(--red)}
+.smart-rec.caution{border-left:3px solid var(--gold)}
+.smart-rec.learned{border-left:3px solid var(--grn2)}
+.smart-rec.info{border-left:3px solid var(--blue)}
+.smart-rec.none{border-left:3px solid var(--grn2)}
+.smart-note{font-size:10px;color:var(--tx3)}
+.smart-card.cite .smart-cites{margin:0;padding-left:18px;font-size:11px;color:var(--tx3);line-height:1.8}
+.smart-princ{font-size:10px;color:var(--tx3);margin-top:10px;padding:8px;background:var(--s2);border-radius:4px;line-height:1.5}
 .ftg-box{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:12px 14px;overflow:hidden}
 .ftg-box.warn{border-color:rgba(244,162,97,.35)}
 .ftg-box.danger{border-color:rgba(230,57,70,.35)}
@@ -658,9 +682,18 @@ select{color-scheme:dark}
   </div>
 </div>
 
+<!-- SMART PROGRAM -->
+<div class="pg" id="pg-smart">
+  <div class="pghdr"><div class="pgt">Smart Program</div><div class="pgs">Science-backed recommendations that improve with your data</div></div>
+  <div class="smart-body" id="SMB"></div>
+</div>
+
 <nav class="nav">
   <button class="nb on" id="nb-home" onclick="showPg('home')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span>
+  </button>
+  <button class="nb" id="nb-smart" onclick="showPg('smart')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a10 10 0 0110 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><path d="M12 6v6l4 2"/></svg><span>Smart</span>
   </button>
   <button class="nb" id="nb-an" onclick="showPg('an')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Analytics</span>
@@ -1014,6 +1047,7 @@ function showPg(p){
   document.getElementById('pg-'+p).classList.add('on');
   const nb=document.getElementById('nb-'+p);if(nb)nb.classList.add('on');
   if(p==='home'){renderHome();renderBodyTracker();}
+  if(p==='smart')renderSmartProgram();
   if(p==='an')renderAN();
   if(p==='ex')renderES();
   window.scrollTo(0,0);
@@ -1202,6 +1236,154 @@ function renderFatigueCard(){
   signals.forEach(s=>{h+=`<div class="ftg-item">${s.msg}</div>`});
   if(recommendation)h+=`<div class="ftg-rec"><strong>Recommendation:</strong> ${recommendation}</div>`;
   h+='</div>';
+  el.innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SMART PROGRAM — Science-backed recommendations (Schoenfeld, Wernbom, etc.)
+// ═══════════════════════════════════════════════════════════
+function computeSmartRecommendations(wk){
+  const groups=['quads','hamstrings','calves','glutes','chest','back','biceps','triceps','delts'];
+  const targ=WEEKLY_TARGETS;
+  const actual=getActualSets(wk);
+  const prescribed=getPrescribedSets();
+  const stalled=getStalledLifts();
+  const {signals,fatigueScore,recommendation:fatigueRec}=detectOverreaching();
+  const isDeload=DLOADS.has(wk);
+  const bp=getBlockPhase(wk);
+
+  let recs=[];
+  let weekVerdict='';
+  let dayPlan=[];
+
+  if(isDeload){
+    weekVerdict='Deload week (Schoenfeld: every 4–6 weeks). Use 60–70% of working weights, ~50% of sets. This resets volume sensitivity — supercompensation follows.';
+    recs.push({type:'info',title:'Deload protocol','Schoenfeld 2017':`Reduce load to ${Math.round((DELOAD_PCT[wk]||.65)*100)}%, halve sets. Focus on technique and ROM.`});
+  }else if(fatigueScore>=50){
+    weekVerdict=fatigueRec||'High fatigue detected. Consider an extra deload this week even if not scheduled.';
+    recs.push({type:'warn',title:'Recovery priority',reason:fatigueRec});
+  }else if(fatigueScore>=25){
+    recs.push({type:'caution',title:'Auto-regulate',reason:'Drop compound weights ~10%. Cap sets at RPE 8. Same volume, lower intensity.'});
+  }
+
+  groups.forEach(g=>{
+    const act=actual[g]||0;
+    const tar=targ[g]?.target||prescribed[g]||12;
+    const pct=tar>0?Math.round((act/tar)*100):0;
+    if(act<tar&&!isDeload){
+      const add=tar-act;
+      const status=targ[g]?.status||'';
+      let reason='';
+      if(status==='lagging')reason=`Lagging muscle — Schoenfeld meta: 10–20 sets/week for growth. You're at ${act}. Add ~${add} sets.`;
+      else reason=`Below target. Add ~${add} sets to hit ${tar}.`;
+      recs.push({type:'add_volume',muscle:g,current:act,target:tar,add,reason});
+    }
+  });
+
+  stalled.forEach(s=>{
+    recs.push({type:'stall',ex:s.ex,weight:s.weight,since:s.since,action:'Try variation, rep scheme change (e.g. 5×5→3×8), or tempo manipulation.'});
+  });
+
+  const weeksLogged=ST.logs.length?new Set(ST.logs.map(l=>l.wk)).size:0;
+  if(weeksLogged>=4){
+    const volByWk={};
+    const e1rmByWk={};
+    for(let w=1;w<=Math.min(wk,24);w++){
+      const logs=ST.logs.filter(l=>l.wk===w);
+      volByWk[w]=logs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
+      const compounds=logs.filter(l=>isCompound(l.ex)&&l.e1rm);
+      e1rmByWk[w]=compounds.length?compounds.reduce((s,l)=>s+l.e1rm,0)/compounds.length:0;
+    }
+    const recentVol=[volByWk[wk-2],volByWk[wk-1]].filter(v=>v);
+    const recentE1=[e1rmByWk[wk-2],e1rmByWk[wk-1]].filter(v=>v);
+    if(recentVol.length>=2&&recentE1.length>=2){
+      const volTrend=recentVol[1]-recentVol[0];
+      const e1Trend=recentE1[1]-recentE1[0];
+      if(volTrend>5000&&e1Trend<2){
+        recs.push({type:'learned',title:'Volume-response insight',msg:'Your last 2 weeks: volume up but strength flat. Consider reducing volume 15% and increasing intensity (heavier weight, lower reps) on compounds.'});
+      }else if(e1Trend>5&&volTrend>0){
+        recs.push({type:'learned',title:'What\'s working',msg:'Volume and strength both trending up. Keep this loading pattern.'});
+      }
+    }
+  }
+
+  const sched=getScheduleForWeek(wk);
+  DO.forEach(dk=>{
+    const mapped=sched[dk]||dk;
+    if(mapped==='rest'){
+      dayPlan.push({dk,name:DAY_NAMES[dk],type:'rest'});
+      return;
+    }
+    const d=P[mapped];
+    if(!d)return;
+    const dayLogs=ST.logs.filter(l=>l.wk===wk&&l.dk===dk);
+    const done=dayLogs.length>0;
+    const exCount=(d.exercises||[]).length+((ST.addedExercises||{})[dk]||[]).length;
+    dayPlan.push({dk,name:DAY_NAMES[dk],focus:d.focus,type:'workout',done,exCount});
+  });
+
+  return {recs,weekVerdict,dayPlan,isDeload,bp,weeksLogged:ST.logs.length?new Set(ST.logs.map(l=>l.wk)).size:0,citations:['Schoenfeld 2017 (J Sports Sci)','Wernbom 2007 (Sports Med)','Schoenfeld 2021 (AMPK/mTOR)']};
+}
+
+function renderSmartProgram(){
+  const el=document.getElementById('SMB');
+  if(!el)return;
+  if(ST.smartWk===undefined)ST.smartWk=ST.wk;
+  const wk=ST.smartWk;
+  const {recs,weekVerdict,dayPlan,isDeload,bp,weeksLogged,citations}=computeSmartRecommendations(wk);
+
+  let h='';
+
+  h+=`<div class="smart-wk-sel" style="margin-bottom:12px">
+    <label style="font-size:11px;color:var(--tx3);display:block;margin-bottom:4px">Week</label>
+    <select class="custom-ex-input" style="width:100%;max-width:120px" onchange="ST.smartWk=parseInt(this.value);renderSmartProgram()">`;
+  for(let w=1;w<=24;w++){
+    h+=`<option value="${w}" ${w===wk?'selected':''}>W${w}${DLOADS.has(w)?' (Deload)':''}</option>`;
+  }
+  h+=`</select></div>`;
+
+  h+=`<div class="smart-card"><div class="smart-hdr">${bp.name} — W${wk}</div>
+    <div class="smart-phase">${bp.phase}</div>
+    ${weekVerdict?`<div class="smart-verdict">${weekVerdict}</div>`:''}
+    ${weeksLogged>0?`<div class="smart-meta">Algorithm trained on ${weeksLogged} week${weeksLogged!==1?'s':''} of your data. More logging = better recommendations.</div>`:''}
+  </div>`;
+
+  h+=`<div class="smart-card"><div class="smart-hdr">This Week's Plan</div>`;
+  dayPlan.forEach(d=>{
+    if(d.type==='rest'){
+      h+=`<div class="smart-day rest"><span class="smart-day-name">${d.name}</span><span class="smart-day-badge">Rest</span></div>`;
+    }else{
+      h+=`<div class="smart-day workout"><span class="smart-day-name">${d.name}</span><span class="smart-day-focus">${d.focus||''}</span>${d.done?`<span class="smart-day-done">✓</span>`:`<span class="smart-day-ex">${d.exCount} exercises</span>`}</div>`;
+    }
+  });
+  h+=`</div>`;
+
+  h+=`<div class="smart-card"><div class="smart-hdr">Recommendations</div>`;
+  if(!recs.length){
+    h+=`<div class="smart-rec none"><strong>On track.</strong> Hit your targets, keep compounds at RPE 7–8.5, and reserve failure for isolation finishers only.</div>`;
+  }else{
+    recs.forEach(r=>{
+      const cl=r.type==='warn'?'warn':r.type==='caution'?'caution':r.type==='learned'?'learned':'';
+      if(r.type==='add_volume'){
+        h+=`<div class="smart-rec add ${cl}"><strong>${r.muscle}:</strong> ${r.reason} <span class="smart-note">(${r.current}→${r.target} sets)</span></div>`;
+      }else if(r.type==='stall'){
+        h+=`<div class="smart-rec stall"><strong>${r.ex}</strong> stalled at ${r.weight} lbs since ${r.since}. ${r.action}</div>`;
+      }else if(r.type==='info'){
+        h+=`<div class="smart-rec info">${r.title}: ${r['Schoenfeld 2017']||r.reason||''}</div>`;
+      }else if(r.type==='learned'){
+        h+=`<div class="smart-rec learned">📈 ${r.title}: ${r.msg}</div>`;
+      }else{
+        h+=`<div class="smart-rec ${cl}">${r.title}: ${r.reason||''}</div>`;
+      }
+    });
+  }
+  h+=`</div>`;
+
+  h+=`<div class="smart-card cite"><div class="smart-hdr">Science Sources</div>
+    <ul class="smart-cites">${citations.map(c=>`<li>${c}</li>`).join('')}</ul>
+    <div class="smart-princ">Principles: 10–20 sets/muscle/week, 6–20 reps, 2–3x frequency, RPE 7–9, progressive overload, deload every 4–6 wk.</div>
+  </div>`;
+
   el.innerHTML=h;
 }
 
