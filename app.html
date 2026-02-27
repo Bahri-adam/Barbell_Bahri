@@ -134,6 +134,17 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .rpe-inp.rpe-yellow{border-color:var(--gold)!important;color:var(--gold)!important;background:rgba(244,162,97,.08)!important}
 .rpe-inp.rpe-red{border-color:var(--red)!important;color:var(--red)!important;background:rgba(230,57,70,.1)!important}
 .rpe-inp.rpe-low{border-color:var(--blue)!important;color:var(--blue2)!important;background:rgba(69,123,157,.08)!important}
+.ec.superset{border-left:3px solid var(--blue)}
+.ss-hdr{font-size:10px;color:var(--blue2);font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.ss-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:flex-start;margin-bottom:6px}
+@media(max-width:360px){.ss-row{grid-template-columns:1fr}}
+.ss-col{background:var(--s2);border:1px solid var(--b1);border-radius:5px;padding:8px;min-width:0}
+.ss-col-lbl{font-size:9px;color:var(--tx3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.ss-col .srow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:0}
+.ss-col .snum{min-width:24px;font-size:11px}
+.ss-col .ig{min-width:0;flex:1}
+.ss-col .sinp{width:100%;min-width:40px}
+.ss-col .ckbtn,.ss-col .del-set-btn{flex-shrink:0}
 .rpe-ig{max-width:44px}
 .rpe-inp{text-align:center;font-size:12px!important}
 .prev .rec{color:var(--grn2)}
@@ -202,6 +213,7 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .ex-actions{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
 .ex-act-btn{background:none;border:1px solid var(--b2);border-radius:3px;color:var(--tx3);font-size:10px;font-weight:600;padding:4px 8px;cursor:pointer;font-family:var(--fb);letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center;gap:4px;transition:all .15s}
 .ex-act-btn:active{border-color:var(--red);color:var(--red)}
+.ex-act-btn.on{background:rgba(69,123,157,.2);border-color:var(--blue);color:var(--blue2)}
 .ex-act-btn.del-ex{border-color:rgba(230,57,70,.3);color:rgba(230,57,70,.7)}
 .ex-act-btn.del-ex:active{border-color:var(--red);color:var(--red)}
 .ex-act-btn.move-btn{min-width:72px;padding:6px 10px}
@@ -1344,58 +1356,91 @@ function renderWO(){
   const stalledMap={};
   getStalledLifts().forEach(s=>{stalledMap[s.ex]=s});
 
-  ST.awExs.forEach((ex,exIdx)=>{
+  const blocks=[];
+  for(let i=0;i<ST.awExs.length;i++){
+    const ex=ST.awExs[i];
+    const next=ST.awExs[i+1];
+    if(ex.supersetWith&&next&&ex.supersetWith===next.id){
+      blocks.push({type:'superset',exs:[ex,next],startIdx:i});
+      i++;
+    }else{
+      blocks.push({type:'single',exs:[ex],startIdx:i});
+    }
+  }
+
+  blocks.forEach(block=>{
+    const ex=block.exs[0];
+    const ex2=block.exs[1];
+    const exIdx=block.startIdx;
+    const isSuperset=block.type==='superset';
     const sets=ST.aws[ex.id]||[];
+    const sets2=ex2?(ST.aws[ex2.id]||[]):[];
     const prev=getPrev(ex.displayName,ST.aday,ex.name);
+    const prev2=ex2?getPrev(ex2.displayName,ST.aday,ex2.name):[];
     const tc={'h':'eh','s':'es','d':'ed','n':''}[ex.type]||'';
     const bl={'h':'<span class="badge bh">HEAVY</span>','s':'<span class="badge bs">★ STRETCH</span>','d':'<span class="badge bd">↓ DROP</span>','n':''}[ex.type]||'';
 
-    // Volume for this exercise
     const exVol=sets.reduce((s,st)=>s+(st.w&&st.r?st.w*st.r:0),0);
+    const exVol2=sets2.reduce((s,st)=>s+(st.w&&st.r?st.w*st.r:0),0);
     const exDone=sets.filter(s=>s.done).length;
-    totalSets+=sets.length;completedSets+=exDone;if(exVol)totalVol+=exVol;
+    const exDone2=sets2.filter(s=>s.done).length;
+    totalSets+=sets.length+sets2.length;completedSets+=exDone+exDone2;if(exVol)totalVol+=exVol;if(exVol2)totalVol+=exVol2;
 
     const cueHidden=ST.cueCollapsed[ex.id];
 
     const card=document.createElement('div');
-    card.className=`ec ${tc}`;
+    card.className=`ec ${tc}${isSuperset?' superset':''}`;
     card.dataset.exid=ex.id;
     card.dataset.exidx=exIdx;
     card.draggable=true;
 
     const setAlreadyLogged=sets.some(s=>s.done&&s.w&&s.r);
-    const setsHtml=sets.map((s,si)=>{
+    const setAlreadyLogged2=sets2.some(s=>s.done&&s.w&&s.r);
+
+    function oneSetRow(e,s,si,prev,setAlLogged){
       const ps=prev[si];
-      const rec=setAlreadyLogged?null:(getRec(ex.displayName,ST.aday,si)||getProgOverloadRec(ex.displayName,ST.aday,si));
-      const isDeload=setAlreadyLogged?false:!!getRec(ex.displayName,ST.aday,si);
-      const isLast=si===sets.length-1;
-      const canDel=sets.length>1;
+      const rec=setAlLogged?null:(getRec(e.displayName,ST.aday,si)||getProgOverloadRec(e.displayName,ST.aday,si));
+      const isDeload=setAlLogged?false:!!getRec(e.displayName,ST.aday,si);
+      const canDel=(e===ex?sets:sets2).length>1;
       let footer='';
-      if(ps||rec){footer='<div class="prev" id="pv-'+ex.id+'-'+si+'">';
+      if(ps||rec){footer='<div class="prev" id="pv-'+e.id+'-'+si+'">';
         if(ps)footer+=`Prev: <span class="pv">${ps.w?ps.w+'×':''}${ps.r}</span>${ps.e1?` · e1RM <span class="pv">${ps.e1}</span>`:''}`;
         if(rec)footer+=`${ps?' · ':''}Rec: <span class="pv rec">${rec.w}×${rec.r}</span> <span class="rec-hint">${isDeload?'(deload)':'(+overload)'}</span>`;
         footer+='</div>';
       }
-      return `<div class="srow" id="sr-${ex.id}-${si}">
+      return `<div class="srow" id="sr-${e.id}-${si}">
         <div class="snum">${si+1}</div>
         <div class="ig"><div class="ilbl">LBS</div>
-          <input type="number" inputmode="decimal" class="sinp${s.w?' ok':''}" id="iw-${ex.id}-${si}" value="${s.w}" placeholder="${rec?rec.w:(ps?ps.w:'')}" onchange="upS('${ex.id}',${si},'w',this.value)" onfocus="this.select()">
+          <input type="number" inputmode="decimal" class="sinp${s.w?' ok':''}" id="iw-${e.id}-${si}" value="${s.w}" placeholder="${rec?rec.w:(ps?ps.w:'')}" onchange="upS('${e.id}',${si},'w',this.value)" onfocus="this.select()">
         </div>
         <div class="ig"><div class="ilbl">REPS</div>
-          <input type="number" inputmode="decimal" class="sinp${s.r?' ok':''}" id="ir-${ex.id}-${si}" value="${s.r}" placeholder="${rec?rec.r:(ps?ps.r:'')}" onchange="upS('${ex.id}',${si},'r',this.value)" onfocus="this.select()">
+          <input type="number" inputmode="decimal" class="sinp${s.r?' ok':''}" id="ir-${e.id}-${si}" value="${s.r}" placeholder="${rec?rec.r:(ps?ps.r:'')}" onchange="upS('${e.id}',${si},'r',this.value)" onfocus="this.select()">
         </div>
         <div class="ig rpe-ig"><div class="ilbl">RPE</div>
-          <input type="number" inputmode="decimal" class="sinp rpe-inp${s.rpe?' ok':''} ${getRPEClass(s.rpe,ex.type)}" id="ie-${ex.id}-${si}" value="${s.rpe}" placeholder="—" min="1" max="10" step="0.5" onchange="upS('${ex.id}',${si},'rpe',this.value)" onfocus="this.select()">
+          <input type="number" inputmode="decimal" class="sinp rpe-inp${s.rpe?' ok':''} ${getRPEClass(s.rpe,e.type)}" id="ie-${e.id}-${si}" value="${s.rpe}" placeholder="—" min="1" max="10" step="0.5" onchange="upS('${e.id}',${si},'rpe',this.value)" onfocus="this.select()">
         </div>
-        <button class="ckbtn${s.done?' on':''}" onclick="ckS('${ex.id}',${si},${ex.rest},'${ex.displayName.replace(/'/g,"\\'")}')">
+        <button class="ckbtn${s.done?' on':''}" onclick="ckS('${e.id}',${si},${e.rest},'${e.displayName.replace(/'/g,"\\'")}')">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
         </button>
-        ${canDel?`<button class="del-set-btn" onclick="delSet('${ex.id}',${si})" title="Remove set">
+        ${canDel?`<button class="del-set-btn" onclick="delSet('${e.id}',${si})" title="Remove set">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>`:'<div style="width:30px;flex-shrink:0"></div>'}
-      </div>
-      ${footer}`;
-    }).join('');
+      </div>${footer}`;
+    }
+
+    let setsHtml;
+    if(isSuperset&&ex2){
+      const nRows=Math.max(sets.length,sets2.length);
+      setsHtml=Array.from({length:nRows},(_,si)=>{
+        const s1=sets[si]||{w:'',r:'',rpe:'',done:false};
+        const s2=sets2[si]||{w:'',r:'',rpe:'',done:false};
+        const row1=oneSetRow(ex,s1,si,prev,setAlreadyLogged);
+        const row2=oneSetRow(ex2,s2,si,prev2,setAlreadyLogged2);
+        return `<div class="ss-row"><div class="ss-col"><div class="ss-col-lbl">A · ${ex.displayName}</div>${row1}</div><div class="ss-col"><div class="ss-col-lbl">B · ${ex2.displayName}</div>${row2}</div></div>`;
+      }).join('');
+    }else{
+      setsHtml=sets.map((s,si)=>oneSetRow(ex,s,si,prev,setAlreadyLogged)).join('');
+    }
 
     const canMoveUp=exIdx>0;
     const canMoveDown=exIdx<ST.awExs.length-1;
@@ -1420,10 +1465,14 @@ function renderWO(){
         </div>
         <div class="ex-header-main">
           <div class="etop">
-            <div class="ename">${ex.displayName}${ex.displayName!==ex.name?` <span style="font-size:10px;color:var(--tx3);font-weight:400;text-transform:none">(swapped)</span>`:''}</div>
-            <div class="badges">${bl}${exDone===sets.length&&sets.length>0?'<span class="badge bpr">✓ DONE</span>':''}</div>
+            <div class="ename">${isSuperset&&ex2?`<span class="ss-hdr">Superset</span> ${ex.displayName} <span style="color:var(--tx3)">+</span> ${ex2.displayName}`:ex.displayName+(ex.displayName!==ex.name?` <span style="font-size:10px;color:var(--tx3);font-weight:400;text-transform:none">(swapped)</span>`:'')}</div>
+            <div class="badges">${bl}${(isSuperset?exDone===sets.length&&exDone2===sets2.length:exDone===sets.length)&&(isSuperset?sets.length+sets2.length:sets.length)>0?'<span class="badge bpr">✓ DONE</span>':''}</div>
           </div>
           <div class="ex-actions">
+            ${!isSuperset&&exIdx<ST.awExs.length-1?`<button class="ex-act-btn ${ex.supersetWith?' on':''}" onclick="toggleSuperset(${exIdx})" title="${ex.supersetWith?'Unpair superset':'Superset with next'}">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v18M16 3v18M3 8h18M3 16h18"/></svg>
+              ${ex.supersetWith?'Unpair':'Superset'}
+            </button>`:''}
             <button class="ex-act-btn" onclick="openSW('${ST.aday}',${exIdx},'${ex.name.replace(/'/g,"\\'")}')">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
               Swap
@@ -1434,10 +1483,10 @@ function renderWO(){
             </button>
           </div>
           <div class="eparams">
-            <div class="ep"><strong>${sets.length}</strong> sets</div>
+            <div class="ep"><strong>${isSuperset&&ex2?sets.length+' + '+sets2.length:sets.length}</strong> sets</div>
             <div class="ep"><strong>${ex.reps}</strong> reps</div>
             <div class="ep"><strong>${ex.rest>=60?ex.rest/60+'min':ex.rest+'s'}</strong> rest</div>
-            ${exVol?`<div class="ep"><strong>${exVol.toLocaleString()}</strong> lbs vol</div>`:''}
+            ${(exVol||exVol2)?`<div class="ep"><strong>${(exVol+exVol2).toLocaleString()}</strong> lbs vol</div>`:''}
           </div>
           <button class="cue-toggle" onclick="toggleCue('${ex.id}')">
             <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><${cueHidden?'polyline points="9 18 15 12 9 6"':'polyline points="6 9 12 15 18 9"'}/></svg>
@@ -1449,10 +1498,13 @@ function renderWO(){
       </div>
       <div class="sets-w" id="sw-${ex.id}">${setsHtml}</div>
       <div class="sets-footer">
-        <button class="addbtn" onclick="addS('${ex.id}')">
+        ${isSuperset&&ex2?`<button class="addbtn" onclick="addS('${ex.id}');addS('${ex2.id}')">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          ADD SET (BOTH)
+        </button>`:`<button class="addbtn" onclick="addS('${ex.id}')">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           ADD SET
-        </button>
+        </button>`}
       </div>`;
 
     wc.appendChild(card);
@@ -1714,8 +1766,13 @@ function initDrag(){
 
 function moveEx(from,to){
   if(from===to) return;
-  const item=ST.awExs.splice(from,1)[0];
-  ST.awExs.splice(to,0,item);
+  const next=ST.awExs[from+1];
+  const ex=ST.awExs[from];
+  const count=(ex.supersetWith&&next&&ex.supersetWith===next.id)?2:1;
+  const items=ST.awExs.splice(from,count);
+  let insertAt=to;
+  if(to>from)insertAt=Math.max(0,to-count);
+  ST.awExs.splice(insertAt,0,...items);
   renderWO();
 }
 function moveUpEx(exIdx){
@@ -1723,8 +1780,23 @@ function moveUpEx(exIdx){
   moveEx(exIdx,exIdx-1);
 }
 function moveDownEx(exIdx){
-  if(exIdx>=ST.awExs.length-1) return;
-  moveEx(exIdx,exIdx+1);
+  const ex=ST.awExs[exIdx];
+  const next=ST.awExs[exIdx+1];
+  const count=(ex.supersetWith&&next&&ex.supersetWith===next.id)?2:1;
+  if(exIdx+count>=ST.awExs.length) return;
+  moveEx(exIdx,exIdx+count);
+}
+function toggleSuperset(exIdx){
+  const ex=ST.awExs[exIdx];
+  const next=ST.awExs[exIdx+1];
+  if(!ex||!next)return;
+  if(ex.supersetWith===next.id){
+    ex.supersetWith=undefined;
+  }else{
+    ex.supersetWith=next.id;
+  }
+  saveWorkoutProgress();
+  renderWO();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2005,18 +2077,13 @@ function finWO(){
     saveST();
   }
 
-  // Remove existing logs for this day+week to prevent duplication
-  const removedIds=[];
-  ST.logs=ST.logs.filter(l=>{
-    if(l.dk===dk&&l.wk===wk){removedIds.push(l.id);return false}
-    return true;
-  });
-  if(removedIds.length&&typeof fbRef==='function'){
-    try{const updates={};removedIds.forEach(id=>{if(id)updates[id]=null});fbRef('logs').update(updates)}catch(e){console.warn('FB cleanup:',e)}
-  }
+  // Preserve original id/ts/date for existing sets; only NEW sets get current timestamp
+  const existing=ST.logs.filter(l=>l.dk===dk&&l.wk===wk);
+  const existingByKey={};
+  existing.forEach(l=>{existingByKey[`${l.ex}|${l.sn}`]=l});
 
-  let added=0;
-  const newRows=[];
+  const mergedRows=[];
+  const newRowsOnly=[];
 
   ST.awExs.forEach(ex=>{
     const sets=ST.aws[ex.id]||[];
@@ -2032,33 +2099,52 @@ function finWO(){
       const e1rm=Math.round(w*(1+r/30));
       const rpe=s.rpe?parseFloat(s.rpe):null;
       const dur=ST.woStartTime?Math.round((Date.now()-ST.woStartTime)/60000):null;
-      const row={
-        id:'l'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
-        ts:new Date().toISOString(),
-        date, dk, dn,
-        wk,
-        bl:ST.bl,
-        ex:ex.displayName,
-        origEx:ex.name||ex.displayName,
-        sn:idx+1,
-        w, r,
-        e1rm,
-        rpe,
-        dur
-      };
-      ST.logs.push(row);
-      newRows.push(row);
-      added++;
+      const key=`${ex.displayName}|${idx+1}`;
+      const prev=existingByKey[key];
+
+      let row;
+      if(prev){
+        row={...prev,w,r,e1rm,rpe};
+      }else{
+        row={
+          id:'l'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+          ts:new Date().toISOString(),
+          date, dk, dn,
+          wk,
+          bl:ST.bl,
+          ex:ex.displayName,
+          origEx:ex.name||ex.displayName,
+          sn:idx+1,
+          w, r,
+          e1rm,
+          rpe,
+          dur
+        };
+        newRowsOnly.push(row);
+      }
+      mergedRows.push(row);
     });
   });
 
+  const keptIds=new Set(mergedRows.map(r=>r.id));
+  const removedIds=existing.map(l=>l.id).filter(id=>!keptIds.has(id));
+
+  ST.logs=ST.logs.filter(l=>!(l.dk===dk&&l.wk===wk));
+  mergedRows.forEach(r=>ST.logs.push(r));
   saveLogs();
   clearWorkoutProgress();
   renderHome();
 
-  if(newRows.length){
-    sheetsPOST({action:'append',sheet:'Logs',rows:newRows});
-    fbSaveLogs(newRows);
+  if(mergedRows.length){
+    try{
+      const updates={};
+      mergedRows.forEach(r=>{if(r.id)updates[r.id]=r});
+      removedIds.forEach(id=>{if(id)updates[id]=null});
+      if(typeof fbRef==='function')fbRef('logs').update(updates);
+    }catch(e){console.warn('FB logs update:',e)}
+  }
+  if(newRowsOnly.length){
+    sheetsPOST({action:'append',sheet:'Logs',rows:newRowsOnly});
   }
 
   // Check if all non-rest days have been logged this week → show weekly review
