@@ -112,18 +112,38 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .sched-sel:focus{border-color:var(--blue);outline:none}
 .sched-btn{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;padding:6px 12px;color:var(--tx2);font-size:11px;font-family:var(--fb);cursor:pointer;margin:8px 14px 0;transition:border-color .2s}
 .sched-btn:hover{border-color:var(--blue);color:var(--tx)}
+.sched-copy{display:flex;align-items:center;gap:8px;padding:12px 16px 4px;font-size:11px;color:var(--tx2);cursor:pointer}
+.sched-copy input{accent-color:var(--blue)}
+.pr-board{margin:8px 14px 0;background:var(--s1);border:1px solid var(--b1);border-radius:8px;overflow:hidden}
+.pr-board:empty{display:none}
+.pr-hdr{font-size:10px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;padding:10px 12px 6px;display:flex;align-items:center;gap:6px}
+.pr-list{padding:0 12px 10px}
+.pr-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--b1);font-size:11px}
+.pr-item:last-child{border-bottom:none}
+.pr-ex{color:var(--tx);font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-val{font-family:var(--fm);color:var(--gold);font-weight:600;font-size:12px;margin-left:8px}
+.pr-delta{font-size:9px;color:var(--grn2);margin-left:6px}
 .rpe-ig{max-width:44px}
 .rpe-inp{text-align:center;font-size:12px!important}
 .prev .rec{color:var(--grn2)}
 .rec-hint{font-size:9px;color:var(--tx3);font-style:italic}
 .deload-banner{background:linear-gradient(90deg,rgba(230,57,70,.15),rgba(230,57,70,.05));border:1px solid rgba(230,57,70,.3);border-radius:8px;padding:10px 14px;margin:0 12px 10px;font-size:12px;color:var(--tx2)}
 .deload-banner strong{color:var(--red)}
-.wt-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:11px;border-bottom:1px solid var(--b1)}
-.wt-row:last-child{border-bottom:none}
-.wt-name{font-weight:600;color:var(--tx2)}
-.wt-status.lagging{color:var(--red)}
-.wt-status.maintained{color:var(--grn2)}
-.wt-status.reduced{color:var(--gold)}
+.wt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.wt-card{background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px}
+.wt-ring-wrap{position:relative;width:38px;height:38px;flex-shrink:0}
+.wt-ring-wrap svg{transform:rotate(-90deg)}
+.wt-ring-bg{fill:none;stroke:var(--s3);stroke-width:3}
+.wt-ring-fg{fill:none;stroke-width:3;stroke-linecap:round;transition:stroke-dashoffset .4s}
+.wt-ring-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:var(--fm);font-weight:600;color:var(--tx2)}
+.wt-info{flex:1;min-width:0}
+.wt-name{font-size:11px;font-weight:700;color:var(--tx);line-height:1.2}
+.wt-counts{font-size:10px;font-family:var(--fm);color:var(--tx3);margin-top:2px}
+.wt-badge{display:inline-block;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 5px;border-radius:3px;margin-top:3px}
+.wt-badge.lagging{background:rgba(230,57,70,.15);color:var(--red)}
+.wt-badge.maintained{background:rgba(42,157,143,.15);color:var(--grn2)}
+.wt-badge.reduced{background:rgba(244,162,97,.15);color:var(--gold)}
+.wt-badge.done{background:rgba(82,183,136,.2);color:var(--grn2)}
 .rlabel{font-family:var(--fd);font-size:17px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em}
 
 /* WORKOUT */
@@ -440,7 +460,7 @@ select{color-scheme:dark}
 <!-- SCHEDULE EDITOR -->
 <div class="overlay" id="SCHED" style="display:none">
   <div class="opanel" style="max-width:420px">
-    <div class="ohdr"><span>Customize Schedule</span><button class="cbtn" onclick="closeSchedule()">&times;</button></div>
+    <div class="ohdr"><span id="SCHED_TITLE">Customize Schedule</span><button class="cbtn" onclick="closeSchedule()">&times;</button></div>
     <div class="sched-hint">Assign any workout to any day. Drag your rest day around or swap workouts freely.</div>
     <div id="SCHED_BODY"></div>
     <div style="padding:0 16px 16px"><button class="btn" onclick="saveSchedule()" style="width:100%">Save Schedule</button></div>
@@ -484,6 +504,7 @@ select{color-scheme:dark}
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     Customize Weekly Schedule
   </button>
+  <div class="pr-board" id="PRB"></div>
   <div class="wstrip" id="WS"></div>
   <div class="day-list" id="DL"></div>
 </div>
@@ -702,20 +723,23 @@ const BODY_PART_OPTIONS=[{v:'chest',l:'Chest'},{v:'back',l:'Back'},{v:'quads',l:
 
 const DAY_NAMES={mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
 
-function initDayMap(){
-  if(ST.dayMap)return;
+function getScheduleForWeek(wk){
+  const s=(ST.weekSchedules||{})[wk];
+  if(s)return s;
+  const def={};
   const rds=new Set(ST.restDays||['fri']);
-  ST.dayMap={};
-  DO.forEach(dk=>{ST.dayMap[dk]=rds.has(dk)?'rest':dk});
+  DO.forEach(dk=>{def[dk]=rds.has(dk)?'rest':dk});
+  return def;
 }
-function syncRestDaysFromMap(){
-  ST.restDays=DO.filter(dk=>ST.dayMap&&ST.dayMap[dk]==='rest');
+function syncRestDaysFromSchedule(wk){
+  const sched=getScheduleForWeek(wk);
+  ST.restDays=DO.filter(dk=>sched[dk]==='rest');
   if(!ST.restDays.length)ST.restDays=['fri'];
 }
 
 function getDayProgram(dk){
-  initDayMap();
-  const mapped=ST.dayMap[dk]||dk;
+  const sched=getScheduleForWeek(ST.wk);
+  const mapped=sched[dk]||dk;
   if(mapped==='rest')return {key:dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
   const base=P[mapped];
   if(!base||base.rest)return {key:dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
@@ -724,41 +748,49 @@ function getDayProgram(dk){
   return {...base,key:dk,name:DAY_NAMES[dk],exercises:merged};
 }
 function toggleRestDay(dk){
-  initDayMap();
-  if(ST.dayMap[dk]==='rest'){
-    ST.dayMap[dk]=dk;
-  }else{
-    ST.dayMap[dk]='rest';
-  }
-  syncRestDaysFromMap();
+  if(!ST.weekSchedules)ST.weekSchedules={};
+  const wk=ST.wk;
+  const sched={...getScheduleForWeek(wk)};
+  sched[dk]=sched[dk]==='rest'?dk:'rest';
+  ST.weekSchedules[wk]=sched;
+  syncRestDaysFromSchedule(wk);
   saveST();
   renderRestDayBtns();
   renderHome();
   renderBodyTracker();
 }
 function renderRestDayBtns(){
-  initDayMap();
-  DO.forEach(dk=>{const b=document.querySelector('.rd-btn[data-dk="'+dk+'"]');if(b)b.classList.toggle('on',ST.dayMap[dk]==='rest')});
+  const sched=getScheduleForWeek(ST.wk);
+  DO.forEach(dk=>{const b=document.querySelector('.rd-btn[data-dk="'+dk+'"]');if(b)b.classList.toggle('on',sched[dk]==='rest')});
 }
-function setRestDay(rd){initDayMap();DO.forEach(dk=>{ST.dayMap[dk]=dk===rd?'rest':ST.dayMap[dk]==='rest'&&dk!==rd?dk:ST.dayMap[dk]});syncRestDaysFromMap();saveST();renderRestDayBtns();renderHome();renderBodyTracker();}
 
 function openScheduleEditor(){
-  initDayMap();
+  const wk=ST.wk;
+  const sched=getScheduleForWeek(wk);
   const workouts=DO.filter(dk=>P[dk]&&!P[dk].rest).map(dk=>({key:dk,label:P[dk].focus}));
   workouts.push({key:'rest',label:'Rest & Recovery'});
   const body=document.getElementById('SCHED_BODY');
+  document.getElementById('SCHED_TITLE').textContent='Week '+wk+' Schedule';
   body.innerHTML=DO.map(dk=>{
-    const cur=ST.dayMap[dk]||dk;
+    const cur=sched[dk]||dk;
     const opts=workouts.map(o=>`<option value="${o.key}"${o.key===cur?' selected':''}>${o.label}</option>`).join('');
     return `<div class="sched-row"><span class="sched-day">${DAY_NAMES[dk]}</span><select class="sched-sel" id="sched-${dk}">${opts}</select></div>`;
   }).join('');
+  body.innerHTML+=`<label class="sched-copy"><input type="checkbox" id="sched-copy-all"> Apply to all future weeks (W${wk}–24)</label>`;
   document.getElementById('SCHED').style.display='flex';
 }
 function saveSchedule(){
   const newMap={};
   DO.forEach(dk=>{newMap[dk]=document.getElementById('sched-'+dk).value});
-  ST.dayMap=newMap;
-  syncRestDaysFromMap();
+  if(!ST.weekSchedules)ST.weekSchedules={};
+  const wk=ST.wk;
+  const copyAll=document.getElementById('sched-copy-all')&&document.getElementById('sched-copy-all').checked;
+  if(copyAll){
+    for(let w=wk;w<=24;w++)ST.weekSchedules[w]={...newMap};
+  }else{
+    ST.weekSchedules[wk]=newMap;
+  }
+  syncRestDaysFromSchedule(wk);
   saveST();
   renderHome();
   renderBodyTracker();
@@ -864,7 +896,7 @@ const HL=[
 const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbyKSyFyEdTkZhfnMrKF66zPUNn8Lf5ppYz5bAZviRzGAcN8YGZx5-hAEvIN03wTW5Ex/exec';
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
-  cueCollapsed:{},restDays:['fri'],dayMap:null,weekOverride:{},workoutsSinceBackupReminder:0,
+  cueCollapsed:{},restDays:['fri'],weekSchedules:{},weekOverride:{},workoutsSinceBackupReminder:0,
   profile:{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}
 };
 let CHS={};
@@ -872,7 +904,7 @@ let CHS={};
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.dayMap=p.dayMap||null;ST.weekOverride=p.weekOverride||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}}catch(e){ST.url=SHEETS_URL}
+  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('adamCustomEx');
@@ -883,7 +915,7 @@ function loadST(){
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],dayMap:ST.dayMap||null,weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
+function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
 function saveST(){saveSTLocal();fbSaveSettings()}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
 function saveLogsLocal(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
@@ -954,7 +986,7 @@ function renderHome(){
     const p=document.createElement('button');
     p.className='wpill'+(w===ST.wk?' on':'')+(DLOADS.has(w)?' dl':'');
     p.textContent=DLOADS.has(w)?`W${w}🔄`:`W${w}`;
-    const ww=w;p.onclick=()=>{ST.wk=ww;saveST();renderHome();renderBodyTracker()};
+    const ww=w;p.onclick=()=>{ST.wk=ww;syncRestDaysFromSchedule(ww);saveST();renderHome();renderBodyTracker()};
     ws.appendChild(p);
   }
   setTimeout(()=>{const a=ws.querySelector('.wpill.on');if(a)a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'})},50);
@@ -978,6 +1010,31 @@ function renderHome(){
     <div style="display:flex;align-items:center;padding-right:14px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="${done?'var(--grn)':'var(--tx3)'}" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;
     dl.appendChild(el);
   });
+  renderPRBoard();
+}
+function renderPRBoard(){
+  const prb=document.getElementById('PRB');
+  if(!prb)return;
+  const wk=ST.wk;
+  const weekLogs=ST.logs.filter(l=>l.wk===wk&&l.e1rm);
+  const priorLogs=ST.logs.filter(l=>l.wk<wk&&l.e1rm);
+  const priorBest={};
+  priorLogs.forEach(l=>{if(!priorBest[l.ex]||l.e1rm>priorBest[l.ex])priorBest[l.ex]=l.e1rm});
+  const weekBest={};
+  weekLogs.forEach(l=>{if(!weekBest[l.ex]||l.e1rm>weekBest[l.ex])weekBest[l.ex]=l.e1rm});
+  const prs=[];
+  for(const ex of Object.keys(weekBest)){
+    const cur=weekBest[ex];
+    const prev=priorBest[ex]||0;
+    if(cur>prev&&prev>0)prs.push({ex,e1rm:cur,delta:cur-prev});
+    else if(!prev&&cur>0)prs.push({ex,e1rm:cur,delta:0});
+  }
+  prs.sort((a,b)=>b.delta-a.delta);
+  if(!prs.length){prb.innerHTML='';return}
+  const items=prs.slice(0,5).map(p=>
+    `<div class="pr-item"><span class="pr-ex">${p.ex}</span><span class="pr-val">${p.e1rm} e1RM</span>${p.delta?`<span class="pr-delta">+${p.delta}</span>`:''}</div>`
+  ).join('');
+  prb.innerHTML=`<div class="pr-hdr"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> PRs This Week</div><div class="pr-list">${items}</div>`;
 }
 function getLastDate(dk){const l=ST.logs.filter(x=>x.dk===dk);if(!l.length)return null;return l.map(x=>x.date).sort().reverse()[0]}
 function calcStreak(){
@@ -1039,15 +1096,32 @@ function renderBodyTracker(){
     </div>`;
   }
   const targ=WEEKLY_TARGETS;
-  let wtHtml='';
+  const R=16,C=2*Math.PI*R;
+  let wtHtml='<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--b1);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Weekly Targets</div><div class="wt-grid">';
   for(const bp of Object.keys(targ)){
-    const actBp=actu[bp]||0;
+    const a=actu[bp]||0;
     const t=targ[bp].target;
     const status=targ[bp].status;
-    const rec=actBp>=t?'✓':actBp>0?`${t-actBp} to go`:'—';
-    wtHtml+=`<div class="wt-row"><span class="wt-name">${labels[bp]}</span><span>${actBp}/${t}</span><span class="wt-status ${status}">${rec}</span></div>`;
+    const pct=Math.min(100,Math.round((a/t)*100));
+    const offset=C-C*(pct/100);
+    const ringColor=a>=t?'var(--grn2)':status==='lagging'?'var(--red)':status==='reduced'?'var(--gold)':'var(--blue2)';
+    const badgeClass=a>=t?'done':status;
+    const badgeText=a>=t?'Complete':status==='lagging'?'Priority':status==='reduced'?'Reduced':'On Track';
+    const note=a>=t?'':`<span style="font-size:9px;color:var(--tx3);margin-left:4px">${t-a} to go</span>`;
+    wtHtml+=`<div class="wt-card">
+      <div class="wt-ring-wrap">
+        <svg viewBox="0 0 36 36" width="38" height="38"><circle class="wt-ring-bg" cx="18" cy="18" r="${R}"/><circle class="wt-ring-fg" cx="18" cy="18" r="${R}" stroke="${ringColor}" stroke-dasharray="${C}" stroke-dashoffset="${offset}"/></svg>
+        <div class="wt-ring-pct">${pct}%</div>
+      </div>
+      <div class="wt-info">
+        <div class="wt-name">${labels[bp]}</div>
+        <div class="wt-counts">${a} / ${t} sets${note}</div>
+        <span class="wt-badge ${badgeClass}">${badgeText}</span>
+      </div>
+    </div>`;
   }
-  html+='<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--b1);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Weekly targets</div>'+wtHtml;
+  wtHtml+='</div>';
+  html+=wtHtml;
   btb.innerHTML=html||'<div style="font-size:12px;color:var(--tx3);padding:8px 0">Complete workouts to see progress</div>';
 }
 
@@ -1226,12 +1300,14 @@ function renderWO(){
 
   // Workout summary bar
   const sumBar=document.getElementById('WOSUM');
+  const elapsed=getElapsed();
   sumBar.innerHTML=`
     <div class="wo-sum-item">Sets: <strong>${completedSets}/${totalSets}</strong></div>
     <div class="wo-sum-item">Volume: <strong>${totalVol.toLocaleString()} lbs</strong></div>
     <div class="wo-sum-item">Exercises: <strong>${ST.awExs.length}</strong></div>
+    <div class="wo-sum-item" id="WOT">Time: <strong>${elapsed}</strong></div>
   `;
-
+  startWOTimer();
   initDrag();
 }
 
@@ -1266,8 +1342,25 @@ function updateSummary(){
     totalVol+=sets.reduce((s,st)=>s+(st.w&&st.r?st.w*st.r:0),0);
   });
   const bar=document.getElementById('WOSUM');
-  if(bar)bar.innerHTML=`<div class="wo-sum-item">Sets: <strong>${completedSets}/${totalSets}</strong></div><div class="wo-sum-item">Volume: <strong>${totalVol.toLocaleString()} lbs</strong></div><div class="wo-sum-item">Exercises: <strong>${ST.awExs.length}</strong></div>`;
+  const el=getElapsed();
+  if(bar)bar.innerHTML=`<div class="wo-sum-item">Sets: <strong>${completedSets}/${totalSets}</strong></div><div class="wo-sum-item">Volume: <strong>${totalVol.toLocaleString()} lbs</strong></div><div class="wo-sum-item">Exercises: <strong>${ST.awExs.length}</strong></div><div class="wo-sum-item" id="WOT">Time: <strong>${el}</strong></div>`;
 }
+let WO_TIMER=null;
+function getElapsed(){
+  if(!ST.woStartTime)return '0:00';
+  const s=Math.floor((Date.now()-ST.woStartTime)/1000);
+  const m=Math.floor(s/60);const sec=s%60;
+  return m>=60?`${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${m}:${String(sec).padStart(2,'0')}`;
+}
+function startWOTimer(){
+  if(WO_TIMER)clearInterval(WO_TIMER);
+  WO_TIMER=setInterval(()=>{
+    const el=document.getElementById('WOT');
+    if(el)el.innerHTML=`Time: <strong>${getElapsed()}</strong>`;
+    else{clearInterval(WO_TIMER);WO_TIMER=null}
+  },1000);
+}
+function stopWOTimer(){if(WO_TIMER){clearInterval(WO_TIMER);WO_TIMER=null}}
 function ckS(id,si,rest,dn){
   if(!ST.aws[id])return;
   const s=ST.aws[id][si];s.done=!s.done;
@@ -1615,7 +1708,7 @@ function getProgOverloadRec(exName,dk,setIdx){
 // FINISH WORKOUT (LOGGING)
 // ═══════════════════════════════════════════════════════════
 function finWO(){
-  // Only log sets that have both weight + reps (allow BW as 0 weight)
+  stopWOTimer();
   const today=new Date();
   const date=today.toISOString().split('T')[0];
   const dk=ST.aday;
@@ -1675,8 +1768,8 @@ function finWO(){
   }
 
   // Check if all non-rest days have been logged this week → show weekly review
-  const rds=new Set(ST.restDays||['fri']);
-  const workDays=DO.filter(d=>!rds.has(d));
+  const finSched=getScheduleForWeek(ST.logWk||ST.wk);
+  const workDays=DO.filter(d=>finSched[d]!=='rest');
   const loggedDays=new Set(ST.logs.filter(l=>l.wk===(ST.logWk||ST.wk)).map(l=>l.dk));
   const allDone=workDays.every(d=>loggedDays.has(d));
 
@@ -2241,7 +2334,7 @@ function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
 function fbSaveSettings(){
   if(!fbReady)return;
   try{
-    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],dayMap:ST.dayMap||null,weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
+    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
     fbRef('settings').set(data);
   }catch(e){console.warn('FB settings write failed:',e)}
 }
@@ -2283,7 +2376,7 @@ async function fbPullAll(){
     // Merge settings (Firebase wins if newer)
     if(data.settings){
       const fb=data.settings;
-      const keys=['wk','bl','ovr','restDays','dayMap','weekOverride','addedExercises','profile'];
+      const keys=['wk','bl','ovr','restDays','weekSchedules','weekOverride','addedExercises','profile'];
       keys.forEach(k=>{if(fb[k]!==undefined){ST[k]=fb[k];changed=true}});
       if(fb.url)ST.url=fb.url;
     }
@@ -2325,7 +2418,7 @@ function fbListenForChanges(){
 
       if(data.settings){
         const fb=data.settings;
-        ['wk','bl','ovr','restDays','dayMap','weekOverride','addedExercises','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
+        ['wk','bl','ovr','restDays','weekSchedules','weekOverride','addedExercises','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
         if(fb.url)ST.url=fb.url;
         saveSTLocal();
       }
