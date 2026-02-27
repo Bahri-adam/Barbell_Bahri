@@ -960,15 +960,22 @@ function renderHome(){
   setTimeout(()=>{const a=ws.querySelector('.wpill.on');if(a)a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'})},50);
   // Day cards
   const dl=document.getElementById('DL');dl.innerHTML='';
+  const loggedThisWeek=new Set(weekLogs.map(l=>l.dk));
   DO.forEach(k=>{
     const d=getDayProgram(k);
-    if(d.rest){const dayNames={mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};const el=document.createElement('div');el.className='rcard';el.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--tx3)" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><div class="rlabel">${dayNames[k]} — Rest & Recovery</div>`;dl.appendChild(el);return}
+    if(d.rest){const el=document.createElement('div');el.className='rcard';el.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--tx3)" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><div class="rlabel">${DAY_NAMES[k]} — Rest & Recovery</div>`;dl.appendChild(el);return}
+    const dayLogs=weekLogs.filter(l=>l.dk===k);
+    const done=loggedThisWeek.has(k);
+    const daySets=dayLogs.length;
+    const dayVol=dayLogs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
     const last=getLastDate(k);
-    const el=document.createElement('div');el.className='dcard';el.onclick=()=>openWO(k);
-    el.innerHTML=`<div class="dstripe" style="background:${d.color}"></div>
-    <div class="dbody"><div class="dnrow"><div class="dname" style="color:${d.color}">${d.name}</div><div class="dcount">${d.exercises.length} ex</div></div>
-    <div class="dfocus">${d.focus}</div><div class="dlast">${last?'Last: '+last:'Not yet logged'}</div></div>
-    <div style="display:flex;align-items:center;padding-right:14px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--tx3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;
+    const el=document.createElement('div');el.className='dcard'+(done?' dcard-done':'');el.onclick=()=>openWO(k);
+    el.innerHTML=`<div class="dstripe" style="background:${done?'var(--grn)':d.color}"></div>
+    <div class="dbody"><div class="dnrow"><div class="dname" style="color:${done?'var(--grn)':d.color}">${d.name}${done?' ✓':''}</div><div class="dcount">${d.exercises.length} ex</div></div>
+    <div class="dfocus">${d.focus}</div>
+    ${done?`<div class="dlast" style="color:var(--grn2)">${daySets} sets · ${dayVol>1000?(dayVol/1000).toFixed(1)+'K':dayVol} lbs volume</div>`:`<div class="dlast">${last?'Last: '+last:'Not yet logged'}</div>`}
+    </div>
+    <div style="display:flex;align-items:center;padding-right:14px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="${done?'var(--grn)':'var(--tx3)'}" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;
     dl.appendChild(el);
   });
 }
@@ -1051,19 +1058,44 @@ function getOvr(dk,ei,wk){return ST.ovr[`${dk}-${ei}-${wk}`]||ST.ovr[`${dk}-${ei
 
 function openWO(dk){
   ST.aday=dk;ST.aws={};ST.cueCollapsed={};
+  ST.logWk=ST.wk;
   const d=getDayProgram(dk);
-  // Deep copy exercises so we can mutate order/add/remove without affecting template
-  ST.awExs=d.exercises.map((ex,i)=>{
-    const ovr=getOvr(dk,i,ST.wk);
-    return {...ex, displayName: ovr||ex.name, templateIdx: i};
-  });
-  ST.awExs.forEach(ex=>{
-    ST.aws[ex.id]=Array.from({length:ex.sets},()=>({w:'',r:'',rpe:'',done:false}));
-  });
-  ST.woStartTime=Date.now();
+
+  // Check for saved in-progress workout first
+  const wip=loadWorkoutProgress(dk);
+  if(wip&&wip.awExs&&wip.aws){
+    ST.awExs=wip.awExs;
+    ST.aws=wip.aws;
+    ST.woStartTime=wip.woStartTime||Date.now();
+  }else{
+    ST.awExs=d.exercises.map((ex,i)=>{
+      const ovr=getOvr(dk,i,ST.wk);
+      return {...ex, displayName: ovr||ex.name, templateIdx: i};
+    });
+
+    // Pre-fill from logs if this day was already logged this week
+    const wk=ST.logWk||ST.wk;
+    const weekLogs=ST.logs.filter(l=>l.wk===wk&&l.dk===dk);
+    if(weekLogs.length>0){
+      ST.awExs.forEach(ex=>{
+        const exLogs=weekLogs.filter(l=>l.ex===ex.displayName).sort((a,b)=>a.sn-b.sn);
+        if(exLogs.length>0){
+          ST.aws[ex.id]=exLogs.map(l=>({w:l.w||'',r:l.r||'',rpe:l.rpe||'',done:true}));
+          while(ST.aws[ex.id].length<ex.sets)ST.aws[ex.id].push({w:'',r:'',rpe:'',done:false});
+        }else{
+          ST.aws[ex.id]=Array.from({length:ex.sets},()=>({w:'',r:'',rpe:'',done:false}));
+        }
+      });
+    }else{
+      ST.awExs.forEach(ex=>{
+        ST.aws[ex.id]=Array.from({length:ex.sets},()=>({w:'',r:'',rpe:'',done:false}));
+      });
+    }
+    ST.woStartTime=Date.now();
+  }
+
   document.getElementById('WT').textContent=d.name;
   document.getElementById('WF').textContent=d.focus;
-  ST.logWk=ST.wk;
   const dlBanner=document.getElementById('WODLB');
   if(dlBanner){dlBanner.style.display=DLOADS.has(ST.wk)?'block':'none';if(DLOADS.has(ST.wk)){const pct=Math.round((DELOAD_PCT[ST.wk]||.65)*100);dlBanner.innerHTML=`<strong>★ DELOAD WEEK (W${ST.wk})</strong> — Use ~${pct}% of working weights, ~50% of sets. Resets volume sensitivity — this is when you grow.`}}
   const wws=document.getElementById('WWS');
@@ -1098,10 +1130,11 @@ function renderWO(){
     card.dataset.exidx=exIdx;
     card.draggable=true;
 
+    const setAlreadyLogged=sets.some(s=>s.done&&s.w&&s.r);
     const setsHtml=sets.map((s,si)=>{
       const ps=prev[si];
-      const rec=getRec(ex.displayName,ST.aday,si)||getProgOverloadRec(ex.displayName,ST.aday,si);
-      const isDeload=!!getRec(ex.displayName,ST.aday,si);
+      const rec=setAlreadyLogged?null:(getRec(ex.displayName,ST.aday,si)||getProgOverloadRec(ex.displayName,ST.aday,si));
+      const isDeload=setAlreadyLogged?false:!!getRec(ex.displayName,ST.aday,si);
       const isLast=si===sets.length-1;
       const canDel=sets.length>1;
       let footer='';
@@ -1211,10 +1244,19 @@ function toggleCue(exId){
 function upS(id,si,f,v){
   if(!ST.aws[id])return;
   ST.aws[id][si][f]=v?parseFloat(v):'';
-  const inp=document.getElementById((f==='w'?'iw-':'ir-')+id+'-'+si);
+  const inp=document.getElementById((f==='w'?'iw-':f==='r'?'ir-':'ie-')+id+'-'+si);
   if(inp)inp.classList.toggle('ok',!!v);
   updateSummary();
+  saveWorkoutProgress();
 }
+function saveWorkoutProgress(){
+  if(!ST.aday)return;
+  try{localStorage.setItem('adamWIP',JSON.stringify({dk:ST.aday,wk:ST.logWk||ST.wk,aws:ST.aws,awExs:ST.awExs,woStartTime:ST.woStartTime}))}catch(e){}
+}
+function loadWorkoutProgress(dk){
+  try{const s=localStorage.getItem('adamWIP');if(!s)return null;const d=JSON.parse(s);if(d.dk===dk&&d.wk===(ST.logWk||ST.wk))return d}catch(e){}return null;
+}
+function clearWorkoutProgress(){try{localStorage.removeItem('adamWIP')}catch(e){}}
 function updateSummary(){
   let totalVol=0,totalSets=0,completedSets=0;
   ST.awExs.forEach(ex=>{
@@ -1229,10 +1271,8 @@ function updateSummary(){
 function ckS(id,si,rest,dn){
   if(!ST.aws[id])return;
   const s=ST.aws[id][si];s.done=!s.done;
-  // Just update button state without full re-render
-  const btn=document.querySelector(`#sw-${id} .srow:nth-child(${si*2+1}) .ckbtn`);
-  // Full re-render for simplicity to update done badge
   renderWO();
+  saveWorkoutProgress();
   if(s.done&&rest)startRest(parseInt(rest),dn);
 }
 function addS(id){
@@ -1244,11 +1284,13 @@ function addS(id){
     const sw=document.getElementById('sw-'+id);
     if(sw){const rows=sw.querySelectorAll('.srow');if(rows.length)rows[rows.length-1].scrollIntoView({behavior:'smooth',block:'nearest'})}
   },50);
+  saveWorkoutProgress();
 }
 function delSet(id,si){
   if(!ST.aws[id]||ST.aws[id].length<=1)return;
   ST.aws[id].splice(si,1);
   renderWO();
+  saveWorkoutProgress();
 }
 
 // ── EXERCISE ADD/REMOVE/REORDER ────────────────────────────
@@ -1624,6 +1666,7 @@ function finWO(){
   });
 
   saveLogs();
+  clearWorkoutProgress();
   renderHome();
 
   if(newRows.length){
