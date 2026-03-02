@@ -137,7 +137,7 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .ec.superset{border-left:3px solid var(--blue)}
 .ss-hdr{font-size:10px;color:var(--blue2);font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
 .ss-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:flex-start;margin-bottom:6px}
-@media(max-width:360px){.ss-row{grid-template-columns:1fr}}
+@media(max-width:500px){.ss-row{grid-template-columns:1fr}.ss-col{min-width:100%}.ec.superset .ename{flex-wrap:wrap;font-size:12px}.ec.superset .ex-actions{flex-wrap:wrap;gap:6px}}
 .ss-col{background:var(--s2);border:1px solid var(--b1);border-radius:5px;padding:8px;min-width:0}
 .ss-col-lbl{font-size:9px;color:var(--tx3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
 .ss-col .srow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:0}
@@ -145,6 +145,8 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .ss-col .ig{min-width:0;flex:1}
 .ss-col .sinp{width:100%;min-width:40px}
 .ss-col .ckbtn,.ss-col .del-set-btn{flex-shrink:0}
+.sets-footer-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.unpair-superset-btn{background:transparent;border:1px solid var(--b2);color:var(--tx3);font-size:11px;padding:6px 10px;border-radius:4px;cursor:pointer} .unpair-superset-btn:hover{color:var(--tx2);border-color:var(--tx3)}
 .rpe-ig{max-width:44px}
 .rpe-inp{text-align:center;font-size:12px!important}
 .prev .rec{color:var(--grn2)}
@@ -573,6 +575,18 @@ select{color-scheme:dark}
   </div>
 </div>
 
+<!-- EDIT CUE MODAL -->
+<div class="overlay" id="EDCUE" onclick="if(event.target===this)closeEditCue()">
+  <div class="modal" style="max-width:480px" onclick="event.stopPropagation()">
+    <div class="mhdr">Edit Cue / Notes <button class="mx" onclick="closeEditCue()">✕</button></div>
+    <div style="margin-top:12px">
+      <label style="font-size:11px;color:var(--tx3);text-transform:uppercase;display:block;margin-bottom:6px">Cue for <span id="EDCUE_EX"></span></label>
+      <textarea id="EDCUE_TA" class="custom-ex-input" rows="4" placeholder="Your form cue, notes, or reminders..." style="width:100%;resize:vertical;min-height:80px"></textarea>
+      <button class="use-custom-btn" onclick="saveEditCue()" style="margin-top:12px">Save Cue</button>
+    </div>
+  </div>
+</div>
+
 <!-- SCHEDULE EDITOR -->
 <div class="overlay" id="SCHED" style="display:none">
   <div class="opanel" style="max-width:420px">
@@ -799,6 +813,8 @@ const P={
 };
 const DO=['mon','tue','wed','thu','fri','sat','sun'];
 const DLOADS=new Set([3,6,9,12,15,18,21,24]);
+const PROGRAM_START_DATE=new Date(2025,1,10); // Week 1 Monday = Feb 10, 2025
+function getDateForDay(wk,dk){const d=new Date(PROGRAM_START_DATE);d.setDate(d.getDate()+(wk-1)*7+DO.indexOf(dk));return d.getMonth()+1+'/'+d.getDate()+'/'+String(d.getFullYear()).slice(-2);}
 // Periodization roadmap — which weeks are deload and at what %
 const DELOAD_PCT={3:.65,6:.65,9:.65,12:.70,15:.65,18:.65,21:.65,24:.65};
 // Block phases (W1–9 Block 1, W10–15 Block 2, W16–24 Block 3)
@@ -1315,7 +1331,7 @@ function getDayProgram(dk){
   const base=P[mapped];
   if(!base||base.rest)return {key:dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
   const added=(ST.addedExercises||{})[dk]||[];
-  const merged=base.exercises.concat(added.map(a=>({id:'ae_'+a.name.replace(/\s/g,'_'),name:a.name,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Run perfect reps. Full ROM.',mech:'Custom.',bodyPart:a.bodyPart||'other',isAdded:true})));
+  const merged=base.exercises.concat(added.map(a=>({id:'ae_'+a.name.replace(/\s/g,'_'),name:a.name,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:a.cue||'Run perfect reps. Full ROM.',mech:'Custom.',bodyPart:a.bodyPart||'other',isAdded:true})));
   return {...base,key:dk,name:DAY_NAMES[dk],exercises:merged};
 }
 function toggleRestDay(dk){
@@ -1475,7 +1491,7 @@ let CHS={};
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
+  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.cueOverrides=p.cueOverrides||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('adamCustomEx');
@@ -1486,7 +1502,7 @@ function loadST(){
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
+function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,cueOverrides:ST.cueOverrides||{},restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
 function saveST(){saveSTLocal();fbSaveSettings()}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
 function saveLogsLocal(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
@@ -1567,15 +1583,16 @@ function renderHome(){
   const loggedThisWeek=new Set(weekLogs.map(l=>l.dk));
   DO.forEach(k=>{
     const d=getDayProgram(k);
-    if(d.rest){const el=document.createElement('div');el.className='rcard';el.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--tx3)" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><div class="rlabel">${DAY_NAMES[k]} — Rest & Recovery</div>`;dl.appendChild(el);return}
+    if(d.rest){const restDate=getDateForDay(ST.wk,k);const el=document.createElement('div');el.className='rcard';el.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--tx3)" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><div class="rlabel">${DAY_NAMES[k]} ${restDate} — Rest & Recovery</div>`;dl.appendChild(el);return}
     const dayLogs=weekLogs.filter(l=>l.dk===k);
     const done=loggedThisWeek.has(k);
     const daySets=dayLogs.length;
     const dayVol=dayLogs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
     const last=getLastDate(k);
     const el=document.createElement('div');el.className='dcard'+(done?' dcard-done':'');el.onclick=()=>openWO(k);
+    const dayDate=getDateForDay(ST.wk,k);
     el.innerHTML=`<div class="dstripe" style="background:${done?'var(--grn)':d.color}"></div>
-    <div class="dbody"><div class="dnrow"><div class="dname" style="color:${done?'var(--grn)':d.color}">${d.name}${done?' ✓':''}</div><div class="dcount">${d.exercises.length} ex</div></div>
+    <div class="dbody"><div class="dnrow"><div class="dname" style="color:${done?'var(--grn)':d.color}">${d.name}${done?' ✓':''}</div><div class="dcount">${dayDate} · ${d.exercises.length} ex</div></div>
     <div class="dfocus">${d.focus}</div>
     ${done?`<div class="dlast" style="color:var(--grn2)">${daySets} sets · ${dayVol>1000?(dayVol/1000).toFixed(1)+'K':dayVol} lbs volume</div>`:`<div class="dlast">${last?'Last: '+last:'Not yet logged'}</div>`}
     </div>
@@ -1964,8 +1981,19 @@ function computeSmartRecommendations(wk){
   return {recs,weekVerdict,dayPlan,dayDetails,isDeload,bp,weeksLogged:global.weeksLogged,hasRPE,globalState:global.globalState,globalResponse:global.globalResponse,core,citations:['Schoenfeld 2017 (J Sports Sci)','Wernbom 2007 (Sports Med)','Schoenfeld 2021 (AMPK/mTOR)']};
 }
 
-// Adaptive program generator — builds alongside training, improves with verdict/stalls/deload
-const ADAM6_MUSCLES={mon:['quads','hamstrings','calves','glutes'],tue:['chest','back','delts'],wed:['biceps','triceps','delts'],thu:['quads','hamstrings','calves','glutes'],sat:['chest','biceps','triceps','delts'],sun:['quads','hamstrings','calves','glutes']};
+// Adaptive program generator — single source of truth for split config
+// titles.length === focus.length === num sessions (enforced)
+const SPLITS={
+  fullBody:{days:3,titles:['Full Body A','Full Body B','Full Body C'],focus:[['quads','hamstrings','chest','back','delts','biceps','triceps','calves','glutes'],['hamstrings','quads','chest','back','delts','biceps','triceps','calves','glutes'],['quads','hamstrings','chest','back','delts','biceps','triceps','calves','glutes']]},
+  upperLower:{days:4,titles:['Upper A','Lower A','Upper B','Lower B'],focus:[['chest','back','delts','biceps','triceps'],['quads','hamstrings','calves','glutes'],['chest','back','delts','biceps','triceps'],['quads','hamstrings','calves','glutes']]},
+  adam6:{days:6,titles:['Legs — Quad Focus','Chest & Back','Arms & Delts','Legs — Posterior Chain','Chest & Arms','Legs — Volume'],focus:[['quads','hamstrings','calves','glutes'],['chest','back','delts'],['biceps','triceps','delts'],['quads','hamstrings','calves','glutes'],['chest','biceps','triceps','delts'],['quads','hamstrings','calves','glutes']]}
+};
+function assertSplitIntegrity(splitKey){
+  const s=SPLITS[splitKey];if(!s)throw new Error('Unknown split: '+splitKey);
+  const n=s.titles.length;if(s.focus.length!==n)throw new Error('SPLITS.'+splitKey+': focus.length!==titles.length');if(s.days!==n)throw new Error('SPLITS.'+splitKey+': days!==titles.length');
+  s.titles.forEach((t,i)=>{if(t==null||t===undefined||t==='')throw new Error('SPLITS.'+splitKey+': title['+i+'] is empty');});
+  return s;
+}
 function getExercisesForBodyPartGen(bp,exclude,stalledSet){
   const pool=EL.filter(e=>{const name=e.n||e.name;if(!name||name===exclude)return false;const elBp=getBodyPartFromMuscle(e.m);if(elBp!=='other')return elBp===bp;return getBodyPart(name)===bp;});
   return pool.map(e=>{const name=e.n||e.name;const mw=getMuscleWeights(name);const lb=getLengthBias(name);const compound=Object.keys(mw||{}).filter(m=>(mw[m]||0)>0).length>1;const primary=Object.keys(mw||{}).length?Object.entries(mw).sort((a,b)=>b[1]-a[1])[0][0]:null;return{name,mw,lb,compound,primary,stalled:stalledSet&&stalledSet.has(name)};}).sort((a,b)=>{if(a.stalled&&!b.stalled)return 1;if(!a.stalled&&b.stalled)return-1;if(a.compound&&!b.compound)return-1;if(!a.compound&&b.compound)return 1;return(b.lb||1)-(a.lb||1);});
@@ -1978,19 +2006,37 @@ function selectExercisesForDayGen(dayMuscles,stalledMap,maxPer){
 function generateAdaptiveProgram(wk){
   const global=getGlobalState(wk);const verdict=global.verdict||'PROGRESSING';const stalled=getStalledLifts(wk);const isDeload=DLOADS.has(wk);
   const stalledMap={};stalled.forEach(s=>{const bp=getBodyPart(s.ex);if(bp&&bp!=='other'){stalledMap[bp]=stalledMap[bp]||[];if(!stalledMap[bp].includes(s.ex))stalledMap[bp].push(s.ex);}});
-  const sched=getScheduleForWeek(wk);const restDays=new Set(DO.filter(dk=>sched[dk]==='rest'));if(!restDays.size)restDays.add('fri');
-  const weekProgram={days:[],archetype:'adam6',verdict,stalledMap:Object.keys(stalledMap).length?stalledMap:null,isDeload};
+  const sched=getScheduleForWeek(wk);
+  const workoutDays=DO.filter(dk=>sched[dk]!=='rest'&&sched[dk]);
+  const numWorkouts=workoutDays.length;
+  const profile=(ST.profile||{});
+  let splitKey='adam6';if(numWorkouts<=3)splitKey='fullBody';else if(numWorkouts===4)splitKey='upperLower';else if(numWorkouts>=6)splitKey='adam6';
+  if(profile.preferredSplit&&SPLITS[profile.preferredSplit]&&SPLITS[profile.preferredSplit].days===numWorkouts)splitKey=profile.preferredSplit;
+  const split=assertSplitIntegrity(splitKey);
+  const maxPer=splitKey==='fullBody'?1:2;
+  const weekProgram={days:[],archetype:splitKey,verdict,stalledMap:Object.keys(stalledMap).length?stalledMap:null,isDeload};
   const deloadMult=isDeload?(DELOAD_PCT[wk]||0.65):1;let volumeMult=1;if(verdict==='UNDERSTIMULATED')volumeMult=1.15;else if(verdict==='OVERREACHED')volumeMult=0.85;
   for(const dk of DO){
-    const mapped=sched[dk]||dk;if(mapped==='rest'||restDays.has(dk)){weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',exercises:[]});continue;}
-    const muscles=ADAM6_MUSCLES[mapped];if(!muscles){weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',exercises:[]});continue;}
-    const templateDay=P[mapped];const templateExMap={};if(templateDay&&templateDay.exercises)templateDay.exercises.forEach(ex=>templateExMap[ex.name]=ex);
-    const dayExs=selectExercisesForDayGen(muscles,stalledMap,2);
+    if(sched[dk]==='rest'||!workoutDays.includes(dk)){weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:true,focus:'Rest',exercises:[]});continue;}
+    const sessionIdx=workoutDays.indexOf(dk);if(sessionIdx<0||sessionIdx>=split.titles.length){weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:true,focus:'Rest',exercises:[]});continue;}
+    const title=split.titles[sessionIdx];const focusMuscles=split.focus[sessionIdx];if(!title||!focusMuscles){weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:true,focus:'Rest',exercises:[]});continue;}
+    const templateDay=P[workoutDays[sessionIdx]];const templateExMap={};if(templateDay&&templateDay.exercises)templateDay.exercises.forEach(ex=>templateExMap[ex.name]=ex);
+    const dayExs=selectExercisesForDayGen(focusMuscles,stalledMap,maxPer);
     const typeOrder={h:0,n:1,s:2,d:3};dayExs.sort((a,b)=>{if(a.compound&&!b.compound)return-1;if(!a.compound&&b.compound)return 1;const ta=typeOrder[templateExMap[a.name]?.type||'n']??1;const tb=typeOrder[templateExMap[b.name]?.type||'n']??1;return ta-tb;});
     const exercises=dayExs.map(ex=>{const t=templateExMap[ex.name];let sets=t?t.sets||3:3;if(isDeload)sets=Math.max(1,Math.round(sets*deloadMult));else if(volumeMult!==1)sets=Math.max(1,Math.round(sets*volumeMult));const isReplacement=stalledMap[ex.muscle]&&stalledMap[ex.muscle].length&&ex.primary===ex.muscle;return{name:ex.name,sets,reps:t?t.reps||'8–12':'8–12',type:t?t.type||'n':'n',muscle:ex.muscle,primary:ex.primary,swapped:!!isReplacement};});
-    weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:false,focus:templateDay?templateDay.focus:muscles.join(' + '),exercises});
+    weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:false,title,focus:title,exercises});
   }
   return weekProgram;
+}
+
+function auditGeneratedProgram(wp){
+  const warnings=[];const LOWER_BP=new Set(['quads','hamstrings','calves','glutes']);
+  wp.days.forEach((d,i)=>{if(d.rest){if((d.focus||'').includes('undefined')||(d.title||'').includes('undefined'))warnings.push('Rest day has undefined: '+d.name);return;}
+    const t=String(d.title||d.focus||'');if(!t||t==='undefined')warnings.push('Day '+i+' ('+d.name+') has undefined title');
+    const focusLower=(t||'').toLowerCase();const isUpperDay=focusLower.includes('upper')||focusLower.includes('chest')||focusLower.includes('back')||focusLower.includes('arms');const isLowerDay=focusLower.includes('lower')||focusLower.includes('legs')||focusLower.includes('quad')||focusLower.includes('posterior');const isFullBody=focusLower.includes('full body');
+    const exs=d.exercises||[];if(exs.length>0&&!isFullBody){let match=0;exs.forEach(ex=>{const bp=getBodyPart(ex.name);const isLower=LOWER_BP.has(bp);if(isUpperDay&&!isLower)match++;else if(isLowerDay&&isLower)match++;});const score=match/exs.length;if(score<0.7)warnings.push('Day '+d.name+' ("'+t+'") focus misalignment: '+((score*100).toFixed(0))+'% exercises match');}
+  });
+  return{ok:warnings.length===0,warnings};
 }
 
 function renderSmartProgram(){
@@ -2230,9 +2276,11 @@ function openWO(dk){
     ST.aws=wip.aws;
     ST.woStartTime=wip.woStartTime||Date.now();
   }else{
+    const wk=ST.logWk||ST.wk;
     ST.awExs=d.exercises.map((ex,i)=>{
-      const ovr=getOvr(dk,i,ST.wk);
-      return {...ex, displayName: ovr||ex.name, templateIdx: i};
+      const ovr=getOvr(dk,i,wk);
+      const cueOvr=(ST.cueOverrides||{})[`${dk}-${i}-${wk}`]||(ST.cueOverrides||{})[`${dk}-${i}-perm`];
+      return {...ex, displayName: (typeof ovr==='string'?ovr:ovr?.name)||ex.name, templateIdx: i, cue: cueOvr||ex.cue};
     });
 
     // Pre-fill from logs if this day was already logged this week
@@ -2388,9 +2436,9 @@ function renderWO(){
             <div class="badges">${bl}${(isSuperset?exDone===sets.length&&exDone2===sets2.length:exDone===sets.length)&&(isSuperset?sets.length+sets2.length:sets.length)>0?'<span class="badge bpr">✓ DONE</span>':''}</div>
           </div>
           <div class="ex-actions">
-            ${(isSuperset||exIdx<ST.awExs.length-1)?`<button class="ex-act-btn ${ex.supersetWith?' on':''}" onclick="toggleSuperset(${exIdx})" title="${ex.supersetWith?'Unpair superset':'Superset with next'}">
+            ${(isSuperset||exIdx<ST.awExs.length-1)?`<button class="ex-act-btn ${ex.supersetWith?' on unpair-btn':''}" onclick="toggleSuperset(${exIdx})" title="${ex.supersetWith?'Unpair superset':'Superset with next'}">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v18M16 3v18M3 8h18M3 16h18"/></svg>
-              ${ex.supersetWith?'Unpair':'Superset'}
+              ${ex.supersetWith?'Unpair superset':'Superset'}
             </button>`:''}
             <button class="ex-act-btn" onclick="openSW('${ST.aday}',${exIdx},'${ex.name.replace(/'/g,"\\'")}')">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
@@ -2407,20 +2455,23 @@ function renderWO(){
             <div class="ep"><strong>${ex.rest>=60?ex.rest/60+'min':ex.rest+'s'}</strong> rest</div>
             ${(exVol||exVol2)?`<div class="ep"><strong>${(exVol+exVol2).toLocaleString()}</strong> lbs vol</div>`:''}
           </div>
-          <button class="cue-toggle" onclick="toggleCue('${ex.id}')">
-            <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><${cueHidden?'polyline points="9 18 15 12 9 6"':'polyline points="6 9 12 15 18 9"'}/></svg>
-            ${cueHidden?'Show cue':'Hide cue'}
-          </button>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <button class="cue-toggle" onclick="toggleCue('${ex.id}')">
+              <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><${cueHidden?'polyline points="9 18 15 12 9 6"':'polyline points="6 9 12 15 18 9"'}/></svg>
+              ${cueHidden?'Show cue':'Hide cue'}
+            </button>
+            <button class="cue-toggle" onclick="openEditCue('${ex.id}')" style="margin:0" title="Edit cue/notes">Edit</button>
+          </div>
           <div class="ecue${cueHidden?' collapsed':''}">${ex.cue}</div>
           ${stalledMap[ex.displayName]?`<div class="stall-warn"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Stalled at ${stalledMap[ex.displayName].weight} lbs since ${stalledMap[ex.displayName].since} — try a variation or rep scheme change</div>`:''}
         </div>
       </div>
       <div class="sets-w" id="sw-${ex.id}">${setsHtml}</div>
       <div class="sets-footer">
-        ${isSuperset&&ex2?`<button class="addbtn" onclick="addS('${ex.id}');addS('${ex2.id}')">
+        ${isSuperset&&ex2?`<div class="sets-footer-row"><button class="addbtn" onclick="addS('${ex.id}');addS('${ex2.id}')">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           ADD SET (BOTH)
-        </button>`:`<button class="addbtn" onclick="addS('${ex.id}')">
+        </button><button class="unpair-superset-btn" onclick="toggleSuperset(${exIdx})" title="Remove superset pairing">Unpair superset</button></div>`:`<button class="addbtn" onclick="addS('${ex.id}')">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           ADD SET
         </button>`}
@@ -2446,6 +2497,44 @@ function renderWO(){
 
 function toggleCue(exId){
   ST.cueCollapsed[exId]=!ST.cueCollapsed[exId];
+  renderWO();
+}
+
+function openEditCue(exId){
+  const ex=ST.awExs.find(e=>e.id===exId);
+  if(!ex)return;
+  document.getElementById('EDCUE_EX').textContent=ex.displayName||ex.name;
+  document.getElementById('EDCUE_TA').value=ex.cue||'';
+  ST._editingCueExId=exId;
+  document.getElementById('EDCUE').classList.add('on');
+  setTimeout(()=>document.getElementById('EDCUE_TA').focus(),50);
+}
+function closeEditCue(){
+  document.getElementById('EDCUE').classList.remove('on');
+  ST._editingCueExId=null;
+}
+function saveEditCue(){
+  const exId=ST._editingCueExId;
+  if(!exId)return;
+  const ex=ST.awExs.find(e=>e.id===exId);
+  if(!ex)return;
+  const newCue=(document.getElementById('EDCUE_TA').value||'').trim();
+  ex.cue=newCue||(ex.name?'Run perfect reps. Full ROM.':'');
+  const dk=ST.aday;const wk=ST.logWk||ST.wk;
+  if(ex.isAdded||ex.templateIdx===-1){
+    if(ST.addedExercises&&ST.addedExercises[dk]){
+      const item=ST.addedExercises[dk].find(a=>a.name===(ex.displayName||ex.name));
+      if(item)item.cue=newCue;
+    }
+  }else{
+    ST.cueOverrides=ST.cueOverrides||{};
+    const keyPerm=`${dk}-${ex.templateIdx}-perm`;
+    const keyWk=`${dk}-${ex.templateIdx}-${wk}`;
+    if(newCue)ST.cueOverrides[keyPerm]=newCue;else{delete ST.cueOverrides[keyPerm];delete ST.cueOverrides[keyWk];}
+  }
+  saveST();
+  saveWorkoutProgress();
+  closeEditCue();
   renderWO();
 }
 
@@ -2621,8 +2710,20 @@ function confirmDelEx(exIdx,name){
 }
 function delEx(exIdx){
   const ex=ST.awExs[exIdx];
+  const next=ST.awExs[exIdx+1];
+  const prev=ST.awExs[exIdx-1];
+  const isAdded=ex.isAdded||ex.templateIdx===-1;
+  if(prev&&prev.supersetWith===ex.id)prev.supersetWith=undefined;
+  if(next&&ex.supersetWith===next.id)ex.supersetWith=undefined;
   ST.awExs.splice(exIdx,1);
-  // keep aws data in case they undo (not implemented yet, just keep it)
+  if(isAdded&&ST.aday&&ST.addedExercises&&ST.addedExercises[ST.aday]){
+    const name=ex.displayName||ex.name;
+    ST.addedExercises[ST.aday]=ST.addedExercises[ST.aday].filter(a=>a.name!==name);
+    if(!ST.addedExercises[ST.aday].length)delete ST.addedExercises[ST.aday];
+    saveST();
+  }
+  delete ST.aws[ex.id];
+  saveWorkoutProgress();
   renderWO();
 }
 function openAddEx(){
@@ -3033,7 +3134,7 @@ function finWO(){
   const addedExs=ST.awExs.filter(ex=>ex.templateIdx===-1||ex.isAdded===true);
   if(addedExs.length){
     ST.addedExercises=ST.addedExercises||{};
-    ST.addedExercises[dk]=addedExs.map(ex=>({name:ex.displayName||ex.name,sets:ex.sets||3,bodyPart:ex.bodyPart||getBodyPart(ex.displayName||ex.name)||'other'}));
+    ST.addedExercises[dk]=addedExs.map(ex=>({name:ex.displayName||ex.name,sets:ex.sets||3,bodyPart:ex.bodyPart||getBodyPart(ex.displayName||ex.name)||'other',cue:ex.cue}));
     saveST();
   }
 
@@ -3629,8 +3730,8 @@ function renderVOL(ab){
   `).join('');
 }
 
+function fmtDateYMD(s){if(!s)return'';const p=s.split('-');if(p.length>=3)return parseInt(p[1],10)+'/'+parseInt(p[2],10)+'/'+String(p[0]).slice(-2);return s}
 function renderHIST(ab){
-  // Group by date
   const map={};
   ST.logs.forEach(l=>{
     map[l.date]=map[l.date]||[];
@@ -3642,9 +3743,11 @@ function renderHIST(ab){
   dates.forEach(d=>{
     const g=document.createElement('div');
     g.className='hgroup';
+    const dayName=map[d][0]?.dn||map[d][0]?.dk?DAY_NAMES[map[d][0].dk]||'':'';
+    const wk=map[d][0]?.wk;
     const hdr=document.createElement('div');
     hdr.className='hdtehdr';
-    hdr.textContent=d;
+    hdr.textContent=dayName?`${dayName} ${fmtDateYMD(d)}${wk?' · W'+wk:''}`:fmtDateYMD(d)||d;
     g.appendChild(hdr);
 
     // Group by exercise

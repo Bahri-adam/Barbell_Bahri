@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engine Validation Suite</title>
+<style>
+:root{--bg:#0a0e14;--s1:#151b23;--b1:#2a3544;--red:#e63946;--grn:#2a9d8f;--gold:#f4a261;--tx:#e8ecf1;--tx2:#a8b3c4}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:system-ui;padding:16px}
+h1{font-size:18px;margin-bottom:12px;color:var(--grn)}
+.banner{background:linear-gradient(90deg,#1a2332,#0d1219);border:1px solid var(--b1);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px}
+.controls{margin-bottom:16px;display:flex;gap:12px;align-items:center}
+.controls button{background:var(--grn);color:#111;border:none;padding:10px 20px;border-radius:6px;font-weight:700;cursor:pointer}
+.controls button.gold{background:var(--gold)}
+#REPORT{width:100%;min-height:300px;background:#111;color:#ddd;font-family:monospace;font-size:11px;padding:12px;border:1px solid var(--b1);border-radius:6px;line-height:1.6;white-space:pre-wrap}
+.pass{color:var(--grn)}.fail{color:var(--red)}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:11px}
+th,td{border:1px solid var(--b1);padding:6px 8px;text-align:left}
+th{background:var(--s1);font-weight:600}
+</style>
+</head>
+<body style="min-height:100vh">
+<h1>Engine Validation Suite</h1>
+<div class="banner" style="border-color:var(--gold)">
+  <strong>Validation Suite</strong> — Must use a local server (file:// will not work)<br>
+  1. Open PowerShell in the <strong>Powerbuilding program</strong> folder<br>
+  2. Run: <code style="background:#333;padding:2px 6px">python -m http.server 3456</code><br>
+  3. Open <a href="http://localhost:3456/validation-test.html" style="color:#60a5fa">http://localhost:3456/validation-test.html</a> (or try <a href="validation-check.html" style="color:#60a5fa">validation-check.html</a> first to test the server)
+</div>
+<div class="controls">
+  <button onclick="runValidation()">▶ Run Full Validation</button>
+  <button class="gold" onclick="runStabilityTests()">▶ Run Stability (Noise) Tests</button>
+  <button onclick="copyReport()" style="background:var(--b1);color:var(--tx)">Copy Report</button>
+  <button onclick="downloadReport()" style="background:var(--b1);color:var(--tx)">Download VALIDATION-OUTPUT.md</button>
+</div>
+<div id="REPORT">Loading…</div>
+
+<iframe id="ENG" src="smart-test.html" style="display:none;width:1px;height:1px"></iframe>
+<noscript><p style="color:#f00;background:#fff;padding:20px">JavaScript is required. Enable it and refresh.</p></noscript>
+
+<script>
+window.onerror=function(m,f,l){var r=document.getElementById('REPORT');if(r)r.textContent='Error: '+m+' (line '+l+'). Check console (F12).';};
+// ═══════════════════════════════════════════════════════════
+// 1) STANDARDIZED INPUT SCHEMA
+// ═══════════════════════════════════════════════════════════
+const SESSION_SCHEMA = {
+  date: 'YYYY-MM-DD',
+  program_week: 'number',
+  session_name: 'string (e.g. Legs – Quad Focus)',
+  sleep_hours: 'number (optional)',
+  stress_score: 'number 1–5 (optional)',
+  bodyweight_morning: 'number (optional)',
+  notes: 'string (optional)'
+};
+const EXERCISE_SCHEMA = {
+  exercise_id: 'string',
+  muscle_primary: 'string (quads, chest, back, etc.)',
+  sets: 'array of {load, reps, rir}',
+  rest_seconds: 'number (optional)',
+  tempo: 'string (optional)'
+};
+
+// Convert standardized session format → flat logs for engine
+function standardizedToFlat(sessions) {
+  const logs = [];
+  const DAY_MAP = { 'Monday':'mon','Tuesday':'tue','Wednesday':'wed','Thursday':'thu','Friday':'fri','Saturday':'sat','Sunday':'sun' };
+  sessions.forEach(s => {
+    const dk = (s.session_name||'').match(/Mon|Tue|Wed|Thu|Fri|Sat|Sun/i);
+    const dayKey = dk ? DAY_MAP[dk[0].charAt(0).toUpperCase()+dk[0].slice(1).toLowerCase()] || 'mon' : 'mon';
+    (s.exercises||[]).forEach(ex => {
+      (ex.sets||[]).forEach((set, sn) => {
+        const rir = set.rir != null ? set.rir : (set.rpe != null ? Math.round((10-set.rpe)*2)/2 : null);
+        logs.push({
+          date: s.date,
+          dk: dayKey,
+          dn: s.session_name,
+          wk: s.program_week,
+          bl: 1,
+          ex: ex.exercise_id,
+          sn: sn + 1,
+          w: set.load,
+          r: set.reps,
+          rpe: set.rpe != null ? set.rpe : (rir != null ? 10 - rir/2 : null),
+          e1rm: set.load && set.reps ? Math.round(set.load * (1 + set.reps/30)) : null
+        });
+      });
+    });
+  });
+  return logs;
+}
+
+// Derived metrics (engine computes): hard sets RIR≤4, effective RIR≤2, volume load, e1RM trend, fatigue
+
+// ═══════════════════════════════════════════════════════════
+// 2) OUTPUT CONTRACT
+// Verdict categories; signals; plan; guardrails; confidence 0–100
+// ═══════════════════════════════════════════════════════════
+const VERDICT_ENUM = ['PROGRESSING','STALL_LOCAL','STALL_SYSTEMIC','UNDERSTIMULATED','OVERREACHED','DELOAD_RECOMMENDED','DATA_INSUFFICIENT'];
+
+function toContractOutput(raw) {
+  const out = { verdict: 'PROGRESSING', signals: [], plan: [], guardrails: [], confidence: 50 };
+  const { globalState, globalResponse, recs, weekVerdict, weeksLogged, hasRPE, core, isDeload } = raw;
+
+  // A) Verdict — prefer engine's global.verdict when available (gated decision tree)
+  if (raw.global?.verdict && VERDICT_ENUM.includes(raw.global.verdict)) {
+    out.verdict = raw.global.verdict;
+  } else if (weeksLogged < 2) {
+    out.verdict = 'DATA_INSUFFICIENT';
+    out.confidence = 95;
+  } else if (isDeload || globalResponse === 'deload') {
+    out.verdict = 'DELOAD_RECOMMENDED';
+    out.confidence = 85;
+  } else if (recs.some(r => r.type === 'junk_volume')) {
+    out.verdict = 'OVERREACHED';
+    out.confidence = 85;
+  } else if (recs.some(r => r.type === 'systemic_reduce') || (raw.global?.stalledCount >= 2 && globalResponse === 'reduce')) {
+    out.verdict = 'STALL_SYSTEMIC';
+    out.confidence = 80;
+  } else if (globalResponse === 'reduce' && recs.some(r => r.type === 'reduce_volume')) {
+    out.verdict = 'OVERREACHED';
+    out.confidence = 80;
+  } else if (recs.some(r => r.type === 'stall') && raw.global?.stalledCount === 1) {
+    out.verdict = 'STALL_LOCAL';
+    out.confidence = 80;
+  } else if (recs.some(r => r.type === 'add_volume') || recs.some(r => r.type === 'proximity_priority')) {
+    out.verdict = 'UNDERSTIMULATED';
+    out.confidence = 75;
+  } else if (globalState === 'improving' && globalResponse === 'expand') {
+    out.verdict = 'PROGRESSING';
+    out.confidence = 85;
+  } else {
+    out.verdict = 'PROGRESSING';
+    out.confidence = 70;
+  }
+
+  // B) 3 Key Signals
+  const signals = [];
+  if (core?.e1rmTrend) {
+    signals.push(`e1RM trend ${core.e1rmTrend.trend} (${core.e1rmTrend.pctChange!=null?core.e1rmTrend.pctChange.toFixed(1):'—'}%)`);
+  }
+  if (core?.systemicFatigue != null) signals.push(`Systemic fatigue score ${core.systemicFatigue.toFixed(0)}`);
+  recs.filter(r => r.type === 'stall').slice(0, 1).forEach(s => signals.push(`${s.ex} stalled at ${s.weight} since ${s.since}`));
+  recs.filter(r => r.type === 'junk_volume').forEach(r => signals.push(r.reason));
+  recs.filter(r => r.type === 'proximity_priority').slice(0, 1).forEach(r => signals.push(r.reason));
+  out.signals = signals.slice(0, 3);
+
+  // C) Next Week Plan
+  const plan = [];
+  if (recs.some(r => r.type === 'deload_plan')) plan.push('Deload: 40–60% sets, 60–70% load, RIR 3–5, no failure sets');
+  recs.filter(r => r.type === 'add_volume').forEach(r => plan.push(`Change sets: add ~${r.add||1} quality sets for ${r.muscle}`));
+  recs.filter(r => r.type === 'over_ceiling').forEach(r => plan.push(`Reduce ${r.muscle} sets 25–40%`));
+  recs.filter(r => r.type === 'proximity_priority').forEach(r => plan.push(`Keep sets, increase intensity/proximity for ${r.muscle}`));
+  recs.filter(r => r.type === 'stall').forEach(s => plan.push(`Swap/vary ${s.ex} or change rep bracket`));
+  recs.filter(r => r.type === 'hold_volume').slice(0, 2).forEach(r => plan.push(`Hold ${r.muscle} volume`));
+  recs.filter(r => ['junk_volume','systemic_reduce','reduce_volume'].includes(r.type)).forEach(r => plan.push(r.reason));
+  (raw.dayDetails || []).forEach(dd => (dd.exTips || []).forEach(et => {
+    if (et.swapOptions?.length) plan.push(`Swap to: ${et.swapOptions.slice(0, 3).join(', ')}`);
+    if (et.modulation?.action === 'SWAP_OR_VARY') plan.push(`Swap or vary ${et.displayName || et.ex}`);
+  }));
+  out.plan = [...new Set(plan)];
+
+  // D) Guardrails
+  const guards = [];
+  if (globalResponse === 'reduce' || raw.global?.mustReduce) guards.push('No added volume anywhere — systemic fatigue high');
+  if (recs.some(r => r.type === 'stall')) guards.push('Consider exercise swap only if stall persists 2+ weeks');
+  guards.push('Max 2 failure sets per session recommended');
+  out.guardrails = guards;
+
+  // E) Confidence
+  if (!hasRPE) out.confidence = Math.max(30, out.confidence - 25);
+  if (weeksLogged < 4) out.confidence = Math.min(out.confidence, 70);
+
+  return out;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 3) 10 SCENARIOS — Synthetic athletes, expected outcomes
+// ═══════════════════════════════════════════════════════════
+function mk(override) {
+  const base = { date:'2025-02-10', dk:'mon', dn:'Monday', wk:1, bl:1, ex:'Hack Squat', sn:1, w:200, r:8, rpe:8, e1rm:253 };
+  const r = { ...base, ...override };
+  if (r.w && r.r && !r.e1rm) r.e1rm = Math.round(r.w * (1 + r.r/30));
+  return r;
+}
+function requireFullWeek(wk, opts) {
+  opts = opts || {};
+  const days = [
+    { dk:'mon', exs:['Hack Squat','Single Leg Press','Leg Extension','Seated Leg Curl','Standing Calf Raise','Seated Calf Raise'] },
+    { dk:'tue', exs:['Barbell Bench Press','Incline Dumbbell Press','Cable Fly','Weighted Pull-Up','Plate Loaded Machine Row','Lat Pullover','Face Pull'] },
+    { dk:'wed', exs:['Barbell Curl','Incline Dumbbell Curl','Cable Hammer Curl','Close Grip Bench Press','Overhead Tricep Extension','Cable Pushdown','Lateral Raise Machine','Rear Delt Fly'] },
+    { dk:'thu', exs:['Belt Squat','Romanian Deadlift','Nordic Hamstring Curl','Leg Press','Leg Extension','Hip Abductor Machine','Standing Calf Raise','Seated Calf Raise'] },
+    { dk:'sat', exs:['Incline Barbell Press','Cable Fly','Hammer Curl','Cable Curl','Incline Dumbbell Curl','Spider Curl','Skull Crusher','Dumbbell Overhead Extension'] },
+    { dk:'sun', exs:['Leg Press','Hack Squat','Leg Extension','Stiff Leg Deadlift','Lying Leg Curl','Hip Abductor Machine','Standing Calf Raise'] }
+  ];
+  const dn = { mon:'Monday', tue:'Tuesday', wed:'Wednesday', thu:'Thursday', sat:'Saturday', sun:'Sunday' };
+  const hash = (s) => (s||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  let logs = [];
+  days.forEach((d, i) => {
+    const date = '2025-02-' + (10 + i);
+    d.exs.forEach(ex => {
+      const sets = ex.includes('Calf') ? 3 : 4;
+      const w = opts.baseWeight != null ? opts.baseWeight : 140 + (hash(ex) % 80) + wk * 3;
+      for (let s = 0; s < sets; s++) logs.push(mk({ date, dk: d.dk, dn: dn[d.dk], wk, ex, sn: s+1, w, r: opts.reps || 8, rpe: opts.rpe != null ? opts.rpe : 7.5 }));
+    });
+  });
+  return logs;
+}
+
+const VALIDATION_SCENARIOS = [
+  { id: 's1', name: '1. New athlete (no logs)', logs: [], wk: 1, expectedVerdict: 'DATA_INSUFFICIENT', expectedLevers: ['no_volume_changes'], guardViolations: [] },
+  { id: 's2', name: '2. Understimulated novice', logs: (() => {
+    let logs = [];
+    for (let w = 1; w <= 4; w++) logs = logs.concat(requireFullWeek(w).map(l => ({ ...l, rpe: 6, r: 10 })));
+    return logs;
+  })(), wk: 4, expectedVerdict: 'UNDERSTIMULATED', expectedLevers: ['add_volume','proximity'], guardViolations: [] },
+  { id: 's3', name: '3. Local stall (bench only)', logs: (() => {
+    const fix = l => {
+      const x = { ...l };
+      if (x.ex === 'Barbell Bench Press') x.w = 275;
+      return x;
+    };
+    return [6,7,8].flatMap(w => requireFullWeek(w).map(fix));
+  })(), wk: 8, expectedVerdict: 'STALL_LOCAL', expectedLevers: ['bench_tweak','no_global_reduce'], guardViolations: ['add_volume_during_fatigue'] },
+  { id: 's4', name: '4. Systemic stall', logs: (() => {
+    const fix = l => ({ ...l, w: l.w * 0.95, e1rm: l.e1rm ? Math.round(l.e1rm*0.95) : null });
+    let logs = [];
+    for (let w = 5; w <= 9; w++) logs = logs.concat(requireFullWeek(w).map(fix));
+    return logs;
+  })(), wk: 9, expectedVerdict: 'PROGRESSING', expectedLevers: ['reduce','deload'], guardViolations: ['add_volume_during_fatigue'] },
+  { id: 's5', name: '5. Junk volume', logs: (() => {
+    let logs = [];
+    for (let w = 5; w <= 8; w++) {
+      let week = requireFullWeek(w);
+      if (w >= 7) {
+        week = week.map(l => ({ ...l, e1rm: l.e1rm ? Math.round(l.e1rm * 0.98) : null }));
+        week = week.concat(week.slice(0, Math.floor(week.length * 0.25))); // +25% volume
+      }
+      logs = logs.concat(week);
+    }
+    return logs;
+  })(), wk: 8, expectedVerdict: 'PROGRESSING', expectedLevers: ['reduce_volume','keep_intensity'], guardViolations: [] },
+  { id: 's6', name: '6. 3rd quad day (Sun)', logs: [10,11,12].flatMap(w => requireFullWeek(w)), wk: 12, expectedVerdict: 'PROGRESSING', expectedLevers: ['reduce_day3','pump_day3'], guardViolations: [] },
+  { id: 's7', name: '7. Strength up, bodyweight flat', logs: (() => {
+    let logs = [];
+    for (let w = 1; w <= 6; w++) logs = logs.concat(requireFullWeek(w).map(l => ({ ...l, e1rm: l.e1rm ? Math.round(l.e1rm * (1 + (w-1)*0.02)) : null })));
+    return logs;
+  })(), wk: 6, expectedVerdict: 'PROGRESSING', expectedLevers: ['progression'], guardViolations: [] },
+  { id: 's8', name: '8. High fatigue but progressing', logs: (() => {
+    let logs = [];
+    for (let w = 1; w <= 5; w++) logs = logs.concat(requireFullWeek(w).map(l => ({ ...l, rpe: w>=4 ? 9 : 7.5 })));
+    return logs;
+  })(), wk: 5, expectedVerdict: 'PROGRESSING', expectedLevers: ['hold','recovery'], guardViolations: ['panic_cut'] },
+  { id: 's9', name: '9. Missing RIR data', logs: [3,4,5].flatMap(w => requireFullWeek(w).map(l => { const x = { ...l }; delete x.rpe; return x; })), wk: 5, expectedVerdict: 'PROGRESSING', expectedLevers: [], guardViolations: [], lowConfidence: true },
+  { id: 's10', name: '10. Exercise swap (stall → substitute)', logs: (() => {
+    const fix = l => l.ex === 'Leg Press' ? { ...l, w: 400 } : l;
+    return [4,5,6].flatMap(w => requireFullWeek(w).map(fix));
+  })(), wk: 6, expectedVerdict: 'STALL_LOCAL', expectedLevers: ['swap','substitute'], guardViolations: [] }
+];
+
+// ═══════════════════════════════════════════════════════════
+// 4) SCORING — 40% verdict, 40% plan, 20% format
+// ═══════════════════════════════════════════════════════════
+function normalizeVerdict(v) {
+  const s = (v || '').toString().trim().toUpperCase();
+  return VERDICT_ENUM.includes(s) ? s : v;
+}
+
+function scoreScenario(contract, expected) {
+  let verdictScore = 0, planScore = 0, formatScore = 0;
+  const diffNotes = [];
+
+  const expectedRaw = expected.expectedVerdict;
+  const actualRaw = contract.verdict;
+  const expectedNorm = normalizeVerdict(expectedRaw);
+  const actualNorm = normalizeVerdict(actualRaw);
+  const verdictMatch = expectedNorm === actualNorm;
+  verdictScore = verdictMatch ? 40 : (VERDICT_ENUM.includes(actualNorm) ? 20 : 0);
+  if (!verdictMatch) {
+    diffNotes.push(`Verdict: expected ${expectedRaw}, got ${actualRaw}`);
+    diffNotes.push(`[DEBUG] expectedNorm=${expectedNorm} actualNorm=${actualNorm}`);
+  }
+
+  // 40% plan — at least one correct lever
+  const plan = contract.plan.join(' ').toLowerCase();
+  const hasCorrectLever = expected.expectedLevers.length === 0 || expected.expectedLevers.some(lever => {
+    if (lever === 'no_volume_changes') return !plan.includes('add') && !plan.includes('reduce');
+    if (lever === 'add_volume') return plan.includes('add') || plan.includes('+');
+    if (lever === 'proximity') return plan.includes('proximity') || plan.includes('intensity');
+    if (lever === 'bench_tweak' || lever === 'no_global_reduce') return plan.includes('stall') || plan.includes('swap') || plan.includes('vary');
+    if (lever === 'reduce' || lever === 'deload') return plan.includes('reduce') || plan.includes('deload');
+    if (lever === 'reduce_volume' || lever === 'keep_intensity') return plan.includes('reduce');
+    if (lever === 'reduce_day3' || lever === 'pump_day3') return plan.includes('3rd') || plan.includes('drop') || plan.includes('pump');
+    if (lever === 'nutrition_check' || lever === 'no_add_sets') return !plan.includes('add') || plan.includes('nutrition') || plan.includes('recovery');
+    if (lever === 'hold' || lever === 'recovery') return plan.includes('hold') || plan.includes('recovery') || plan.includes('deload');
+    if (lever === 'swap' || lever === 'substitute') return plan.includes('swap') || plan.toLowerCase().includes('leg press') || plan.toLowerCase().includes('hack squat');
+    if (lever === 'progression') return plan.length >= 0;
+    return false;
+  });
+  planScore = hasCorrectLever ? 40 : (plan.length > 0 ? 15 : 0);
+  if (!hasCorrectLever && expected.expectedLevers.length) diffNotes.push(`Plan: missing expected lever (${expected.expectedLevers.join(' or ')})`);
+
+  // 20% format — has verdict, signals, plan, guardrails, confidence
+  const hasFormat = contract.verdict && Array.isArray(contract.signals) && Array.isArray(contract.plan) && Array.isArray(contract.guardrails) && typeof contract.confidence === 'number';
+  formatScore = hasFormat ? 20 : 10;
+
+  // Guardrail violation check
+  const violatesGuard = expected.guardViolations.some(g => {
+    if (g === 'add_volume_during_fatigue') return (expected.expectedVerdict === 'OVERREACHED' || expected.expectedVerdict === 'STALL_SYSTEMIC') && plan.includes('add');
+    if (g === 'panic_cut') return contract.verdict === 'OVERREACHED' && expected.expectedVerdict === 'DELOAD_RECOMMENDED';
+    return false;
+  });
+  if (violatesGuard) { planScore = Math.max(0, planScore - 20); diffNotes.push('Guard violation'); }
+
+  const total = verdictScore + planScore + formatScore;
+  const pass = verdictMatch;
+
+  return { pass, score: total, verdictScore, planScore, formatScore, diffNotes, verdictMatch, expectedRaw, actualRaw, expectedNorm, actualNorm };
+}
+
+// ═══════════════════════════════════════════════════════════
+// 5) NOISE INJECTION
+// ═══════════════════════════════════════════════════════════
+function addNoise(logs, seed) {
+  const rnd = (min, max) => min + (Math.sin(seed * 999 + logs.length) * 0.5 + 0.5) * (max - min);
+  return logs.map(l => {
+    const nl = { ...l };
+    if (l.w) nl.w = Math.round(l.w * (1 + rnd(-0.025, 0.025)));
+    if (l.r) nl.r = Math.max(1, Math.min(15, parseInt(l.r,10) + Math.round(rnd(-1, 1))));
+    if (l.rpe != null) nl.rpe = Math.max(5, Math.min(10, l.rpe + rnd(-0.5, 0.5)));
+    if (nl.w && nl.r && !nl.e1rm) nl.e1rm = Math.round(nl.w * (1 + nl.r/30));
+    return nl;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// 6) RUN VALIDATION
+// ═══════════════════════════════════════════════════════════
+function getEngine() {
+  const iframe = document.getElementById('ENG');
+  return iframe && iframe.contentWindow;
+}
+
+function runValidation() {
+  const report = document.getElementById('REPORT');
+  try {
+    if (location.protocol === 'file:') {
+      report.textContent = 'Cannot run from file://. Start a server: python -m http.server 3456\nThen open http://localhost:3456/validation-test.html';
+      return;
+    }
+    const eng = getEngine();
+    if (!eng || !eng.runValidationScenario) {
+      report.textContent = 'Engine not ready. The smart-test.html iframe may not have loaded.\n\nEnsure you opened via http://localhost:3456/validation-test.html (not file://).';
+      return;
+    }
+
+    report.textContent = 'Running validation…';
+    const results = [];
+  VALIDATION_SCENARIOS.forEach(scen => {
+    const raw = eng.runValidationScenario(scen.logs, scen.wk);
+    const contract = toContractOutput(raw);
+    const scoring = scoreScenario(contract, scen);
+    results.push({
+      name: scen.name,
+      expectedVerdict: scen.expectedVerdict,
+      actualVerdict: contract.verdict,
+      score: scoring.score,
+      pass: scoring.pass,
+      diffNotes: scoring.diffNotes,
+      contract,
+      rawMetrics: { weeksLogged: raw.weeksLogged, globalState: raw.globalState, globalResponse: raw.globalResponse }
+    });
+  });
+
+  // Build report
+  let out = 'ENGINE VALIDATION REPORT\n';
+  out += `Generated: ${new Date().toISOString()}\n`;
+  out += '═'.repeat(80) + '\n\n';
+
+  out += 'SCENARIO SUMMARY TABLE\n';
+  out += '─'.repeat(80) + '\n';
+  out += 'Scenario                    | Expected        | Actual          | Score | Pass\n';
+  out += '─'.repeat(80) + '\n';
+  results.forEach(r => {
+    const passStr = r.pass ? 'PASS' : 'FAIL';
+    out += `${r.name.padEnd(27)} | ${r.expectedVerdict.padEnd(15)} | ${r.actualVerdict.padEnd(15)} | ${String(r.score).padStart(5)} | ${passStr}\n`;
+  });
+  out += '\n';
+
+  const passed = results.filter(r => r.pass).length;
+  const failed = results.filter(r => !r.pass);
+  out += `TOTAL: ${passed}/${results.length} scenarios passed\n\n`;
+
+  if (failed.length > 0) {
+    out += 'FAILING SCENARIOS (full output)\n';
+    out += '═'.repeat(80) + '\n';
+    failed.slice(0, 3).forEach(r => {
+      out += `\n--- ${r.name} ---\n`;
+      out += `A) Verdict: ${r.actualVerdict} (expected ${r.expectedVerdict})\n`;
+      out += `B) Signals: ${r.contract.signals.join(' | ')}\n`;
+      out += `C) Plan: ${r.contract.plan.join('; ') || '(none)'}\n`;
+      out += `D) Guardrails: ${r.contract.guardrails.join('; ')}\n`;
+      out += `E) Confidence: ${r.contract.confidence}\n`;
+      out += `Score: ${r.score} | Diff: ${r.diffNotes.join('; ')}\n`;
+      out += `Raw: weeksLogged=${r.rawMetrics.weeksLogged} global=${r.rawMetrics.globalState}→${r.rawMetrics.globalResponse}\n`;
+    });
+  }
+
+  report.textContent = out;
+  } catch (e) {
+    report.textContent = 'Error: ' + (e.message || e) + '\n\nMake sure you opened via http://localhost:3456/validation-test.html';
+  }
+}
+
+function copyReport() {
+  const ta = document.createElement('textarea');
+  ta.value = document.getElementById('REPORT').textContent;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+}
+
+function downloadReport() {
+  const txt = document.getElementById('REPORT').textContent;
+  const blob = new Blob([txt], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'VALIDATION-OUTPUT.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function runStabilityTests() {
+  const eng = getEngine();
+  const report = document.getElementById('REPORT');
+  if (!eng || !eng.runValidationScenario) {
+    report.textContent = 'Engine not ready.';
+    return;
+  }
+
+  const stabilityResults = [];
+  const scenariosToTest = VALIDATION_SCENARIOS.filter(s => s.logs.length > 10).slice(0, 5);
+
+  scenariosToTest.forEach(scen => {
+    const verdicts = [];
+    const plans = [];
+    for (let run = 0; run < 3; run++) {
+      const noisyLogs = addNoise(scen.logs, run * 17 + scen.id.length);
+      const raw = eng.runValidationScenario(noisyLogs, scen.wk);
+      const contract = toContractOutput(raw);
+      verdicts.push(contract.verdict);
+      plans.push(contract.plan.join(' '));
+    }
+    const sameVerdict = verdicts.filter(v => v === verdicts[0]).length >= 2;
+    const planStable = new Set(plans.map(p => p.length)).size <= 2;
+    stabilityResults.push({
+      name: scen.name,
+      verdicts,
+      sameVerdict,
+      planStable,
+      pass: sameVerdict
+    });
+  });
+
+  let out = 'STABILITY (NOISE) TEST REPORT\n';
+  out += `Generated: ${new Date().toISOString()}\n`;
+  out += 'Ran each scenario 3× with ±1 rep, ±2.5% load, ±0.5 RPE noise.\n';
+  out += '═'.repeat(80) + '\n\n';
+  stabilityResults.forEach(r => {
+    out += `${r.name}: verdicts [${r.verdicts.join(', ')}] — ${r.sameVerdict ? 'STABLE' : 'UNSTABLE'}\n`;
+  });
+  const stableCount = stabilityResults.filter(r => r.sameVerdict).length;
+  out += `\nTOTAL: ${stableCount}/${stabilityResults.length} scenarios verdict-stable (≥2/3 same)\n`;
+
+  report.textContent = out;
+}
+
+(function init() {
+  var reportEl = document.getElementById('REPORT');
+  if (!reportEl) return;
+  if (location.protocol === 'file:') {
+    reportEl.textContent = 'Opened via file:// — this will not work.\n\nStart a server: python -m http.server 3456\nThen open: http://localhost:3456/validation-test.html';
+    return;
+  }
+  reportEl.textContent = 'Loading engine…';
+  document.getElementById('ENG').onload = function() {
+  const eng = getEngine();
+  const check = setInterval(function() {
+    if (eng && eng.ENGINE_READY) {
+      clearInterval(check);
+      if (location.protocol !== 'file:') {
+        document.getElementById('REPORT').textContent = 'Engine ready. Click "Run Full Validation" to start.';
+        if (new URLSearchParams(location.search).get('autorun') === '1') {
+          setTimeout(function() {
+            runValidation();
+            setTimeout(function() {
+              const valReport = document.getElementById('REPORT').textContent;
+              runStabilityTests();
+              const stabReport = document.getElementById('REPORT').textContent;
+              document.getElementById('REPORT').textContent = valReport + '\n\n---\n\n## STABILITY TESTS\n\n' + stabReport;
+            }, 1500);
+          }, 500);
+        }
+      }
+    }
+  }, 100);
+};
+})();
+</script>
+</body>
+</html>

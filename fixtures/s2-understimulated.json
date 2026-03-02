@@ -1,0 +1,19 @@
+{
+  "scenarioId": "s2",
+  "name": "Understimulated novice",
+  "weeksLogged": 4,
+  "programTemplate": "default",
+  "logsByWeek": [],
+  "expected": {
+    "verdict": "UNDERSTIMULATED",
+    "keySignals": {
+      "effSetsMax": 35,
+      "effSetsPerMuscleMax": 8,
+      "medianRIRMin": 3,
+      "failureSetsMax": 4
+    },
+    "guardrails": ["no_global_reduce"],
+    "mustIncludePlanTokens": ["add", "proximity", "intensity"],
+    "mustNotIncludePlanTokens": ["GLOBAL_REDUCE", "DELOAD"]
+  }
+}

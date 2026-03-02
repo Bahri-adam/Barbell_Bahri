@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100-Athlete Program Evolution Test</title>
+<style>
+:root{--bg:#0a0e14;--s1:#151b23;--b1:#2a3544;--grn:#2a9d8f;--gold:#f4a261;--red:#e63946;--tx:#e8ecf1;--tx2:#a8b3c4}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:system-ui;padding:16px;max-width:900px;margin:0 auto}
+h1{font-size:18px;margin-bottom:12px;color:var(--grn)}
+.banner{background:linear-gradient(90deg,#1a2332,#0d1219);border:1px solid var(--b1);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px}
+.banner strong{color:var(--grn)}
+.controls{margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.controls button{background:var(--grn);color:#111;border:none;padding:10px 20px;border-radius:6px;font-weight:700;cursor:pointer}
+.controls button.secondary{background:var(--b1);color:var(--tx)}
+.controls label{display:flex;align-items:center;gap:8px;font-size:13px}
+.controls input[type="number"]{width:60px;padding:6px;background:var(--s1);border:1px solid var(--b1);border-radius:4px;color:var(--tx)}
+#OUTPUT{background:#111;border:1px solid var(--b1);border-radius:8px;padding:16px;font-family:monospace;font-size:11px;line-height:1.5;white-space:pre-wrap;max-height:70vh;overflow-y:auto}
+.copy-hint{font-size:11px;color:var(--tx2);margin-top:8px}
+</style>
+</head>
+<body>
+<h1>100-Athlete Program Evolution Test</h1>
+<div class="banner">
+  <strong>No server needed.</strong> Double-click to open. Runs N athletes through the program generator with different variables (verdict, stalled lifts, split, deload). Output is structured for Claude analysis.
+</div>
+<div class="controls">
+  <label>Number of athletes: <input type="number" id="N_ATHLETES" value="100" min="10" max="200"></label>
+  <button onclick="run()">Run All Athletes</button>
+  <button class="secondary" onclick="copyOutput()">Copy to Clipboard</button>
+  <button class="secondary" onclick="downloadOutput()">Download as .txt file</button>
+  <button class="secondary" onclick="runValidation()">Run Output Validation</button>
+</div>
+<div id="OUTPUT">Click "Run All Athletes" to generate output. Then copy and paste into Claude.</div>
+<p class="copy-hint">Output shows how each athlete's program changes based on verdict, stalled exercises, days/week, and deload status. Use <strong>Download as .txt file</strong> to save for Claude upload (avoids paste limits).</p>
+
+<script>
+(function(){
+  const BODY_MAP=[{parts:['quads'],keys:['Squat','Leg Press','Leg Extension','Belt Squat','Pendulum','Bulgarian Split']},{parts:['hamstrings'],keys:['Deadlift','Leg Curl','Nordic','RDL','Stiff Leg']},{parts:['calves'],keys:['Calf Raise']},{parts:['glutes'],keys:['Hip Abductor','Hip Thrust']},{parts:['chest'],keys:['Bench','Press','Fly','Pec Deck','Incline']},{parts:['back'],keys:['Pull','Row','Pullover','Lat Pulldown']},{parts:['biceps'],keys:['Curl','Spider','Preacher']},{parts:['triceps'],keys:['Pushdown','Skull','Extension','Dip','Close Grip']},{parts:['delts'],keys:['Lateral Raise','Face Pull','Rear Delt']}];
+  function getBodyPart(exName){const n=(exName||'').toLowerCase();for(const {parts,keys} of BODY_MAP){if(keys.some(k=>n.includes(k.toLowerCase())))return parts[0];}return 'other';}
+  const MUSCLE_MODEL=[{keys:['Bench','Press'],muscles:{chest:.6,triceps:.25,delts:.15},len:1},{keys:['Incline'],muscles:{chest:.55,triceps:.2,delts:.25},len:1.05},{keys:['Fly','Pec Deck'],muscles:{chest:.9},len:1.1},{keys:['Pull-Up','Pullup','Pull Up','Lat Pulldown'],muscles:{back:.6,biceps:.25,delts:.15},len:1.05},{keys:['Row','Pullover'],muscles:{back:.7,biceps:.2,delts:.1},len:1.05},{keys:['Face Pull','Rear Delt'],muscles:{delts:.85},len:1},{keys:['Hack Squat','Leg Press','Belt Squat','Pendulum Squat','Bulgarian Split'],muscles:{quads:.7,glutes:.25,hamstrings:.05},len:1},{keys:['Leg Extension'],muscles:{quads:.95},len:1.08},{keys:['Single Leg Press'],muscles:{quads:.65,glutes:.3},len:1.05},{keys:['RDL','Romanian Deadlift'],muscles:{hamstrings:.6,glutes:.3,back:.1},len:1.1},{keys:['Stiff Leg Deadlift','Nordic','Leg Curl'],muscles:{hamstrings:.9},len:1.05},{keys:['Curl'],muscles:{biceps:.8},len:1},{keys:['Incline Dumbbell Curl','Incline Curl'],muscles:{biceps:.95},len:1.1},{keys:['Hammer Curl'],muscles:{biceps:.5},len:1},{keys:['Close Grip','Skull','Pushdown','Extension','Overhead Extension','Dip'],muscles:{triceps:.9},len:1},{keys:['Lateral Raise'],muscles:{delts:.95},len:1.05},{keys:['Calf Raise'],muscles:{calves:1},len:1},{keys:['Hip Abductor','Hip Thrust'],muscles:{glutes:.9},len:1}];
+  function getMuscleWeights(exName){const n=(exName||'').toLowerCase();for(const {keys,muscles} of MUSCLE_MODEL){if(keys.some(k=>n.includes(k.toLowerCase())))return muscles;}const bp=getBodyPart(exName);return bp&&bp!=='other'?{[bp]:1}:{};}
+  function getLengthBias(exName){const n=(exName||'').toLowerCase();for(const {keys,len} of MUSCLE_MODEL){if(keys.some(k=>n.includes(k.toLowerCase())))return len||1;}return 1;}
+  const EL=[{n:'Hack Squat',m:'Quads'},{n:'Leg Press',m:'Quads'},{n:'Belt Squat',m:'Quads'},{n:'Bulgarian Split Squat',m:'Quads'},{n:'Pendulum Squat',m:'Quads'},{n:'Leg Extension',m:'Quads'},{n:'Single Leg Press',m:'Quads'},{n:'Romanian Deadlift',m:'Hamstrings'},{n:'Nordic Hamstring Curl',m:'Hamstrings'},{n:'Lying Leg Curl',m:'Hamstrings'},{n:'Seated Leg Curl',m:'Hamstrings'},{n:'Stiff Leg Deadlift',m:'Hamstrings'},{n:'Standing Calf Raise',m:'Calves'},{n:'Seated Calf Raise',m:'Calves'},{n:'Hip Abductor Machine',m:'Glutes'},{n:'Hip Thrust',m:'Glutes'},{n:'Barbell Bench Press',m:'Chest'},{n:'Incline Barbell Press',m:'Chest'},{n:'Incline Dumbbell Press',m:'Chest'},{n:'Plate Loaded Incline Machine Press',m:'Chest'},{n:'Dumbbell Bench Press',m:'Chest'},{n:'Cable Fly',m:'Chest'},{n:'Pec Deck',m:'Chest'},{n:'Weighted Pull-Up',m:'Back'},{n:'Lat Pulldown',m:'Back'},{n:'Plate Loaded Machine Row',m:'Back'},{n:'Barbell Row',m:'Back'},{n:'Dumbbell Row',m:'Back'},{n:'Lat Pullover',m:'Back'},{n:'Face Pull',m:'Rear Delt'},{n:'Barbell Curl',m:'Biceps'},{n:'EZ Bar Curl',m:'Biceps'},{n:'Incline Dumbbell Curl',m:'Biceps'},{n:'Cable Curl',m:'Biceps'},{n:'Hammer Curl',m:'Brachialis'},{n:'Cable Hammer Curl',m:'Brachialis'},{n:'Spider Curl',m:'Biceps'},{n:'Preacher Curl',m:'Biceps'},{n:'Close Grip Bench Press',m:'Triceps'},{n:'Weighted Dip',m:'Triceps'},{n:'Skull Crusher',m:'Triceps'},{n:'Overhead Tricep Extension',m:'Triceps'},{n:'Dumbbell Overhead Extension',m:'Triceps'},{n:'Cable Pushdown',m:'Triceps'},{n:'Lateral Raise Machine',m:'Delts'},{n:'Dumbbell Lateral Raise',m:'Delts'},{n:'Rear Delt Fly',m:'Delts'}];
+  const P={mon:{focus:'Legs — Quad Focus (Heavy)',exercises:[{name:'Hack Squat',sets:5,reps:'6–8',type:'h'},{name:'Single Leg Press',sets:3,reps:'10–12',type:'s'},{name:'Leg Extension',sets:3,reps:'12–15',type:'d'},{name:'Seated Leg Curl',sets:3,reps:'10–12',type:'n'},{name:'Standing Calf Raise',sets:4,reps:'12–15',type:'s'},{name:'Seated Calf Raise',sets:3,reps:'15–20',type:'n'}]},tue:{focus:'Chest & Back — Full Upper',exercises:[{name:'Barbell Bench Press',sets:4,reps:'3–5',type:'h'},{name:'Incline Dumbbell Press',sets:3,reps:'8–10',type:'n'},{name:'Cable Fly',sets:3,reps:'12–15',type:'n'},{name:'Weighted Pull-Up',sets:4,reps:'6–8',type:'h'},{name:'Plate Loaded Machine Row',sets:3,reps:'8–10',type:'n'},{name:'Lat Pullover',sets:3,reps:'12–15',type:'s'},{name:'Face Pull',sets:3,reps:'15–20',type:'n'}]},wed:{focus:'Arms + Delts',exercises:[{name:'Barbell Curl',sets:4,reps:'6–8',type:'h'},{name:'Incline Dumbbell Curl',sets:3,reps:'10–12',type:'s'},{name:'Cable Hammer Curl',sets:3,reps:'12–15',type:'n'},{name:'Close Grip Bench Press',sets:4,reps:'6–8',type:'h'},{name:'Overhead Tricep Extension',sets:3,reps:'10–12',type:'s'},{name:'Cable Pushdown',sets:3,reps:'12–15',type:'d'},{name:'Lateral Raise Machine',sets:4,reps:'15–20',type:'n'},{name:'Rear Delt Fly',sets:3,reps:'15–20',type:'n'}]},thu:{focus:'Legs — Posterior Chain Heavy',exercises:[{name:'Belt Squat',sets:4,reps:'6–8',type:'h'},{name:'Romanian Deadlift',sets:4,reps:'8–10',type:'s'},{name:'Nordic Hamstring Curl',sets:3,reps:'8–10',type:'s'},{name:'Leg Press',sets:3,reps:'15–20',type:'s'},{name:'Leg Extension',sets:2,reps:'12–15',type:'n'},{name:'Hip Abductor Machine',sets:3,reps:'15–20',type:'n'},{name:'Standing Calf Raise',sets:4,reps:'10–12',type:'s'},{name:'Seated Calf Raise',sets:3,reps:'15–20',type:'n'}]},fri:{rest:true,exercises:[]},sat:{focus:'Chest & Arms — Arm Priority',exercises:[{name:'Incline Barbell Press',sets:3,reps:'6–8',type:'h'},{name:'Cable Fly',sets:3,reps:'15–20',type:'n'},{name:'Hammer Curl',sets:4,reps:'6–8',type:'h'},{name:'Cable Curl',sets:3,reps:'10–12',type:'n'},{name:'Incline Dumbbell Curl',sets:3,reps:'12–15',type:'s'},{name:'Spider Curl',sets:3,reps:'12–15',type:'n'},{name:'Skull Crusher',sets:4,reps:'8–10',type:'h'},{name:'Dumbbell Overhead Extension',sets:3,reps:'10–12',type:'s'}]},sun:{focus:'Legs — Volume (Metabolic Stress)',exercises:[{name:'Leg Press',sets:4,reps:'15–20',type:'s'},{name:'Hack Squat',sets:3,reps:'10–12',type:'n'},{name:'Leg Extension',sets:4,reps:'15–20',type:'d'},{name:'Stiff Leg Deadlift',sets:3,reps:'12–15',type:'n'},{name:'Lying Leg Curl',sets:4,reps:'12–15',type:'n'},{name:'Hip Abductor Machine',sets:3,reps:'15–20',type:'n'},{name:'Standing Calf Raise',sets:4,reps:'15–20',type:'s'}]}};
+  const DAY_NAMES={mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
+  const DO=['mon','tue','wed','thu','fri','sat','sun'];
+  const MUSCLES=['quads','hamstrings','calves','glutes','chest','back','biceps','triceps','delts'];
+  const DELOAD_PCT=0.65;
+  const SPLITS={fullBody:{days:3,titles:['Full Body A','Full Body B','Full Body C'],focus:[['quads','hamstrings','chest','back','delts','biceps','triceps','calves','glutes'],['hamstrings','quads','chest','back','delts','biceps','triceps','calves','glutes'],['quads','hamstrings','chest','back','delts','biceps','triceps','calves','glutes']]},upperLower:{days:4,titles:['Upper A','Lower A','Upper B','Lower B'],focus:[['chest','back','delts','biceps','triceps'],['quads','hamstrings','calves','glutes'],['chest','back','delts','biceps','triceps'],['quads','hamstrings','calves','glutes']]},adam6:{days:6,titles:['Legs — Quad Focus','Chest & Back','Arms & Delts','Legs — Posterior Chain','Chest & Arms','Legs — Volume'],focus:[['quads','hamstrings','calves','glutes'],['chest','back','delts'],['biceps','triceps','delts'],['quads','hamstrings','calves','glutes'],['chest','biceps','triceps','delts'],['quads','hamstrings','calves','glutes']]}};
+
+  function getBodyPartFromMuscle(m){if(!m)return 'other';const x=(m||'').toLowerCase();for(const bp of MUSCLES){if(x.includes(bp))return bp;}if(x.includes('quad')||x.includes('rectus'))return 'quads';if(x.includes('ham'))return 'hamstrings';if(x.includes('calf')||x.includes('gastroc')||x.includes('soleus'))return 'calves';if(x.includes('glute')||x.includes('hip abd'))return 'glutes';if(x.includes('pec')||x.includes('upper'))return 'chest';if(x.includes('lat')||x.includes('rhomb')||x.includes('trap'))return 'back';if(x.includes('bicep')||x.includes('brachialis'))return 'biceps';if(x.includes('tricep'))return 'triceps';if(x.includes('delt')||x.includes('shoulder'))return 'delts';return 'other';}
+  function getPrimaryMuscle(m){if(!m||!Object.keys(m).length)return null;return Object.entries(m).sort((a,b)=>b[1]-a[1])[0][0];}
+  function isCompound(m){if(!m)return false;return Object.keys(m).filter(x=>(m[x]||0)>0).length>1;}
+
+  function getExercisesForBodyPart(bp,exclude,stalledSet,config){
+    const pool=EL.filter(e=>{const name=e.n||e.name;if(!name||name===exclude)return false;const elBp=getBodyPartFromMuscle(e.m);if(elBp!=='other')return elBp===bp;const nameBp=getBodyPart(name);return nameBp===bp;});
+    return pool.map(e=>{const name=e.n||e.name;const mw=getMuscleWeights(name);const lb=getLengthBias(name);return{name,mw,lb,compound:isCompound(mw),primary:getPrimaryMuscle(mw),stalled:stalledSet&&stalledSet.has(name)};}).sort((a,b)=>{if(a.stalled&&!b.stalled)return 1;if(!a.stalled&&b.stalled)return-1;if(a.compound&&!b.compound)return-1;if(!a.compound&&b.compound)return 1;return(b.lb||1)-(a.lb||1);});
+  }
+
+  function selectExercisesForDay(dayMuscles,stalledMap,maxPer,config){
+    const exercises=[];const used=new Set();const maxEx=maxPer||2;
+    for(const muscle of dayMuscles){const stalled=stalledMap&&stalledMap[muscle]?new Set(stalledMap[muscle]):new Set();const pool=getExercisesForBodyPart(muscle,null,stalled,config).filter(e=>!used.has(e.name));let chosen=0;for(const e of pool){if(chosen>=maxEx)break;if(!e.stalled){exercises.push({name:e.name,muscle,primary:e.primary,compound:e.compound,mw:e.mw});used.add(e.name);chosen++;}}}
+    return exercises;
+  }
+
+  function generateProgram(config){
+    const profile=config.profile||{};const verdict=config.verdict||'PROGRESSING';const stalledMap=config.stalledMap||{};const isDeload=config.isDeloadWeek||false;
+    const daysPerWeek=profile.daysPerWeek??6;const preferred=profile.preferredSplit||'adam6';
+    let splitKey=preferred;if(daysPerWeek<=3)splitKey='fullBody';else if(daysPerWeek===4)splitKey='upperLower';else if(!SPLITS[preferred])splitKey='adam6';
+    const split=SPLITS[splitKey];if(!split||split.titles.length!==split.focus.length)throw new Error('SPLITS.'+splitKey+' integrity');
+    const dayKeys=splitKey==='fullBody'?['mon','wed','fri']:splitKey==='upperLower'?['mon','tue','wed','thu']:['mon','tue','wed','thu','sat','sun'];const restDay=splitKey==='adam6'?(profile.restDay||'fri'):null;
+    const weekProgram={days:[],archetype:splitKey,verdict,stalledMap:Object.keys(stalledMap).length?stalledMap:null,isDeload};
+    const deloadMult=isDeload?DELOAD_PCT:1;let volumeMult=1;if(verdict==='UNDERSTIMULATED')volumeMult=1.15;else if(verdict==='OVERREACHED')volumeMult=0.85;
+    const maxPer=splitKey==='fullBody'?1:2;const cfg={EL,P,getMuscleWeights,getBodyPart,getLengthBias};
+    for(const dk of DO){
+      if((restDay&&dk===restDay)||!dayKeys.includes(dk)){weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:true,focus:'Rest',exercises:[]});continue;}
+      const sessionIdx=dayKeys.indexOf(dk);const title=split.titles[sessionIdx];const focusMuscles=split.focus[sessionIdx];
+      if(!title||!focusMuscles){weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:true,focus:'Rest',exercises:[]});continue;}
+      const templateDay=P[dayKeys[sessionIdx]];const templateExMap={};if(templateDay&&templateDay.exercises)templateDay.exercises.forEach(ex=>templateExMap[ex.name]=ex);
+      let dayExs=selectExercisesForDay(focusMuscles,stalledMap,maxPer,cfg);
+      const typeOrder={h:0,n:1,s:2,d:3};dayExs.sort((a,b)=>{if(a.compound&&!b.compound)return-1;if(!a.compound&&b.compound)return 1;const ta=typeOrder[templateExMap[a.name]?.type||'n']??1;const tb=typeOrder[templateExMap[b.name]?.type||'n']??1;return ta-tb;});
+      const exercises=dayExs.map(ex=>{const t=templateExMap[ex.name];let sets=t?t.sets||3:3;if(isDeload)sets=Math.max(1,Math.round(sets*deloadMult));else if(volumeMult!==1)sets=Math.max(1,Math.round(sets*volumeMult));const isReplacement=stalledMap[ex.muscle]&&stalledMap[ex.muscle].length&&ex.primary===ex.muscle;return{name:ex.name,sets,reps:t?t.reps||'8–12':'8–12',type:t?t.type||'n':'n',muscle:ex.muscle,primary:ex.primary,swapped:isReplacement};});
+      weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:false,focus:title,exercises});
+    }
+    return weekProgram;
+  }
+
+  function buildAthleteScenarios(n){
+    const scenarios=[];
+    const edgeCases=[
+      {id:0,name:'New athlete (PROGRESSING)',verdict:'PROGRESSING',stalledMap:{},profile:{daysPerWeek:6,preferredSplit:'adam6'},isDeloadWeek:false},
+      {id:1,name:'Bench stalled — swap to Dumbbell Bench',verdict:'STALL_LOCAL',stalledMap:{chest:['Barbell Bench Press']},profile:{daysPerWeek:6},isDeloadWeek:false},
+      {id:2,name:'Hack Squat stalled — swap to Leg Press',verdict:'STALL_LOCAL',stalledMap:{quads:['Hack Squat']},profile:{daysPerWeek:6},isDeloadWeek:false},
+      {id:3,name:'Bench + Hack both stalled',verdict:'STALL_LOCAL',stalledMap:{chest:['Barbell Bench Press'],quads:['Hack Squat']},profile:{daysPerWeek:6},isDeloadWeek:false},
+      {id:4,name:'Deload week (W6)',verdict:'DELOAD_RECOMMENDED',stalledMap:{},profile:{daysPerWeek:6},isDeloadWeek:true},
+      {id:5,name:'4-day Upper/Lower split',verdict:'PROGRESSING',stalledMap:{},profile:{daysPerWeek:4,preferredSplit:'upperLower'},isDeloadWeek:false},
+      {id:6,name:'3-day Full-body',verdict:'PROGRESSING',stalledMap:{},profile:{daysPerWeek:3,preferredSplit:'fullBody'},isDeloadWeek:false},
+      {id:7,name:'UNDERSTIMULATED — add volume intent',verdict:'UNDERSTIMULATED',stalledMap:{},profile:{daysPerWeek:6},isDeloadWeek:false},
+      {id:8,name:'OVERREACHED — reduce intent',verdict:'OVERREACHED',stalledMap:{},profile:{daysPerWeek:6},isDeloadWeek:false},
+      {id:9,name:'STALL_SYSTEMIC — swap multiple',verdict:'STALL_SYSTEMIC',stalledMap:{chest:['Barbell Bench Press'],quads:['Hack Squat','Leg Press']},profile:{daysPerWeek:6},isDeloadWeek:false},
+    ];
+    for(let i=0;i<Math.min(n,edgeCases.length);i++)scenarios.push({...edgeCases[i],id:i});
+    const stallsOptions=[{},{chest:['Barbell Bench Press']},{quads:['Hack Squat']},{quads:['Leg Press']},{back:['Weighted Pull-Up']},{chest:['Barbell Bench Press'],quads:['Hack Squat']}];
+    const verdicts=['PROGRESSING','PROGRESSING','PROGRESSING','STALL_LOCAL','STALL_LOCAL','UNDERSTIMULATED','DELOAD_RECOMMENDED','OVERREACHED'];
+    const splits=[{daysPerWeek:6,preferredSplit:'adam6'},{daysPerWeek:4,preferredSplit:'upperLower'},{daysPerWeek:3,preferredSplit:'fullBody'}];
+    for(let i=scenarios.length;i<n;i++){
+      const verdict=verdicts[i%verdicts.length];
+      const stalledMap=stallsOptions[i%stallsOptions.length];
+      const profile=splits[i%3];
+      const isDeload=verdict==='DELOAD_RECOMMENDED'||(i%17===0);
+      scenarios.push({id:i,name:`Athlete ${i+1} — ${verdict}${Object.keys(stalledMap).length?' + stalls':''}${isDeload?' (deload)':''}`,verdict,stalledMap,profile,isDeloadWeek:isDeload});
+    }
+    return scenarios;
+  }
+
+  function formatProgramForOutput(wp){
+    let s='';wp.days.forEach(d=>{if(d.rest)s+=`  ${d.name}: REST\n`;else{s+=`  ${d.name} — ${d.focus}\n`;d.exercises.forEach(ex=>s+=`    • ${ex.name} ${ex.sets}×${ex.reps}${ex.swapped?' [SWAPPED]':''}\n`);}});
+    return s;
+  }
+
+  window.run=function(){
+    const n=Math.min(200,Math.max(10,parseInt(document.getElementById('N_ATHLETES').value,10)||100));
+    const scenarios=buildAthleteScenarios(n);
+    const results=[];
+    let text='';
+    text+=`═══════════════════════════════════════════════════════════════════════════\n`;
+    text+=`ADAM 100-ATHLETE PROGRAM EVOLUTION TEST\n`;
+    text+=`Generated: ${new Date().toISOString()}\n`;
+    text+=`Shows how workout programs change based on: verdict, stalled lifts, split, deload.\n`;
+    text+=`Copy this ENTIRE output and paste into Claude for analysis.\n`;
+    text+=`═══════════════════════════════════════════════════════════════════════════\n\n`;
+    text+=`VARIABLES THAT DRIVE PROGRAM CHANGES:\n`;
+    text+=`  • verdict: PROGRESSING | STALL_LOCAL | STALL_SYSTEMIC | UNDERSTIMULATED | DELOAD_RECOMMENDED | OVERREACHED\n`;
+    text+=`  • stalledMap: { muscle: [exercise names to swap out] }\n`;
+    text+=`  • profile.daysPerWeek: 3 | 4 | 6\n`;
+    text+=`  • profile.preferredSplit: adam6 | upperLower | fullBody\n`;
+    text+=`  • isDeloadWeek: reduces sets by ~35%\n\n`;
+    for(let i=0;i<scenarios.length;i++){
+      const a=scenarios[i];
+      const wp=generateProgram({verdict:a.verdict,stalledMap:a.stalledMap,profile:a.profile,isDeloadWeek:a.isDeloadWeek});
+      results.push({id:a.id,name:a.name,variables:{verdict:a.verdict,stalledMap:a.stalledMap,profile:a.profile,isDeloadWeek:a.isDeloadWeek},program:wp});
+      text+=`───────────────────────────────────────────────────────────────────────────\n`;
+      text+=`ATHLETE ${i+1}: ${a.name}\n`;
+      text+=`VARIABLES: verdict=${a.verdict} | days=${a.profile.daysPerWeek} | split=${a.profile.preferredSplit} | deload=${a.isDeloadWeek} | stalls=${JSON.stringify(a.stalledMap)}\n`;
+      text+=`GENERATED PROGRAM:\n`;
+      text+=formatProgramForOutput(wp);
+      text+=`\n`;
+    }
+    const valIssues=runValidationInternal(results);
+    text+=`═══════════════════════════════════════════════════════════════════════════\n`;
+    text+=`END — ${results.length} athletes | Validation: ${valIssues.length?valIssues.length+' issue(s)':'PASSED'}\n`;
+    if(valIssues.length)text+=valIssues.map(x=>`  • Athlete ${x.athlete}${x.day?' '+x.day:''}: ${x.msg}`).join('\n')+'\n';
+    text+=`═══════════════════════════════════════════════════════════════════════════\n\n`;
+    text+=`FULL JSON (for Claude):\n`;
+    text+=JSON.stringify({meta:{purpose:'Program evolution across athlete variables',total:results.length,instructions:'Analyze how verdict, stalledMap, split, and deload change the generated program. Identify patterns and edge cases.'},results},null,2);
+    document.getElementById('OUTPUT').textContent=text;
+    window._lastOutput=text;
+    window._lastResults=results;
+  };
+
+  window.copyOutput=function(){
+    const t=window._lastOutput||document.getElementById('OUTPUT').textContent;
+    if(navigator.clipboard?.writeText)navigator.clipboard.writeText(t).then(()=>alert('Copied to clipboard!')).catch(()=>{});
+    else{document.getElementById('OUTPUT').select();document.execCommand('copy');alert('Copied!');}
+  };
+
+  window.downloadOutput=function(){
+    const t=window._lastOutput||document.getElementById('OUTPUT').textContent;
+    if(!t||t.includes('Click "Run All Athletes"')){alert('Run the test first, then download.');return;}
+    const blob=new Blob([t],{type:'text/plain;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='100-athlete-program-output.txt';a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const UPPER_MUSCLES=new Set(['chest','back','biceps','triceps','delts']);
+  const LOWER_MUSCLES=new Set(['quads','hamstrings','calves','glutes']);
+  function getPrimaryFromEx(name){return getPrimaryMuscle(getMuscleWeights(name));}
+  function isUpperEx(name){return UPPER_MUSCLES.has(getPrimaryFromEx(name));}
+  function isLowerEx(name){return LOWER_MUSCLES.has(getPrimaryFromEx(name));}
+
+  function runValidationInternal(results){
+    if(!results||!results.length)return[];
+    const issues=[];
+    for(let i=0;i<results.length;i++){
+      const r=results[i];const wp=r.program;const v=r.variables;
+      wp.days.forEach(d=>{
+        if(d.rest)return;
+        if(!d.focus||d.focus==='undefined')issues.push({athlete:i+1,day:d.name,msg:'Missing or undefined focus label'});
+        const focusLower=(d.focus||'').toLowerCase();
+        const isUpperDay=focusLower.includes('upper')||focusLower.includes('chest')||focusLower.includes('back')||focusLower.includes('arm');
+        const isLowerDay=focusLower.includes('lower')||focusLower.includes('leg')||focusLower.includes('quad');
+        if(isUpperDay&&d.exercises.length){const wrong=d.exercises.filter(ex=>isLowerEx(ex.name)&&!isUpperEx(ex.name));if(wrong.length)issues.push({athlete:i+1,day:d.name,msg:`Upper day has lower-body exercise: ${wrong.map(x=>x.name).join(', ')}`});}
+        if(isLowerDay&&d.exercises.length){const wrong=d.exercises.filter(ex=>isUpperEx(ex.name)&&!isLowerEx(ex.name));if(wrong.length)issues.push({athlete:i+1,day:d.name,msg:`Lower day has upper-body exercise: ${wrong.map(x=>x.name).join(', ')}`});}
+      });
+      if(v.verdict==='UNDERSTIMULATED'&&!v.isDeloadWeek){
+        const prog=results.find(x=>x.variables.verdict==='PROGRESSING'&&!x.variables.isDeloadWeek&&(x.variables.profile?.daysPerWeek||6)===(v.profile?.daysPerWeek||6));
+        if(prog){const underTotal=wp.days.reduce((s,d)=>s+d.exercises.reduce((a,e)=>a+e.sets,0),0);const progTotal=prog.program.days.reduce((s,d)=>s+d.exercises.reduce((a,e)=>a+e.sets,0),0);if(underTotal<=progTotal)issues.push({athlete:i+1,msg:`UNDERSTIMULATED should have more sets than PROGRESSING (got ${underTotal} vs ${progTotal})`});}
+      }
+      if(v.verdict==='OVERREACHED'&&!v.isDeloadWeek){
+        const prog=results.find(x=>x.variables.verdict==='PROGRESSING'&&!x.variables.isDeloadWeek&&(x.variables.profile?.daysPerWeek||6)===(v.profile?.daysPerWeek||6));
+        if(prog){const overTotal=wp.days.reduce((s,d)=>s+d.exercises.reduce((a,e)=>a+e.sets,0),0);const progTotal=prog.program.days.reduce((s,d)=>s+d.exercises.reduce((a,e)=>a+e.sets,0),0);if(overTotal>=progTotal)issues.push({athlete:i+1,msg:`OVERREACHED should have fewer sets than PROGRESSING (got ${overTotal} vs ${progTotal})`});}
+      }
+    }
+    return issues;
+  }
+
+  window.runValidation=function(){
+    const results=window._lastResults;
+    if(!results||!results.length){alert('Run the test first, then run validation.');return;}
+    const issues=runValidationInternal(results);
+    let report='OUTPUT VALIDATION REPORT\n'+'═'.repeat(50)+'\n';
+    if(!issues.length)report+='All checks passed.\n';
+    else{report+=`Found ${issues.length} issue(s):\n\n`;issues.forEach((x,i)=>report+=`${i+1}. Athlete ${x.athlete}${x.day?' '+x.day:''}: ${x.msg}\n`);}
+    document.getElementById('OUTPUT').textContent=report;
+    window._lastOutput=report;
+  };
+})();
+</script>
+</body>
+</html>
