@@ -88,6 +88,8 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .dbody{flex:1;padding:13px 14px}
 .dnrow{display:flex;justify-content:space-between;align-items:center}
 .dname{font-family:var(--fd);font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;line-height:1}
+.dname-row{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+.dname-date{font-family:var(--fm);font-size:10px;color:var(--tx3);white-space:nowrap}
 .dcount{font-family:var(--fm);font-size:11px;color:var(--tx3)}
 .dfocus{font-size:11px;color:var(--tx3);margin-top:3px}
 .dlast{font-size:10px;color:var(--tx3);margin-top:5px;font-family:var(--fm)}
@@ -137,7 +139,7 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .ec.superset{border-left:3px solid var(--blue)}
 .ss-hdr{font-size:10px;color:var(--blue2);font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
 .ss-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:flex-start;margin-bottom:6px}
-@media(max-width:360px){.ss-row{grid-template-columns:1fr}}
+@media(max-width:768px){.ss-row{grid-template-columns:1fr}}
 .ss-col{background:var(--s2);border:1px solid var(--b1);border-radius:5px;padding:8px;min-width:0}
 .ss-col-lbl{font-size:9px;color:var(--tx3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
 .ss-col .srow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:0}
@@ -223,6 +225,7 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .ep strong{color:var(--tx2);font-family:var(--fm);font-size:12px}
 .ecue{font-size:11px;color:var(--tx3);line-height:1.45;padding:7px 10px;background:var(--s2);border-radius:3px;border-left:2px solid var(--b2);margin-bottom:10px;cursor:pointer;user-select:none}
 .ecue.collapsed{display:none}
+.ecue-note{font-size:10px;color:var(--tx2);line-height:1.45;padding:7px 10px;background:rgba(69,123,157,.08);border-radius:3px;border-left:2px solid rgba(69,123,157,.4);margin-top:-6px;margin-bottom:10px}
 .cue-toggle{font-size:10px;color:var(--tx3);background:none;border:none;cursor:pointer;font-family:var(--fb);letter-spacing:.05em;text-transform:uppercase;padding:0;margin-bottom:8px;display:flex;align-items:center;gap:4px}
 
 /* SETS */
@@ -552,6 +555,21 @@ select{color-scheme:dark}
           <input type="number" class="custom-ex-input" id="EDR" placeholder="reps" inputmode="numeric"></div>
       </div>
       <button class="use-custom-btn" onclick="saveEditLog()">SAVE CHANGES</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT CUE / NOTE MODAL -->
+<div class="overlay" id="ECN">
+  <div class="modal">
+    <div class="mhdr">Edit Cue / Notes <button class="mx" onclick="closeCueEditor()">✕</button></div>
+    <input type="hidden" id="ECN_ID">
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+      <div><label style="font-size:11px;color:var(--tx3);text-transform:uppercase">Cue</label>
+        <textarea class="custom-ex-input" id="ECN_CUE" rows="4" placeholder="How to perform this movement..."></textarea></div>
+      <div><label style="font-size:11px;color:var(--tx3);text-transform:uppercase">Notes</label>
+        <textarea class="custom-ex-input" id="ECN_NOTE" rows="3" placeholder="Optional notes, machine setup, reminders..."></textarea></div>
+      <button class="use-custom-btn" onclick="saveCueEditor()">SAVE CUE / NOTES</button>
     </div>
   </div>
 </div>
@@ -1293,6 +1311,85 @@ function getBodyPartFromMuscle(m){
 const BODY_PART_OPTIONS=[{v:'chest',l:'Chest'},{v:'back',l:'Back'},{v:'quads',l:'Quads'},{v:'hamstrings',l:'Hamstrings'},{v:'calves',l:'Calves'},{v:'glutes',l:'Glutes'},{v:'biceps',l:'Biceps'},{v:'triceps',l:'Triceps'},{v:'delts',l:'Delts'}];
 
 const DAY_NAMES={mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
+const DAY_INDEX={mon:0,tue:1,wed:2,thu:3,fri:4,sat:5,sun:6};
+
+function toISODate(d){
+  const dt=new Date(d);
+  dt.setHours(12,0,0,0);
+  return dt.toISOString().split('T')[0];
+}
+function parseISODate(iso){
+  if(!iso)return null;
+  const d=new Date(iso+'T12:00:00');
+  return isNaN(d.getTime())?null:d;
+}
+function fmtShortDate(iso){
+  const d=parseISODate(iso);
+  if(!d)return '';
+  return `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+}
+function getWeekAnchorFromLogs(wk){
+  const rows=ST.logs.filter(l=>l.wk===wk&&l.date&&DAY_INDEX[l.dk]!=null);
+  if(!rows.length)return null;
+  const score={};
+  rows.forEach(l=>{
+    const d=parseISODate(l.date);
+    if(!d)return;
+    d.setDate(d.getDate()-DAY_INDEX[l.dk]);
+    const iso=toISODate(d);
+    score[iso]=(score[iso]||0)+1;
+  });
+  const best=Object.keys(score).sort((a,b)=>score[b]-score[a])[0];
+  return best||null;
+}
+function getWeekMondayDate(wk){
+  ST.weekAnchors=ST.weekAnchors||{};
+  if(ST.weekAnchors[wk])return ST.weekAnchors[wk];
+
+  const fromLogs=getWeekAnchorFromLogs(wk);
+  if(fromLogs){
+    ST.weekAnchors[wk]=fromLogs;
+    saveSTLocal();
+    return fromLogs;
+  }
+
+  const anchorWeeks=Object.keys(ST.weekAnchors).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b);
+  if(anchorWeeks.length){
+    const nearest=anchorWeeks.reduce((best,w)=>Math.abs(w-wk)<Math.abs(best-wk)?w:best,anchorWeeks[0]);
+    const base=parseISODate(ST.weekAnchors[nearest]);
+    if(base){
+      base.setDate(base.getDate()+((wk-nearest)*7));
+      const iso=toISODate(base);
+      ST.weekAnchors[wk]=iso;
+      saveSTLocal();
+      return iso;
+    }
+  }
+
+  const today=new Date();
+  const monday=new Date(today);
+  const jsDay=(monday.getDay()+6)%7;
+  monday.setDate(monday.getDate()-jsDay-((ST.wk||1)-wk)*7);
+  const fallback=toISODate(monday);
+  ST.weekAnchors[wk]=fallback;
+  saveSTLocal();
+  return fallback;
+}
+function getDateForWeekDay(wk,dk){
+  const monIso=getWeekMondayDate(wk);
+  const mon=parseISODate(monIso);
+  if(!mon||DAY_INDEX[dk]==null)return '';
+  mon.setDate(mon.getDate()+DAY_INDEX[dk]);
+  return toISODate(mon);
+}
+function escHtml(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
 
 function getScheduleForWeek(wk){
   const s=(ST.weekSchedules||{})[wk];
@@ -1467,7 +1564,7 @@ const HL=[
 const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbyKSyFyEdTkZhfnMrKF66zPUNn8Lf5ppYz5bAZviRzGAcN8YGZx5-hAEvIN03wTW5Ex/exec';
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
-  cueCollapsed:{},restDays:['fri'],weekSchedules:{},weekOverride:{},workoutsSinceBackupReminder:0,
+  cueCollapsed:{},restDays:['fri'],weekSchedules:{},weekOverride:{},weekAnchors:{},workoutsSinceBackupReminder:0,
   profile:{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}
 };
 let CHS={};
@@ -1475,7 +1572,7 @@ let CHS={};
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
+  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('adamCustomEx');
@@ -1486,7 +1583,7 @@ function loadST(){
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
+function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
 function saveST(){saveSTLocal();fbSaveSettings()}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
 function saveLogsLocal(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
@@ -1567,17 +1664,20 @@ function renderHome(){
   const loggedThisWeek=new Set(weekLogs.map(l=>l.dk));
   DO.forEach(k=>{
     const d=getDayProgram(k);
-    if(d.rest){const el=document.createElement('div');el.className='rcard';el.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--tx3)" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><div class="rlabel">${DAY_NAMES[k]} — Rest & Recovery</div>`;dl.appendChild(el);return}
+    const dayDateIso=getDateForWeekDay(ST.wk,k);
+    const dayDate=fmtShortDate(dayDateIso);
+    if(d.rest){const el=document.createElement('div');el.className='rcard';el.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--tx3)" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><div class="rlabel">${DAY_NAMES[k]} ${dayDate?`· ${dayDate}`:''} — Rest & Recovery</div>`;dl.appendChild(el);return}
     const dayLogs=weekLogs.filter(l=>l.dk===k);
     const done=loggedThisWeek.has(k);
     const daySets=dayLogs.length;
     const dayVol=dayLogs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
     const last=getLastDate(k);
+    const lastFmt=last?fmtShortDate(last):'';
     const el=document.createElement('div');el.className='dcard'+(done?' dcard-done':'');el.onclick=()=>openWO(k);
     el.innerHTML=`<div class="dstripe" style="background:${done?'var(--grn)':d.color}"></div>
-    <div class="dbody"><div class="dnrow"><div class="dname" style="color:${done?'var(--grn)':d.color}">${d.name}${done?' ✓':''}</div><div class="dcount">${d.exercises.length} ex</div></div>
+    <div class="dbody"><div class="dnrow"><div class="dname-row"><div class="dname" style="color:${done?'var(--grn)':d.color}">${d.name}${done?' ✓':''}</div><div class="dname-date">${dayDate}</div></div><div class="dcount">${d.exercises.length} ex</div></div>
     <div class="dfocus">${d.focus}</div>
-    ${done?`<div class="dlast" style="color:var(--grn2)">${daySets} sets · ${dayVol>1000?(dayVol/1000).toFixed(1)+'K':dayVol} lbs volume</div>`:`<div class="dlast">${last?'Last: '+last:'Not yet logged'}</div>`}
+    ${done?`<div class="dlast" style="color:var(--grn2)">${daySets} sets · ${dayVol>1000?(dayVol/1000).toFixed(1)+'K':dayVol} lbs volume</div>`:`<div class="dlast">${lastFmt?'Last: '+lastFmt:'Not yet logged'}</div>`}
     </div>
     <div style="display:flex;align-items:center;padding-right:14px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="${done?'var(--grn)':'var(--tx3)'}" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;
     dl.appendChild(el);
@@ -2294,8 +2394,8 @@ function renderWO(){
     const isSuperset=block.type==='superset';
     const sets=ST.aws[ex.id]||[];
     const sets2=ex2?(ST.aws[ex2.id]||[]):[];
-    const prev=getPrev(ex.displayName,ST.aday,ex.name);
-    const prev2=ex2?getPrev(ex2.displayName,ST.aday,ex2.name):[];
+    const prev=getPrev(ex.displayName,ST.aday,ex.displayName===ex.name?ex.name:null);
+    const prev2=ex2?getPrev(ex2.displayName,ST.aday,ex2.displayName===ex2.name?ex2.name:null):[];
     const tc={'h':'eh','s':'es','d':'ed','n':''}[ex.type]||'';
     const bl={'h':'<span class="badge bh">HEAVY</span>','s':'<span class="badge bs">★ STRETCH</span>','d':'<span class="badge bd">↓ DROP</span>','n':''}[ex.type]||'';
 
@@ -2306,6 +2406,8 @@ function renderWO(){
     totalSets+=sets.length+sets2.length;completedSets+=exDone+exDone2;if(exVol)totalVol+=exVol;if(exVol2)totalVol+=exVol2;
 
     const cueHidden=ST.cueCollapsed[ex.id];
+    const cueText=escHtml(ex.cue||'');
+    const noteText=escHtml(ex.note||'');
 
     const card=document.createElement('div');
     card.className=`ec ${tc}${isSuperset?' superset':''}`;
@@ -2390,16 +2492,21 @@ function renderWO(){
           <div class="ex-actions">
             ${(isSuperset||exIdx<ST.awExs.length-1)?`<button class="ex-act-btn ${ex.supersetWith?' on':''}" onclick="toggleSuperset(${exIdx})" title="${ex.supersetWith?'Unpair superset':'Superset with next'}">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v18M16 3v18M3 8h18M3 16h18"/></svg>
-              ${ex.supersetWith?'Unpair':'Superset'}
+              ${ex.supersetWith?'Un-superset':'Superset'}
             </button>`:''}
             <button class="ex-act-btn" onclick="openSW('${ST.aday}',${exIdx},'${ex.name.replace(/'/g,"\\'")}')">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
               Swap
             </button>
+            <button class="ex-act-btn" onclick="openCueEditor('${ex.id}')">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+              Cue/Note
+            </button>
             <button class="ex-act-btn del-ex" onclick="confirmDelEx(${exIdx},'${ex.displayName.replace(/'/g,"\\'")}')">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
               Remove
             </button>
+            ${isSuperset&&ex2?`<button class="ex-act-btn del-ex" onclick="confirmDelEx(${exIdx+1},'${ex2.displayName.replace(/'/g,"\\'")}')">Remove B</button>`:''}
           </div>
           <div class="eparams">
             <div class="ep"><strong>${isSuperset&&ex2?sets.length+' + '+sets2.length:sets.length}</strong> sets</div>
@@ -2411,7 +2518,8 @@ function renderWO(){
             <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><${cueHidden?'polyline points="9 18 15 12 9 6"':'polyline points="6 9 12 15 18 9"'}/></svg>
             ${cueHidden?'Show cue':'Hide cue'}
           </button>
-          <div class="ecue${cueHidden?' collapsed':''}">${ex.cue}</div>
+          <div class="ecue${cueHidden?' collapsed':''}">${cueText||'No cue added yet.'}</div>
+          ${noteText?`<div class="ecue-note${cueHidden?' collapsed':''}"><strong>Note:</strong> ${noteText}</div>`:''}
           ${stalledMap[ex.displayName]?`<div class="stall-warn"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Stalled at ${stalledMap[ex.displayName].weight} lbs since ${stalledMap[ex.displayName].since} — try a variation or rep scheme change</div>`:''}
         </div>
       </div>
@@ -2621,8 +2729,13 @@ function confirmDelEx(exIdx,name){
 }
 function delEx(exIdx){
   const ex=ST.awExs[exIdx];
+  if(!ex)return;
+  const prev=ST.awExs[exIdx-1];
+  if(prev&&prev.supersetWith===ex.id)prev.supersetWith=undefined;
+  if(ex.supersetWith)ex.supersetWith=undefined;
+  if(ST.aws&&ST.aws[ex.id])delete ST.aws[ex.id];
   ST.awExs.splice(exIdx,1);
-  // keep aws data in case they undo (not implemented yet, just keep it)
+  saveWorkoutProgress();
   renderWO();
 }
 function openAddEx(){
@@ -2714,9 +2827,33 @@ function toggleSuperset(exIdx){
   if(ex.supersetWith===next.id){
     ex.supersetWith=undefined;
   }else{
+    const prev=ST.awExs[exIdx-1];
+    if(prev&&prev.supersetWith===ex.id)prev.supersetWith=undefined;
     ex.supersetWith=next.id;
   }
   saveWorkoutProgress();
+  renderWO();
+}
+
+function openCueEditor(exId){
+  const ex=ST.awExs.find(x=>x.id===exId);
+  if(!ex)return;
+  document.getElementById('ECN_ID').value=exId;
+  document.getElementById('ECN_CUE').value=ex.cue||'';
+  document.getElementById('ECN_NOTE').value=ex.note||'';
+  document.getElementById('ECN').classList.add('on');
+}
+function closeCueEditor(){
+  document.getElementById('ECN').classList.remove('on');
+}
+function saveCueEditor(){
+  const exId=document.getElementById('ECN_ID').value;
+  const ex=ST.awExs.find(x=>x.id===exId);
+  if(!ex)return closeCueEditor();
+  ex.cue=(document.getElementById('ECN_CUE').value||'').trim();
+  ex.note=(document.getElementById('ECN_NOTE').value||'').trim();
+  saveWorkoutProgress();
+  closeCueEditor();
   renderWO();
 }
 
@@ -2856,7 +2993,15 @@ function applySW(newName,isCustom=false,bodyPart=null){
 
   // Apply immediately for this session
   ex.displayName=newName;
+  // If swapped, start from the swapped exercise's own recent numbers only.
+  const prevExact=getPrevExact(newName,dk);
+  const rowCount=(ST.aws[ex.id]||[]).length||ex.sets||3;
+  ST.aws[ex.id]=Array.from({length:rowCount},(_,i)=>{
+    const p=prevExact[i]||{};
+    return {w:p.w||'',r:p.r||'',rpe:'',done:false};
+  });
   closeSW();
+  saveWorkoutProgress();
   renderWO();
 }
 
@@ -2929,12 +3074,21 @@ function getPrev(exName,dk,origName){
   const last=rows.filter(r=>r.date===lastDate).sort((a,b)=>a.sn-b.sn);
   return last.map(r=>({w:r.w||'',r:r.r||'',e1:r.e1rm||null}));
 }
+function getPrevExact(exName,dk){
+  const rows=ST.logs
+    .filter(l=>(!dk||l.dk===dk) && l.ex===exName && l.w!=null && l.r!=null)
+    .sort((a,b)=>(a.date<b.date?1:-1));
+  if(!rows.length)return [];
+  const lastDate=rows[0].date;
+  const last=rows.filter(r=>r.date===lastDate).sort((a,b)=>a.sn-b.sn);
+  return last.map(r=>({w:r.w||'',r:r.r||'',e1:r.e1rm||null}));
+}
 // Deload recommended weight (65–70% of previous) — science-backed
 function getRec(exName,dk,setIdx){
   const wk=ST.logWk||ST.wk;
   const pct=DELOAD_PCT[wk];
   if(!pct) return null;
-  const prev=getPrev(exName,dk);
+  const prev=getPrevExact(exName,dk);
   if(!prev.length) return null;
   const p=prev[setIdx]||prev[prev.length-1];
   const pw=parseFloat(p.w);
@@ -3006,7 +3160,7 @@ function getStalledLifts(optWk){
 function getProgOverloadRec(exName,dk,setIdx){
   const wk=ST.logWk||ST.wk;
   if(DELOAD_PCT[wk]) return null; // deload has its own rec
-  const prev=getPrev(exName,dk);
+  const prev=getPrevExact(exName,dk);
   if(!prev.length) return null;
   const p=prev[setIdx]||prev[prev.length-1];
   const pw=parseFloat(p.w);
@@ -3064,7 +3218,7 @@ function finWO(){
 
       let row;
       if(prev){
-        row={...prev,w,r,e1rm,rpe};
+        row={...prev,w,r,e1rm,rpe,nt:ex.note||prev.nt||''};
       }else{
         row={
           id:'l'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
@@ -3078,6 +3232,7 @@ function finWO(){
           w, r,
           e1rm,
           rpe,
+          nt:ex.note||'',
           dur
         };
         newRowsOnly.push(row);
@@ -3644,7 +3799,8 @@ function renderHIST(ab){
     g.className='hgroup';
     const hdr=document.createElement('div');
     hdr.className='hdtehdr';
-    hdr.textContent=d;
+    const headerDay=map[d][0]?.dn||new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long'});
+    hdr.textContent=`${fmtShortDate(d)} · ${headerDay}`;
     g.appendChild(hdr);
 
     // Group by exercise
@@ -3659,8 +3815,9 @@ function renderHIST(ab){
       const card=document.createElement('div');
       card.className='hexrow hexrow-editable';
       const sets=rows.map(r=>`${r.w}×${r.r}${r.e1rm?` (e1 ${r.e1rm})`:''}`).join(' · ');
+      const note=rows.find(r=>r.nt&&String(r.nt).trim());
       card.innerHTML=`
-        <div><div class="hexname">${ex}</div><div class="hsets">${sets}</div></div>
+        <div><div class="hexname">${ex}</div><div class="hsets">${sets}${note?`<br><span style="color:var(--tx3)">Note: ${escHtml(note.nt)}</span>`:''}</div></div>
         <button class="hex-edit-btn" onclick="openEditLog('${d}','${ex.replace(/'/g,"\\'")}')" title="Edit sets">Edit</button>
       `;
       g.appendChild(card);
