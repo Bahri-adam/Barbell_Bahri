@@ -4009,7 +4009,7 @@ function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
 function fbSaveSettings(){
   if(!fbReady)return;
   try{
-    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,addedExercises:ST.addedExercises||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
+    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},addedExercises:ST.addedExercises||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
     fbRef('settings').set(data);
   }catch(e){console.warn('FB settings write failed:',e)}
 }
@@ -4041,6 +4041,32 @@ function fbSaveCustomEx(){
   }catch(e){console.warn('FB custom ex write failed:',e)}
 }
 
+function mergeLogsFromFirebase(logObj){
+  if(!logObj)return {added:0,updated:0,changed:false};
+  const fbLogs=Object.values(logObj).filter(l=>l&&l.id);
+  if(!fbLogs.length)return {added:0,updated:0,changed:false};
+  const idxById={};
+  ST.logs.forEach((l,i)=>{if(l&&l.id)idxById[l.id]=i;});
+  let added=0,updated=0;
+  fbLogs.forEach(r=>{
+    const i=idxById[r.id];
+    if(i==null){
+      ST.logs.push(r);
+      idxById[r.id]=ST.logs.length-1;
+      added++;
+      return;
+    }
+    const cur=ST.logs[i]||{};
+    // Keep local-only fields, but let Firebase overwrite known values for same id.
+    const merged={...cur,...r};
+    if(JSON.stringify(cur)!==JSON.stringify(merged)){
+      ST.logs[i]=merged;
+      updated++;
+    }
+  });
+  return {added,updated,changed:(added+updated)>0};
+}
+
 async function fbPullAll(){
   try{
     const snap=await fbRef('').once('value');
@@ -4051,20 +4077,15 @@ async function fbPullAll(){
     // Merge settings (Firebase wins if newer)
     if(data.settings){
       const fb=data.settings;
-      const keys=['wk','bl','ovr','restDays','weekSchedules','weekOverride','addedExercises','profile'];
+      const keys=['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','addedExercises','profile'];
       keys.forEach(k=>{if(fb[k]!==undefined){ST[k]=fb[k];changed=true}});
       if(fb.url)ST.url=fb.url;
     }
 
-    // Merge logs (union by id)
+    // Merge logs (upsert by id so phone edits propagate to desktop)
     if(data.logs){
-      const localIds=new Set(ST.logs.map(l=>l.id));
-      const fbLogs=Object.values(data.logs);
-      let added=0;
-      fbLogs.forEach(l=>{
-        if(l&&l.id&&!localIds.has(l.id)){ST.logs.push(l);added++}
-      });
-      if(added>0){saveLogsLocal();changed=true}
+      const m=mergeLogsFromFirebase(data.logs);
+      if(m.changed){saveLogsLocal();changed=true}
     }
 
     // Merge custom exercises
@@ -4093,18 +4114,14 @@ function fbListenForChanges(){
 
       if(data.settings){
         const fb=data.settings;
-        ['wk','bl','ovr','restDays','weekSchedules','weekOverride','addedExercises','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
+        ['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','addedExercises','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
         if(fb.url)ST.url=fb.url;
         saveSTLocal();
       }
 
       if(data.logs){
-        const localIds=new Set(ST.logs.map(l=>l.id));
-        let added=0;
-        Object.values(data.logs).forEach(l=>{
-          if(l&&l.id&&!localIds.has(l.id)){ST.logs.push(l);added++}
-        });
-        if(added>0)saveLogsLocal();
+        const m=mergeLogsFromFirebase(data.logs);
+        if(m.changed)saveLogsLocal();
       }
 
       if(data.customExercises&&Array.isArray(data.customExercises.items)){
