@@ -282,6 +282,8 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .wo-summary::-webkit-scrollbar{display:none}
 .wo-sum-item{font-size:11px;color:var(--tx3);white-space:nowrap;flex-shrink:0}
 .wo-sum-item strong{color:var(--tx2);font-family:var(--fm)}
+.wo-start-btn{background:var(--grn);border:none;border-radius:4px;color:#fff;font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 12px;cursor:pointer}
+.wo-reset-btn{background:none;border:none;color:var(--tx3);font-size:13px;cursor:pointer;padding:0 2px;vertical-align:middle;line-height:1}
 
 .add-ex-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 16px;padding:16px;background:var(--s1);border:2px dashed var(--b2);border-radius:8px;cursor:pointer;color:var(--tx3);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-family:var(--fb);transition:all .2s}
 .add-ex-bar:hover{border-color:var(--grn2);color:var(--grn2);background:rgba(82,183,136,.06)}
@@ -2514,7 +2516,8 @@ function openWO(dk){
   if(wip&&wip.awExs&&wip.aws){
     ST.awExs=wip.awExs;
     ST.aws=wip.aws;
-    ST.woStartTime=wip.woStartTime||Date.now();
+    // Restore timer only if it was already intentionally started (non-null in WIP)
+    ST.woStartTime=wip.woStartTime||null;
   }else{
     ST.awExs=d.exercises.map((ex,i)=>{
       const ovr=getOvr(dk,i,ST.wk);
@@ -2592,7 +2595,7 @@ function openWO(dk){
       const validIds=new Set(ST.awExs.map(ex=>ex.id));
       Object.keys(ST.aws||{}).forEach(id=>{if(!validIds.has(id))delete ST.aws[id]});
     }
-    ST.woStartTime=Date.now();
+    ST.woStartTime=null; // timer starts only when user taps Start
   }
 
   document.getElementById('WT').textContent=d.name;
@@ -2778,14 +2781,13 @@ function renderWO(){
 
   // Workout summary bar
   const sumBar=document.getElementById('WOSUM');
-  const elapsed=getElapsed();
   sumBar.innerHTML=`
     <div class="wo-sum-item">Sets: <strong>${completedSets}/${totalSets}</strong></div>
     <div class="wo-sum-item">Volume: <strong>${totalVol.toLocaleString()} lbs</strong></div>
     <div class="wo-sum-item">Exercises: <strong>${ST.awExs.length}</strong></div>
-    <div class="wo-sum-item" id="WOT">Time: <strong>${elapsed}</strong></div>
+    <div class="wo-sum-item" id="WOT">${getTimerCell()}</div>
   `;
-  startWOTimer();
+  if(ST.woStartTime) startWOTimer();
   checkSessionDuration();
   analyzeSessionRPE();
   initDrag();
@@ -2830,22 +2832,38 @@ function updateSummary(){
     totalVol+=sets.reduce((s,st)=>s+(st.w&&st.r?st.w*st.r:0),0);
   });
   const bar=document.getElementById('WOSUM');
-  const el=getElapsed();
-  if(bar)bar.innerHTML=`<div class="wo-sum-item">Sets: <strong>${completedSets}/${totalSets}</strong></div><div class="wo-sum-item">Volume: <strong>${totalVol.toLocaleString()} lbs</strong></div><div class="wo-sum-item">Exercises: <strong>${ST.awExs.length}</strong></div><div class="wo-sum-item" id="WOT">Time: <strong>${el}</strong></div>`;
+  if(bar)bar.innerHTML=`<div class="wo-sum-item">Sets: <strong>${completedSets}/${totalSets}</strong></div><div class="wo-sum-item">Volume: <strong>${totalVol.toLocaleString()} lbs</strong></div><div class="wo-sum-item">Exercises: <strong>${ST.awExs.length}</strong></div><div class="wo-sum-item" id="WOT">${getTimerCell()}</div>`;
 }
 let WO_TIMER=null;
 function getElapsed(){
-  if(!ST.woStartTime)return '0:00';
+  if(!ST.woStartTime)return null;
   const s=Math.floor((Date.now()-ST.woStartTime)/1000);
   const m=Math.floor(s/60);const sec=s%60;
   return m>=60?`${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${m}:${String(sec).padStart(2,'0')}`;
+}
+function getTimerCell(){
+  const el=getElapsed();
+  if(!el) return `<button class="wo-start-btn" onclick="startTimerManual()">▶ Start Workout</button>`;
+  return `Time: <strong>${el}</strong> <button class="wo-reset-btn" onclick="resetTimer()" title="Reset timer">↺</button>`;
+}
+function startTimerManual(){
+  ST.woStartTime=Date.now();
+  saveWorkoutProgress();
+  startWOTimer();
+  updateSummary();
+}
+function resetTimer(){
+  stopWOTimer();
+  ST.woStartTime=null;
+  saveWorkoutProgress();
+  updateSummary();
 }
 function startWOTimer(){
   if(WO_TIMER)clearInterval(WO_TIMER);
   let tick=0;
   WO_TIMER=setInterval(()=>{
     const el=document.getElementById('WOT');
-    if(el)el.innerHTML=`Time: <strong>${getElapsed()}</strong>`;
+    if(el)el.innerHTML=getTimerCell();
     else{clearInterval(WO_TIMER);WO_TIMER=null;return}
     if(++tick%30===0)checkSessionDuration();
   },1000);
