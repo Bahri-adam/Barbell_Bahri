@@ -153,6 +153,24 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .rec-hint{font-size:9px;color:var(--tx3);font-style:italic}
 .deload-banner{background:linear-gradient(90deg,rgba(230,57,70,.15),rgba(230,57,70,.05));border:1px solid rgba(230,57,70,.3);border-radius:8px;padding:10px 14px;margin:0 12px 10px;font-size:12px;color:var(--tx2)}
 .deload-banner strong{color:var(--red)}
+.deload-cfg-btn{display:flex;align-items:center;gap:8px;width:calc(100% - 28px);margin:0 14px 6px;padding:10px 14px;background:rgba(230,57,70,.06);border:1px solid rgba(230,57,70,.2);border-radius:8px;color:var(--red);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;font-family:var(--fb)}
+.deload-cfg-btn svg{flex-shrink:0}
+.deload-cfg-btn:active{opacity:.8}
+.dl-modal-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--b1)}
+.dl-modal-row:last-child{border-bottom:none}
+.dl-modal-label{font-size:13px;color:var(--tx);font-weight:500}
+.dl-modal-sub{font-size:11px;color:var(--tx3);margin-top:2px}
+.dl-sel{background:var(--s2);border:1px solid var(--b2);border-radius:4px;padding:7px 10px;font-size:13px;color:var(--tx);font-family:var(--fb);width:110px}
+.dl-wk-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:8px}
+.dl-wk-pill{padding:5px 2px;border-radius:5px;font-size:10px;font-weight:700;text-align:center;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--tx3);transition:all .15s;font-family:var(--fb)}
+.dl-wk-pill.auto{background:rgba(230,57,70,.12);border-color:rgba(230,57,70,.35);color:var(--red)}
+.dl-wk-pill.on{background:var(--red);border-color:var(--red);color:#fff}
+.dl-wk-pill.off{background:var(--s3);border-color:var(--b1);color:var(--tx3);text-decoration:line-through;opacity:.6}
+.dl-rules{background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:12px 14px;margin-top:10px}
+.dl-rules-hdr{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.dl-rule-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--tx2);margin-bottom:6px;line-height:1.4}
+.dl-rule-item:last-child{margin-bottom:0}
+.dl-rule-item .dl-rule-icon{color:var(--red);font-size:14px;flex-shrink:0;line-height:1}
 .wt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .wt-card{background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px}
 .wt-ring-wrap{position:relative;width:38px;height:38px;flex-shrink:0}
@@ -612,6 +630,59 @@ select{color-scheme:dark}
   </div>
 </div>
 
+<!-- DELOAD SETTINGS MODAL -->
+<div class="overlay" id="DLSET" style="display:none">
+  <div class="modal">
+    <div class="mhdr">
+      <span>Deload Settings</span>
+      <button class="mx" onclick="document.getElementById('DLSET').style.display='none'">&times;</button>
+    </div>
+
+    <div class="dl-modal-row">
+      <div>
+        <div class="dl-modal-label">Deload every</div>
+        <div class="dl-modal-sub">How many weeks between deloads (Schoenfeld 3:1 = every 3)</div>
+      </div>
+      <select class="dl-sel" id="DL_EVERY" onchange="ST.deloadEvery=parseInt(this.value)||3;saveST();renderDeloadWkGrid();renderHome()">
+        <option value="2">Every 2 wks</option>
+        <option value="3" selected>Every 3 wks</option>
+        <option value="4">Every 4 wks</option>
+        <option value="5">Every 5 wks</option>
+        <option value="6">Every 6 wks</option>
+      </select>
+    </div>
+
+    <div class="dl-modal-row" style="flex-direction:column;align-items:flex-start">
+      <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+        <div>
+          <div class="dl-modal-label">Manual overrides</div>
+          <div class="dl-modal-sub">Tap any week to force it ON or OFF as a deload. Tap again to reset to auto.</div>
+        </div>
+        <button style="font-size:11px;color:var(--tx3);background:var(--s2);border:1px solid var(--b2);border-radius:4px;padding:5px 10px;cursor:pointer" onclick="ST.deloadOverrides={};saveST();renderDeloadWkGrid();renderHome()">Reset all</button>
+      </div>
+      <div class="dl-wk-grid" id="DL_WK_GRID" style="width:100%;margin-top:10px"></div>
+      <div style="display:flex;gap:12px;margin-top:8px;font-size:10px;color:var(--tx3)">
+        <span><span style="color:var(--red)">■</span> Auto deload</span>
+        <span><span style="color:#fff">■</span> Forced ON</span>
+        <span style="opacity:.6">■ Forced OFF</span>
+      </div>
+    </div>
+
+    <div class="dl-rules">
+      <div class="dl-rules-hdr">Deload protocol (Schoenfeld 2017)</div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">📅</span><span>2 full-body sessions only — <strong>Monday</strong> (Full Body A) + <strong>Thursday</strong> (Full Body B)</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">⚖️</span><span>Weights at <strong>~60–70%</strong> of your normal working loads</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">📉</span><span><strong>~50% of normal weekly sets</strong> — about half the volume</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">🎯</span><span>All sets stop <strong>4–5 reps short of failure</strong> (RIR 4–5) — no grinding</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>No 3-sec eccentrics</strong> — smooth, normal tempo only</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>No loaded interset stretches</strong> — skip the calf stretch holds etc.</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>No drop sets</strong> — straight sets only</span></div>
+    </div>
+
+    <button class="btn" style="width:100%;margin-top:16px" onclick="document.getElementById('DLSET').style.display='none'">Done</button>
+  </div>
+</div>
+
 <!-- HOME -->
 <div class="pg on" id="pg-home">
   <div class="home-top">
@@ -649,6 +720,10 @@ select{color-scheme:dark}
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     Customize Weekly Schedule
   </button>
+  <button class="deload-cfg-btn" id="DLCFGBTN" onclick="openDeloadSettings()">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+    <span id="DLCFGLAB">Deload Settings — every 3 wks · W3, W6, W9...</span>
+  </button>
   <div class="pr-board" id="PRB"></div>
   <div id="FATIGUE" class="fatigue-card"></div>
   <div class="wstrip" id="WS"></div>
@@ -661,7 +736,7 @@ select{color-scheme:dark}
     <div class="wo-row">
       <button class="bk" onclick="showPg('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
       <div class="wo-t" id="WT">Workout</div>
-      <select class="wo-wk-sel" id="WWS" onchange="ST.logWk=parseInt(this.value);renderWO();const db=document.getElementById('WODLB');if(db){db.style.display=DLOADS.has(ST.logWk)?'block':'none';if(DLOADS.has(ST.logWk)){const pct=Math.round((DELOAD_PCT[ST.logWk]||.65)*100);db.innerHTML='<strong>★ DELOAD WEEK (W'+ST.logWk+')</strong> — Use ~'+pct+'% of working weights, ~50% of sets. Resets volume sensitivity — this is when you grow.'}}" title="Log as week"
+      <select class="wo-wk-sel" id="WWS" onchange="ST.logWk=parseInt(this.value);renderWO();const db=document.getElementById('WODLB');if(db){db.style.display=isDeloadWk(ST.logWk)?'block':'none';if(isDeloadWk(ST.logWk)){db.innerHTML='<strong>★ DELOAD WEEK (W'+ST.logWk+')</strong> — Mon &amp; Thu only · ~60-70% load · ~50% sets · RIR 4-5 · No 3-sec eccentrics · No loaded stretches · No drop sets.'}}" title="Log as week"
         style="background:var(--s2);border:1px solid var(--b2);border-radius:3px;padding:6px 10px;font-family:var(--fm);font-size:12px;color:var(--tx2);min-width:52px">
         <!-- filled by JS -->
       </select>
@@ -816,6 +891,23 @@ const P={
     {id:'s7',name:'Skull Crusher',sets:4,reps:'8–10',rest:120,type:'h',cue:'3-sec eccentric to forehead. Long head stretch at bottom.',mech:'Heavy tricep. Second session. Different to CGBP.'},
     {id:'s8',name:'Dumbbell Overhead Extension',sets:3,reps:'10–12',rest:90,type:'s',cue:'Shoulder flexed overhead = long head maximally stretched. 3-sec eccentric.',mech:'Long head lengthened — second weekly exposure.'}
   ]},
+  // ── DELOAD TEMPLATES (full-body, Mon+Thu, ~50% vol, 60-70% load, RIR 4-5) ──
+  deload_mon:{key:'deload_mon',name:'Monday',focus:'Deload — Full Body A',color:'#e63946',isDeloadDay:true,exercises:[
+    {id:'dl1',name:'Hack Squat',sets:3,reps:'8–10',rest:120,type:'n',cue:'Smooth controlled reps. Stop 4-5 reps short of failure. NO 3-sec eccentric. NO loaded stretch.',mech:'Full quad stimulus at reduced intensity. Maintain motor pattern.'},
+    {id:'dl2',name:'Romanian Deadlift',sets:3,reps:'10–12',rest:120,type:'n',cue:'Controlled eccentric, feel the stretch without forcing it. Stop 4-5 RIR. NO extended stretch hold.',mech:'Hamstring lengthened position. Light load maintains neural efficiency.'},
+    {id:'dl3',name:'Barbell Bench Press',sets:3,reps:'8–10',rest:120,type:'n',cue:'Smooth eccentric. Full ROM. Stop 4-5 reps short. NO pauses or intensity tricks.',mech:'Chest + triceps compound. Maintain pattern at reduced load.'},
+    {id:'dl4',name:'Lat Pulldown',sets:3,reps:'8–10',rest:90,type:'n',cue:'Full stretch at top, full contraction at bottom. Stop 4-5 RIR. NO intensity techniques.',mech:'Back + biceps. Sub-maximal for CNS recovery.'},
+    {id:'dl5',name:'Lateral Raise',sets:2,reps:'15–18',rest:60,type:'n',cue:'Light and controlled. Stop well short of failure. Smooth movement.',mech:'Delt maintenance. Minimal systemic fatigue.'},
+    {id:'dl6',name:'Seated Calf Raise',sets:2,reps:'15–20',rest:60,type:'n',cue:'Full range of motion. Controlled. NO loaded interset stretch.',mech:'Soleus maintenance at low fatigue cost.'}
+  ]},
+  deload_thu:{key:'deload_thu',name:'Thursday',focus:'Deload — Full Body B',color:'#e63946',isDeloadDay:true,exercises:[
+    {id:'dl7',name:'Leg Press',sets:3,reps:'10–12',rest:120,type:'n',cue:'Comfortable depth. Smooth reps. Stop 4-5 RIR. NO forced stretch hold at bottom.',mech:'Quad stimulus. Different pattern to Monday hack squat.'},
+    {id:'dl8',name:'Seated Leg Curl',sets:3,reps:'10–12',rest:90,type:'n',cue:'Controlled eccentric. Stop 4-5 reps short. NO extended stretch.',mech:'Knee-flexion hamstring. Completes lower body.'},
+    {id:'dl9',name:'Incline Dumbbell Press',sets:3,reps:'8–10',rest:120,type:'n',cue:'Full ROM. Smooth, controlled. Stop 4-5 short. NO intensity techniques.',mech:'Upper chest + delt. Different angle from Monday flat press.'},
+    {id:'dl10',name:'Cable Row',sets:3,reps:'10–12',rest:90,type:'n',cue:'Neutral grip. Row to lower chest. Controlled. Stop 4-5 RIR. NO kipping.',mech:'Mid-back rhomboids. Completes upper body pull.'},
+    {id:'dl11',name:'Face Pull',sets:2,reps:'15–20',rest:60,type:'n',cue:'Pull to face, external rotation at end. Stop well short of failure.',mech:'Posterior delt + rotator cuff. Low fatigue. Pressing health.'},
+    {id:'dl12',name:'Standing Calf Raise',sets:2,reps:'12–15',rest:60,type:'n',cue:'Full range. Controlled eccentric. NO loaded interset stretch.',mech:'Gastrocnemius maintenance.'}
+  ]},
   sun:{key:'sun',name:'Sunday',focus:'Legs — Volume (Metabolic Stress)',color:'#457b9d',exercises:[
     {id:'u1',name:'Leg Press',sets:4,reps:'15–20',rest:90,type:'s',cue:'LOADED STRETCH after every set — hold bottom 20-30 sec.',mech:'Type I fiber. Cell swelling → PI3K/MAPK signal.'},
     {id:'u2',name:'Hack Squat',sets:3,reps:'10–12',rest:90,type:'n',cue:'NOT max effort today. Controlled. Feel the quad. Full depth.',mech:'p70S6K moderate stimulus. Volume accumulation.'},
@@ -827,15 +919,23 @@ const P={
   ]}
 };
 const DO=['mon','tue','wed','thu','fri','sat','sun'];
-const DLOADS=new Set([3,6,9,12,15,18,21,24]);
-// Periodization roadmap — which weeks are deload and at what %
-const DELOAD_PCT={3:.65,6:.65,9:.65,12:.70,15:.65,18:.65,21:.65,24:.65};
+// Dynamic deload detection — reads ST.deloadEvery (default 3) and ST.deloadOverrides {wk:bool}
+function isDeloadWk(wk){
+  const every=ST&&ST.deloadEvery||3;
+  const ov=ST&&ST.deloadOverrides||{};
+  if(ov[wk]!==undefined)return!!ov[wk];
+  return Number.isInteger(wk)&&wk>0&&wk<=24&&wk%every===0;
+}
+function getDeloadPct(){return 0.65;}
+// Backward-compat shim — all DLOADS.has(w) calls still work
+const DLOADS={has:w=>isDeloadWk(w)};
 // Block phases (W1–9 Block 1, W10–15 Block 2, W16–24 Block 3)
 function getBlockPhase(wk){
+  if(isDeloadWk(wk)) return {block:wk<=9?1:wk<=15?2:3,name:wk<=9?'Block 1 — Hypertrophy':wk<=15?'Block 2 — Strength':'Block 3 — Peak Hypertrophy',phase:'★ DELOAD ★'};
   if(wk>=24) return {block:0,name:'Macrocycle Complete',phase:'★ ACTIVE RECOVERY WEEK ★'};
-  if(wk<=9) return {block:1,name:'Block 1 — Hypertrophy',phase:wk<=2?'Break-In':wk===3||wk===6||wk===9?'★ DELOAD ★':wk<=5?'Full Volume':wk<=8?'Push Phase':'Assessment'};
-  if(wk<=15) return {block:2,name:'Block 2 — Strength',phase:wk===10||wk===11?'Introduction':wk===12||wk===15?'★ DELOAD ★':'Peak'};
-  return {block:3,name:'Block 3 — Peak Hypertrophy',phase:wk===16||wk===17||wk===18?'Reload':wk===21?'★ DELOAD ★':wk>=22?'Accumulation Peak':'Volume Push'};
+  if(wk<=9) return {block:1,name:'Block 1 — Hypertrophy',phase:wk<=2?'Break-In':wk<=5?'Full Volume':wk<=8?'Push Phase':'Assessment'};
+  if(wk<=15) return {block:2,name:'Block 2 — Strength',phase:wk===10||wk===11?'Introduction':'Peak'};
+  return {block:3,name:'Block 3 — Peak Hypertrophy',phase:wk<=18?'Reload':wk>=22?'Accumulation Peak':'Volume Push'};
 }
 // Stimulus targets (research: 8–14 effective sets = growth zone; 18+ = diminishing returns)
 const STIMULUS_TARGET={quads:10,hamstrings:8,calves:6,glutes:6,chest:8,back:10,biceps:8,triceps:8,delts:8};
@@ -1405,6 +1505,10 @@ function escHtml(s){
 function getScheduleForWeek(wk){
   const s=(ST.weekSchedules||{})[wk];
   if(s)return s;
+  // Deload weeks: only Mon (Full Body A) and Thu (Full Body B) are training days
+  if(isDeloadWk(wk)){
+    return {mon:'deload_mon',tue:'rest',wed:'rest',thu:'deload_thu',fri:'rest',sat:'rest',sun:'rest'};
+  }
   const def={};
   const rds=new Set(ST.restDays||['fri']);
   DO.forEach(dk=>{def[dk]=rds.has(dk)?'rest':dk});
@@ -1422,6 +1526,8 @@ function getDayProgram(dk){
   if(mapped==='rest')return {key:dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
   const base=P[mapped];
   if(!base||base.rest)return {key:dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
+  // Deload days: use template as-is, no added exercises (strict protocol)
+  if(base.isDeloadDay)return {...base,key:dk,name:DAY_NAMES[dk]};
   const added=(ST.addedExercises||{})[dk]||[];
   const merged=base.exercises.concat(added.map(a=>({id:'ae_'+a.name.replace(/\s/g,'_'),name:a.name,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Run perfect reps. Full ROM.',mech:'Custom.',bodyPart:a.bodyPart||'other',isAdded:true})));
   return {...base,key:dk,name:DAY_NAMES[dk],exercises:merged};
@@ -1441,6 +1547,64 @@ function toggleRestDay(dk){
 function renderRestDayBtns(){
   const sched=getScheduleForWeek(ST.wk);
   DO.forEach(dk=>{const b=document.querySelector('.rd-btn[data-dk="'+dk+'"]');if(b)b.classList.toggle('on',sched[dk]==='rest')});
+}
+
+// ═══════════════════════════════════════════════════════════
+// DELOAD SETTINGS
+// ═══════════════════════════════════════════════════════════
+function openDeloadSettings(){
+  const el=document.getElementById('DLSET');
+  if(!el)return;
+  const sel=document.getElementById('DL_EVERY');
+  if(sel)sel.value=ST.deloadEvery||3;
+  renderDeloadWkGrid();
+  el.style.display='flex';
+}
+function renderDeloadWkGrid(){
+  const grid=document.getElementById('DL_WK_GRID');
+  if(!grid)return;
+  const every=ST.deloadEvery||3;
+  const ov=ST.deloadOverrides||{};
+  let h='';
+  for(let w=1;w<=24;w++){
+    const autoDeload=Number.isInteger(w)&&w>0&&w%every===0;
+    const forced=ov[w];
+    let cls='dl-wk-pill';
+    let label=`W${w}`;
+    if(forced===true){cls+=' on';label=`W${w}✓`;}
+    else if(forced===false){cls+=' off';}
+    else if(autoDeload){cls+=' auto';}
+    h+=`<button class="${cls}" onclick="toggleDeloadOverride(${w})">${label}</button>`;
+  }
+  grid.innerHTML=h;
+  // Also update the summary label
+  const lab=document.getElementById('DLCFGLAB');
+  if(lab){
+    const wks=[];
+    for(let w=1;w<=24;w++){if(isDeloadWk(w))wks.push('W'+w);}
+    lab.textContent=`Deload Settings — every ${every} wks · ${wks.slice(0,5).join(', ')}${wks.length>5?'...':''}`;
+  }
+}
+function toggleDeloadOverride(wk){
+  if(!ST.deloadOverrides)ST.deloadOverrides={};
+  const ov=ST.deloadOverrides;
+  const every=ST.deloadEvery||3;
+  const autoDeload=Number.isInteger(wk)&&wk>0&&wk%every===0;
+  // Cycle: auto → force ON (if not auto) / force OFF (if auto) → force opposite → reset
+  if(ov[wk]===undefined){
+    // Currently auto — force the opposite
+    ov[wk]=!autoDeload;
+  }else if(ov[wk]===!autoDeload){
+    // Forced to opposite of auto — flip to same as auto (which cancels the force)
+    ov[wk]=autoDeload;
+  }else{
+    // Forced to same as auto — reset to auto
+    delete ov[wk];
+  }
+  ST.deloadOverrides={...ov};
+  saveST();
+  renderDeloadWkGrid();
+  renderHome();
 }
 
 function openScheduleEditor(){
@@ -1576,6 +1740,7 @@ const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbyKSyFyEdT
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
   cueCollapsed:{},restDays:['fri'],weekSchedules:{},weekOverride:{},weekAnchors:{},removedExercises:{},workoutsSinceBackupReminder:0,
+  deloadEvery:3,deloadOverrides:{},
   profile:{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}
 };
 let CHS={};
@@ -1583,7 +1748,7 @@ let CHS={};
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.removedExercises=p.removedExercises||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
+  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.removedExercises=p.removedExercises||{};ST.addedExercises=p.addedExercises||{};ST.deloadEvery=p.deloadEvery||3;ST.deloadOverrides=p.deloadOverrides||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('adamCustomEx');
@@ -1594,7 +1759,7 @@ function loadST(){
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
+function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
 function saveST(){saveSTLocal();fbSaveSettings()}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
 function saveLogsLocal(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
@@ -1661,6 +1826,8 @@ function renderHome(){
   document.getElementById('SST').textContent=setsCount;
   document.getElementById('SV').textContent=vol>1000?(vol/1000).toFixed(1)+'K':vol;
   document.getElementById('SK').textContent=calcWeekStreak(ST.wk);
+  // Deload cfg button label
+  renderDeloadWkGrid();
   // Week strip
   const ws=document.getElementById('WS');ws.innerHTML='';
   for(let w=1;w<=24;w++){
@@ -1919,8 +2086,8 @@ function computeSmartRecommendations(wk){
   let dayPlan=[];
 
   if(isDeload){
-    weekVerdict='Deload week (Schoenfeld: every 4–6 weeks). Use 60–70% of working weights, ~50% of sets.';
-    recs.push({type:'info',title:'Deload protocol','Schoenfeld 2017':`Reduce load to ${Math.round((DELOAD_PCT[wk]||.65)*100)}%, halve sets. Focus on technique and ROM.`});
+    weekVerdict='Deload week (Schoenfeld 3:1). Mon + Thu full-body only · 60–70% load · ~50% sets · RIR 4–5 · No eccentrics/stretches/drops.';
+    recs.push({type:'info',title:'Deload protocol (Schoenfeld 2017)',desc:`Reduce load to ~${Math.round(getDeloadPct()*100)}%, halve sets, stop 4–5 reps short of failure. No 3-sec eccentrics, no loaded interset stretches, no drop sets.`});
   }else{
   const fatigueNorm=fatigueScore;
   if(fatigueNorm>=80){
@@ -2092,9 +2259,15 @@ function generateAdaptiveProgram(wk){
   const stalledMap={};stalled.forEach(s=>{const bp=getBodyPart(s.ex);if(bp&&bp!=='other'){stalledMap[bp]=stalledMap[bp]||[];if(!stalledMap[bp].includes(s.ex))stalledMap[bp].push(s.ex);}});
   const sched=getScheduleForWeek(wk);const restDays=new Set(DO.filter(dk=>sched[dk]==='rest'));if(!restDays.size)restDays.add('fri');
   const weekProgram={days:[],archetype:'adam6',verdict,stalledMap:Object.keys(stalledMap).length?stalledMap:null,isDeload};
-  const deloadMult=isDeload?(DELOAD_PCT[wk]||0.65):1;let volumeMult=1;if(verdict==='UNDERSTIMULATED')volumeMult=1.15;else if(verdict==='OVERREACHED')volumeMult=0.85;
+  const deloadMult=isDeload?getDeloadPct():1;let volumeMult=1;if(verdict==='UNDERSTIMULATED')volumeMult=1.15;else if(verdict==='OVERREACHED')volumeMult=0.85;
   for(const dk of DO){
     const mapped=sched[dk]||dk;if(mapped==='rest'||restDays.has(dk)){weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',exercises:[]});continue;}
+    // Deload templates use their fixed exercise list directly
+    if(mapped==='deload_mon'||mapped==='deload_thu'){
+      const templateDay=P[mapped];
+      weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:false,focus:templateDay.focus,exercises:templateDay.exercises.map(ex=>({...ex,muscle:getBodyPart(ex.name),primary:getBodyPart(ex.name)}))});
+      continue;
+    }
     const muscles=ADAM6_MUSCLES[mapped];if(!muscles){weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',exercises:[]});continue;}
     const templateDay=P[mapped];const templateExMap={};if(templateDay&&templateDay.exercises)templateDay.exercises.forEach(ex=>templateExMap[ex.name]=ex);
     const dayExs=selectExercisesForDayGen(muscles,stalledMap,2);
@@ -2425,9 +2598,9 @@ function openWO(dk){
   document.getElementById('WT').textContent=d.name;
   document.getElementById('WF').textContent=d.focus;
   const dlBanner=document.getElementById('WODLB');
-  if(dlBanner){dlBanner.style.display=DLOADS.has(ST.wk)?'block':'none';if(DLOADS.has(ST.wk)){const pct=Math.round((DELOAD_PCT[ST.wk]||.65)*100);dlBanner.innerHTML=`<strong>★ DELOAD WEEK (W${ST.wk})</strong> — Use ~${pct}% of working weights, ~50% of sets. Resets volume sensitivity — this is when you grow.`}}
+  if(dlBanner){dlBanner.style.display=isDeloadWk(ST.wk)?'block':'none';if(isDeloadWk(ST.wk)){dlBanner.innerHTML=`<strong>★ DELOAD WEEK (W${ST.wk})</strong> — Mon &amp; Thu only · ~60–70% load · ~50% sets · RIR 4–5 · No 3-sec eccentrics · No loaded stretches · No drop sets`}}
   const wws=document.getElementById('WWS');
-  if(wws){wws.innerHTML=Array.from({length:24},(_,i)=>`<option value="${i+1}" ${i+1===ST.wk?'selected':''}>W${i+1}</option>`).join('');wws.value=ST.wk}
+  if(wws){wws.innerHTML=Array.from({length:24},(_,i)=>`<option value="${i+1}" ${i+1===ST.wk?'selected':''}>W${i+1}${isDeloadWk(i+1)?' 🔄':''}</option>`).join('');wws.value=ST.wk}
   renderWO();
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
   document.getElementById('pg-wo').classList.add('on');
@@ -3231,8 +3404,8 @@ function getPrevExact(exName,dk){
 // Deload recommended weight (65–70% of best-ever) — science-backed
 function getRec(exName,dk,setIdx){
   const wk=ST.logWk||ST.wk;
-  const pct=DELOAD_PCT[wk];
-  if(!pct) return null;
+  if(!isDeloadWk(wk)) return null;
+  const pct=getDeloadPct();
   // Use best-ever so deload is relative to peak, not a potentially light recent session
   const allRows=ST.logs
     .filter(l=>(!dk||l.dk===dk) && l.ex===exName && l.w!=null && l.r!=null && parseFloat(l.w)>0);
@@ -3312,7 +3485,7 @@ function getStalledLifts(optWk){
 // Progressive overload: suggest best-ever + increment so a bad week never drags the target down
 function getProgOverloadRec(exName,dk,setIdx){
   const wk=ST.logWk||ST.wk;
-  if(DELOAD_PCT[wk]) return null; // deload has its own rec
+  if(isDeloadWk(wk)) return null; // deload has its own rec
 
   // Gather ALL logged sets for this exercise on this day-of-week (exact name match)
   const allRows=ST.logs
@@ -4175,7 +4348,7 @@ function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
 function fbSaveSettings(){
   if(!fbReady)return;
   try{
-    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
+    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
     fbRef('settings').set(data);
   }catch(e){console.warn('FB settings write failed:',e)}
 }
@@ -4243,7 +4416,7 @@ async function fbPullAll(){
     // Merge settings (Firebase wins if newer)
     if(data.settings){
       const fb=data.settings;
-      const keys=['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','removedExercises','addedExercises','profile'];
+      const keys=['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','removedExercises','addedExercises','deloadEvery','deloadOverrides','profile'];
       keys.forEach(k=>{if(fb[k]!==undefined){ST[k]=fb[k];changed=true}});
       if(fb.url)ST.url=fb.url;
     }
