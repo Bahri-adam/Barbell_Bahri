@@ -1564,7 +1564,7 @@ const HL=[
 const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbyKSyFyEdTkZhfnMrKF66zPUNn8Lf5ppYz5bAZviRzGAcN8YGZx5-hAEvIN03wTW5Ex/exec';
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
-  cueCollapsed:{},restDays:['fri'],weekSchedules:{},weekOverride:{},weekAnchors:{},workoutsSinceBackupReminder:0,
+  cueCollapsed:{},restDays:['fri'],weekSchedules:{},weekOverride:{},weekAnchors:{},removedExercises:{},workoutsSinceBackupReminder:0,
   profile:{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}
 };
 let CHS={};
@@ -1572,7 +1572,7 @@ let CHS={};
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
+  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.removedExercises=p.removedExercises||{};ST.addedExercises=p.addedExercises||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('adamCustomEx');
@@ -1583,7 +1583,7 @@ function loadST(){
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
+function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
 function saveST(){saveSTLocal();fbSaveSettings()}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
 function saveLogsLocal(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
@@ -1643,8 +1643,9 @@ function renderHome(){
   renderProfile();
   const weekLogs=ST.logs.filter(l=>l.wk===ST.wk);
   const sess=new Set(weekLogs.map(l=>l.date+l.dk)).size;
-  const setsCount=weekLogs.length;
-  const vol=weekLogs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
+  const completedWeekLogs=weekLogs.filter(l=>l.w!=null&&l.w!==''&&l.r!=null&&l.r!=='');
+  const setsCount=completedWeekLogs.length;
+  const vol=completedWeekLogs.reduce((s,l)=>s+((parseFloat(l.w)||0)*(parseFloat(l.r)||0)),0);
   document.getElementById('SS').textContent=sess;
   document.getElementById('SST').textContent=setsCount;
   document.getElementById('SV').textContent=vol>1000?(vol/1000).toFixed(1)+'K':vol;
@@ -1667,10 +1668,10 @@ function renderHome(){
     const dayDateIso=getDateForWeekDay(ST.wk,k);
     const dayDate=fmtShortDate(dayDateIso);
     if(d.rest){const el=document.createElement('div');el.className='rcard';el.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--tx3)" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><div class="rlabel">${DAY_NAMES[k]} ${dayDate?`· ${dayDate}`:''} — Rest & Recovery</div>`;dl.appendChild(el);return}
-    const dayLogs=weekLogs.filter(l=>l.dk===k);
+    const dayLogs=weekLogs.filter(l=>l.dk===k&&l.w!=null&&l.w!==''&&l.r!=null&&l.r!=='');
     const done=loggedThisWeek.has(k);
     const daySets=dayLogs.length;
-    const dayVol=dayLogs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
+    const dayVol=dayLogs.reduce((s,l)=>s+((parseFloat(l.w)||0)*(parseFloat(l.r)||0)),0);
     const last=getLastDate(k);
     const lastFmt=last?fmtShortDate(last):'';
     const el=document.createElement('div');el.className='dcard'+(done?' dcard-done':'');el.onclick=()=>openWO(k);
@@ -2317,6 +2318,7 @@ function renderBodyTracker(){
 // WORKOUT
 // ═══════════════════════════════════════════════════════════
 function getOvr(dk,ei,wk){return ST.ovr[`${dk}-${ei}-${wk}`]||ST.ovr[`${dk}-${ei}-perm`]||null}
+function getRemovedKey(wk,dk){return `W${wk}-${dk}`}
 
 function openWO(dk){
   ST.aday=dk;ST.aws={};ST.cueCollapsed={};
@@ -2339,8 +2341,18 @@ function openWO(dk){
     const wk=ST.logWk||ST.wk;
     const weekLogs=ST.logs.filter(l=>l.wk===wk&&l.dk===dk);
     if(weekLogs.length>0){
+      const getLogsForExercise=(ex)=>{
+        const names=new Set([ex.displayName,ex.name].filter(Boolean));
+        const rows=weekLogs.filter(l=>{
+          const exName=l.ex||'';
+          const orig=l.origEx||'';
+          return names.has(exName)||names.has(orig);
+        }).sort((a,b)=>a.sn-b.sn);
+        return rows;
+      };
+
       ST.awExs.forEach(ex=>{
-        const exLogs=weekLogs.filter(l=>l.ex===ex.displayName).sort((a,b)=>a.sn-b.sn);
+        const exLogs=getLogsForExercise(ex);
         if(exLogs.length>0){
           ST.aws[ex.id]=exLogs.map(l=>({w:l.w||'',r:l.r||'',rpe:l.rpe||'',done:true}));
           while(ST.aws[ex.id].length<ex.sets)ST.aws[ex.id].push({w:'',r:'',rpe:'',done:false});
@@ -2348,10 +2360,53 @@ function openWO(dk){
           ST.aws[ex.id]=Array.from({length:ex.sets},()=>({w:'',r:'',rpe:'',done:false}));
         }
       });
+
+      // If cloud/local logs contain extra exercises not in the current template (custom/swap),
+      // attach them so desktop always shows what was actually logged on phone.
+      const knownNames=new Set();
+      ST.awExs.forEach(ex=>{
+        if(ex.displayName)knownNames.add(ex.displayName.toLowerCase());
+        if(ex.name)knownNames.add(ex.name.toLowerCase());
+      });
+      // Also register origEx values (swap targets) so they don't get double-added.
+      weekLogs.forEach(l=>{if(l.origEx)knownNames.add(String(l.origEx).toLowerCase())});
+      const extras=Array.from(new Set(weekLogs.map(l=>l.ex).filter(n=>n&&!knownNames.has(String(n).toLowerCase()))));
+      extras.forEach(name=>{
+        const rows=weekLogs.filter(l=>l.ex===name).sort((a,b)=>a.sn-b.sn);
+        const id=genId();
+        const sets=Math.max(1,rows.length||3);
+        const ex={
+          id,
+          name,
+          displayName:name,
+          sets,
+          reps:'8–12',
+          rest:90,
+          type:'n',
+          cue:'Logged on another device.',
+          mech:'Synced.',
+          templateIdx:-1,
+          bodyPart:getBodyPart(name),
+          isAdded:true
+        };
+        ST.awExs.push(ex);
+        ST.aws[id]=rows.length
+          ? rows.map(l=>({w:l.w||'',r:l.r||'',rpe:l.rpe||'',done:true}))
+          : Array.from({length:sets},()=>({w:'',r:'',rpe:'',done:false}));
+      });
     }else{
       ST.awExs.forEach(ex=>{
         ST.aws[ex.id]=Array.from({length:ex.sets},()=>({w:'',r:'',rpe:'',done:false}));
       });
+    }
+    // Apply week/day-scoped removals (delete for this day only, not future weeks).
+    const remKey=getRemovedKey(wk,dk);
+    const removed=(ST.removedExercises&&ST.removedExercises[remKey])||[];
+    if(removed.length){
+      const rm=new Set(removed.map(n=>String(n).toLowerCase()));
+      ST.awExs=ST.awExs.filter(ex=>!rm.has(String(ex.displayName||ex.name||'').toLowerCase()));
+      const validIds=new Set(ST.awExs.map(ex=>ex.id));
+      Object.keys(ST.aws||{}).forEach(id=>{if(!validIds.has(id))delete ST.aws[id]});
     }
     ST.woStartTime=Date.now();
   }
@@ -2403,7 +2458,7 @@ function renderWO(){
     const exVol2=sets2.reduce((s,st)=>s+(st.w&&st.r?st.w*st.r:0),0);
     const exDone=sets.filter(s=>s.done).length;
     const exDone2=sets2.filter(s=>s.done).length;
-    totalSets+=sets.length+sets2.length;completedSets+=exDone+exDone2;if(exVol)totalVol+=exVol;if(exVol2)totalVol+=exVol2;
+    totalSets+=sets.filter(hasSetData).length+sets2.filter(hasSetData).length;completedSets+=exDone+exDone2;if(exVol)totalVol+=exVol;if(exVol2)totalVol+=exVol2;
 
     const cueHidden=ST.cueCollapsed[ex.id];
     const cueText=escHtml(ex.cue||'');
@@ -2579,11 +2634,14 @@ function loadWorkoutProgress(dk){
   try{const s=localStorage.getItem('adamWIP');if(!s)return null;const d=JSON.parse(s);if(d.dk===dk&&d.wk===(ST.logWk||ST.wk))return d}catch(e){}return null;
 }
 function clearWorkoutProgress(){try{localStorage.removeItem('adamWIP')}catch(e){}}
+function hasSetData(s){return s.done||(s.w!==''&&s.w!=null&&s.r!==''&&s.r!=null)}
 function updateSummary(){
   let totalVol=0,totalSets=0,completedSets=0;
   ST.awExs.forEach(ex=>{
     const sets=ST.aws[ex.id]||[];
-    totalSets+=sets.length;
+    // Only count sets that have actual data — not empty template placeholders.
+    const active=sets.filter(hasSetData);
+    totalSets+=active.length;
     completedSets+=sets.filter(s=>s.done).length;
     totalVol+=sets.reduce((s,st)=>s+(st.w&&st.r?st.w*st.r:0),0);
   });
@@ -2734,6 +2792,19 @@ function delEx(exIdx){
   if(prev&&prev.supersetWith===ex.id)prev.supersetWith=undefined;
   if(ex.supersetWith)ex.supersetWith=undefined;
   if(ST.aws&&ST.aws[ex.id])delete ST.aws[ex.id];
+  // Delete is week/day scoped (this week's day only).
+  const wk=ST.logWk||ST.wk;
+  const key=getRemovedKey(wk,ST.aday);
+  const target=(ex.displayName||ex.name||'').trim();
+  if(target){
+    ST.removedExercises=ST.removedExercises||{};
+    const arr=Array.isArray(ST.removedExercises[key])?ST.removedExercises[key]:[];
+    if(!arr.some(n=>String(n).toLowerCase()===target.toLowerCase())){
+      arr.push(target);
+      ST.removedExercises[key]=arr;
+      saveST();
+    }
+  }
   ST.awExs.splice(exIdx,1);
   saveWorkoutProgress();
   renderWO();
@@ -2968,6 +3039,14 @@ function applySW(newName,isCustom=false,bodyPart=null){
       isAdded:true
     };
     ST.awExs.push(ex);
+    // If user re-adds something they previously deleted this week/day, un-remove it.
+    const wk=ST.logWk||ST.wk;
+    const remKey=getRemovedKey(wk,ST.aday);
+    if(ST.removedExercises&&Array.isArray(ST.removedExercises[remKey])){
+      ST.removedExercises[remKey]=ST.removedExercises[remKey].filter(n=>String(n).toLowerCase()!==String(newName).toLowerCase());
+      if(!ST.removedExercises[remKey].length)delete ST.removedExercises[remKey];
+      saveST();
+    }
     ST.aws[id]=Array.from({length:ex.sets},()=>({w:'',r:'',done:false}));
     closeSW();
     document.getElementById('customExInput').value='';
@@ -3451,7 +3530,7 @@ function expCSV(){
 function expJSON(){
   const payload={
     meta:{app:'ADAM Powerbuilding',v:'3',exportedAt:new Date().toISOString()},
-    state:{wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays,weekOverride:ST.weekOverride},
+    state:{wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays,weekOverride:ST.weekOverride,removedExercises:ST.removedExercises},
     logs:ST.logs,
     customExercises:EL.filter(e=>e.custom)
   };
@@ -3478,6 +3557,7 @@ function impJSON(ev){
         ST.ovr=data.state.ovr||ST.ovr;
         ST.restDays=Array.isArray(data.state.restDays)?data.state.restDays:ST.restDays;
         ST.weekOverride=data.state.weekOverride||ST.weekOverride;
+        ST.removedExercises=data.state.removedExercises||ST.removedExercises||{};
         saveST();
       }
       if(Array.isArray(data.logs)){
@@ -4009,7 +4089,7 @@ function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
 function fbSaveSettings(){
   if(!fbReady)return;
   try{
-    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},addedExercises:ST.addedExercises||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
+    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
     fbRef('settings').set(data);
   }catch(e){console.warn('FB settings write failed:',e)}
 }
@@ -4077,7 +4157,7 @@ async function fbPullAll(){
     // Merge settings (Firebase wins if newer)
     if(data.settings){
       const fb=data.settings;
-      const keys=['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','addedExercises','profile'];
+      const keys=['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','removedExercises','addedExercises','profile'];
       keys.forEach(k=>{if(fb[k]!==undefined){ST[k]=fb[k];changed=true}});
       if(fb.url)ST.url=fb.url;
     }
@@ -4114,7 +4194,7 @@ function fbListenForChanges(){
 
       if(data.settings){
         const fb=data.settings;
-        ['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','addedExercises','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
+        ['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','removedExercises','addedExercises','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
         if(fb.url)ST.url=fb.url;
         saveSTLocal();
       }
