@@ -2460,8 +2460,8 @@ function renderWO(){
     const isSuperset=block.type==='superset';
     const sets=ST.aws[ex.id]||[];
     const sets2=ex2?(ST.aws[ex2.id]||[]):[];
-    const prev=getPrev(ex.displayName,ST.aday,ex.displayName===ex.name?ex.name:null);
-    const prev2=ex2?getPrev(ex2.displayName,ST.aday,ex2.displayName===ex2.name?ex2.name:null):[];
+    const prev=getPrevExact(ex.displayName,ST.aday);
+    const prev2=ex2?getPrevExact(ex2.displayName,ST.aday):[];
     const tc={'h':'eh','s':'es','d':'ed','n':''}[ex.type]||'';
     const bl={'h':'<span class="badge bh">HEAVY</span>','s':'<span class="badge bs">★ STRETCH</span>','d':'<span class="badge bd">↓ DROP</span>','n':''}[ex.type]||'';
 
@@ -3228,17 +3228,25 @@ function getPrevExact(exName,dk){
   const last=rows.filter(r=>r.date===lastDate).sort((a,b)=>a.sn-b.sn);
   return last.map(r=>({w:r.w||'',r:r.r||'',e1:r.e1rm||null}));
 }
-// Deload recommended weight (65–70% of previous) — science-backed
+// Deload recommended weight (65–70% of best-ever) — science-backed
 function getRec(exName,dk,setIdx){
   const wk=ST.logWk||ST.wk;
   const pct=DELOAD_PCT[wk];
   if(!pct) return null;
-  const prev=getPrevExact(exName,dk);
-  if(!prev.length) return null;
-  const p=prev[setIdx]||prev[prev.length-1];
-  const pw=parseFloat(p.w);
+  // Use best-ever so deload is relative to peak, not a potentially light recent session
+  const allRows=ST.logs
+    .filter(l=>(!dk||l.dk===dk) && l.ex===exName && l.w!=null && l.r!=null && parseFloat(l.w)>0);
+  if(!allRows.length) return null;
+  const forSetIdx=allRows.filter(l=>l.sn===setIdx+1);
+  const pool=forSetIdx.length?forSetIdx:allRows;
+  const best=pool.reduce((a,b)=>{
+    const ae=(a.e1rm&&parseFloat(a.e1rm))||parseFloat(a.w)*1.27;
+    const be=(b.e1rm&&parseFloat(b.e1rm))||parseFloat(b.w)*1.27;
+    return be>ae?b:a;
+  });
+  const pw=parseFloat(best.w);
   if(!pw||isNaN(pw)) return null;
-  const pr=parseInt(p.r,10)||8;
+  const pr=parseInt(best.r,10)||8;
   const recW=Math.round(pw*pct/5)*5;
   const recR=pr<=8?pr:pr+2;
   return {w:recW,r:recR};
@@ -3301,16 +3309,28 @@ function getStalledLifts(optWk){
   }
   return stalled;
 }
-// Progressive overload: suggest +2.5–5 lbs (science: gradual overload)
+// Progressive overload: suggest best-ever + increment so a bad week never drags the target down
 function getProgOverloadRec(exName,dk,setIdx){
   const wk=ST.logWk||ST.wk;
   if(DELOAD_PCT[wk]) return null; // deload has its own rec
-  const prev=getPrevExact(exName,dk);
-  if(!prev.length) return null;
-  const p=prev[setIdx]||prev[prev.length-1];
-  const pw=parseFloat(p.w);
+
+  // Gather ALL logged sets for this exercise on this day-of-week (exact name match)
+  const allRows=ST.logs
+    .filter(l=>(!dk||l.dk===dk) && l.ex===exName && l.w!=null && l.r!=null && parseFloat(l.w)>0);
+  if(!allRows.length) return null;
+
+  // Prefer the best set matching this set-index; fall back to the overall best by e1RM
+  const forSetIdx=allRows.filter(l=>l.sn===setIdx+1);
+  const pool=forSetIdx.length?forSetIdx:allRows;
+  const best=pool.reduce((a,b)=>{
+    const ae=(a.e1rm&&parseFloat(a.e1rm))||parseFloat(a.w)*1.27;
+    const be=(b.e1rm&&parseFloat(b.e1rm))||parseFloat(b.w)*1.27;
+    return be>ae?b:a;
+  });
+
+  const pw=parseFloat(best.w);
   if(!pw||isNaN(pw)) return null;
-  const pr=parseInt(p.r,10)||8;
+  const pr=parseInt(best.r,10)||8;
   const bp=getBodyPart(exName);
   const inc=bp&&['quads','hamstrings','calves','glutes'].includes(bp)?5:2.5;
   const recW=Math.round((pw+inc)/2.5)*2.5;
