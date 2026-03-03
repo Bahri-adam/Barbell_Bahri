@@ -469,6 +469,11 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .confirm-btns button{flex:1;padding:12px;border:none;border-radius:3px;font-family:var(--fd);font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}
 .confirm-cancel{background:var(--s2);color:var(--tx2)}
 .confirm-ok{background:var(--red);color:#fff}
+/* DEL UNDO TOAST */
+.del-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--b2);border-radius:8px;padding:12px 18px;display:flex;align-items:center;gap:14px;z-index:500;box-shadow:0 4px 20px rgba(0,0,0,.5);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+.del-toast.show{opacity:1;pointer-events:auto}
+.del-toast-msg{font-size:13px;color:var(--tx2)}
+.del-toast-undo{background:var(--red);border:none;border-radius:4px;color:#fff;font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 14px;cursor:pointer;flex-shrink:0}
 
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 ::-webkit-scrollbar{width:6px;height:6px}
@@ -577,6 +582,12 @@ select{color-scheme:dark}
 <!-- WEEKLY REVIEW -->
 <div class="review-overlay" id="WREV">
   <div class="review-card" id="WREVC"></div>
+</div>
+
+<!-- DEL UNDO TOAST -->
+<div class="del-toast" id="DEL_TOAST">
+  <span class="del-toast-msg" id="DEL_TOAST_MSG">Exercise removed</span>
+  <button class="del-toast-undo" onclick="undoDelEx()">UNDO</button>
 </div>
 
 <!-- CONFIRM DIALOG -->
@@ -2782,32 +2793,87 @@ function delSet(id,si){
 }
 
 // ── EXERCISE ADD/REMOVE/REORDER ────────────────────────────
+let DEL_UNDO_DATA=null, DEL_UNDO_TIMER=null;
+
 function confirmDelEx(exIdx,name){
-  showConf(`Remove ${name}?`,`This will remove it from today's workout. Your logged data for this session is preserved.`,()=>delEx(exIdx));
+  // Direct delete — no dialog needed. Undo toast appears for 5 seconds.
+  delEx(exIdx,name);
 }
-function delEx(exIdx){
+function delEx(exIdx,name){
   const ex=ST.awExs[exIdx];
   if(!ex)return;
-  const prev=ST.awExs[exIdx-1];
-  if(prev&&prev.supersetWith===ex.id)prev.supersetWith=undefined;
+
+  // Snapshot for undo
+  DEL_UNDO_DATA={
+    exIdx,
+    ex:{...ex},
+    sets:(ST.aws[ex.id]||[]).map(s=>({...s})),
+    prevSuperset:ST.awExs[exIdx-1]&&ST.awExs[exIdx-1].supersetWith===ex.id
+      ?{prevIdx:exIdx-1,id:ex.id}:null
+  };
+
+  // Break superset links
+  const prevEx=ST.awExs[exIdx-1];
+  if(prevEx&&prevEx.supersetWith===ex.id)prevEx.supersetWith=undefined;
   if(ex.supersetWith)ex.supersetWith=undefined;
   if(ST.aws&&ST.aws[ex.id])delete ST.aws[ex.id];
-  // Delete is week/day scoped (this week's day only).
+
+  // Record in removedExercises (week/day scoped)
   const wk=ST.logWk||ST.wk;
   const key=getRemovedKey(wk,ST.aday);
   const target=(ex.displayName||ex.name||'').trim();
   if(target){
     ST.removedExercises=ST.removedExercises||{};
-    const arr=Array.isArray(ST.removedExercises[key])?ST.removedExercises[key]:[];
-    if(!arr.some(n=>String(n).toLowerCase()===target.toLowerCase())){
-      arr.push(target);
-      ST.removedExercises[key]=arr;
-      saveST();
-    }
+    const arr=Array.isArray(ST.removedExercises[key])?[...ST.removedExercises[key]]:[];
+    if(!arr.some(n=>String(n).toLowerCase()===target.toLowerCase()))arr.push(target);
+    ST.removedExercises[key]=arr;
   }
   ST.awExs.splice(exIdx,1);
+  saveST();
   saveWorkoutProgress();
   renderWO();
+  showDelToast(name||ex.displayName||'Exercise');
+}
+function undoDelEx(){
+  if(!DEL_UNDO_DATA)return;
+  const {exIdx,ex,sets,prevSuperset}=DEL_UNDO_DATA;
+  DEL_UNDO_DATA=null;
+  hideDelToast();
+
+  // Remove from removedExercises
+  const wk=ST.logWk||ST.wk;
+  const key=getRemovedKey(wk,ST.aday);
+  const target=(ex.displayName||ex.name||'').trim().toLowerCase();
+  if(ST.removedExercises&&Array.isArray(ST.removedExercises[key])){
+    ST.removedExercises[key]=ST.removedExercises[key].filter(n=>String(n).toLowerCase()!==target);
+    if(!ST.removedExercises[key].length)delete ST.removedExercises[key];
+  }
+
+  // Re-insert exercise and its set data
+  const insertAt=Math.min(exIdx,ST.awExs.length);
+  ST.awExs.splice(insertAt,0,ex);
+  ST.aws[ex.id]=sets;
+  if(prevSuperset){
+    const prev=ST.awExs[prevSuperset.prevIdx];
+    if(prev)prev.supersetWith=ex.id;
+  }
+  saveST();
+  saveWorkoutProgress();
+  renderWO();
+}
+function showDelToast(name){
+  if(DEL_UNDO_TIMER)clearTimeout(DEL_UNDO_TIMER);
+  const t=document.getElementById('DEL_TOAST');
+  const m=document.getElementById('DEL_TOAST_MSG');
+  if(!t)return;
+  if(m)m.textContent=`"${name}" removed`;
+  t.classList.add('show');
+  DEL_UNDO_TIMER=setTimeout(()=>{hideDelToast();DEL_UNDO_DATA=null;},5000);
+}
+function hideDelToast(){
+  if(DEL_UNDO_TIMER){clearTimeout(DEL_UNDO_TIMER);DEL_UNDO_TIMER=null;}
+  const t=document.getElementById('DEL_TOAST');
+  if(t)t.classList.remove('show');
 }
 function openAddEx(){
   ST.isAddEx=true;ST.swt=null;
