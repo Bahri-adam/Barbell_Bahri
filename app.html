@@ -2511,21 +2511,28 @@ function openWO(dk){
   ST.logWk=ST.wk;
   const d=getDayProgram(dk);
 
-  // Check for saved in-progress workout first
+  // WIP is only valid if the workout has NOT been finalized on any device.
+  // If finalized logs already exist (synced from phone or saved locally),
+  // discard the stale desktop WIP and rebuild fresh from those logs.
   const wip=loadWorkoutProgress(dk);
-  if(wip&&wip.awExs&&wip.aws){
+  const wk=ST.logWk||ST.wk;
+  const finalizedLogs=ST.logs.filter(l=>l.wk===wk&&l.dk===dk&&l.w!=null&&l.w!==''&&l.r!=null&&l.r!=='');
+  const useWip=wip&&wip.awExs&&wip.aws&&finalizedLogs.length===0;
+
+  if(useWip){
     ST.awExs=wip.awExs;
     ST.aws=wip.aws;
     // Restore timer only if it was already intentionally started (non-null in WIP)
     ST.woStartTime=wip.woStartTime||null;
   }else{
+    // If we're skipping a stale WIP, clear it so it doesn't interfere again
+    if(wip&&finalizedLogs.length>0)clearWorkoutProgress();
     ST.awExs=d.exercises.map((ex,i)=>{
       const ovr=getOvr(dk,i,ST.wk);
       return {...ex, displayName: ovr||ex.name, templateIdx: i};
     });
 
     // Pre-fill from logs if this day was already logged this week
-    const wk=ST.logWk||ST.wk;
     const weekLogs=ST.logs.filter(l=>l.wk===wk&&l.dk===dk);
     if(weekLogs.length>0){
       const getLogsForExercise=(ex)=>{
@@ -2541,6 +2548,15 @@ function openWO(dk){
       ST.awExs.forEach(ex=>{
         const exLogs=getLogsForExercise(ex);
         if(exLogs.length>0){
+          // If this exercise was swapped on another device, the log's ex field holds
+          // the actual exercise name that was performed. Update displayName to match
+          // so the desktop shows the same exercise name as the phone.
+          const firstLog=exLogs[0];
+          const loggedName=(firstLog.ex||'').toLowerCase();
+          const templateName=(ex.displayName||ex.name||'').toLowerCase();
+          if(firstLog.origEx && loggedName && loggedName!==templateName){
+            ex.displayName=firstLog.ex;
+          }
           ST.aws[ex.id]=exLogs.map(l=>({w:l.w||'',r:l.r||'',rpe:l.rpe||'',done:true}));
           while(ST.aws[ex.id].length<ex.sets)ST.aws[ex.id].push({w:'',r:'',rpe:'',done:false});
         }else{
