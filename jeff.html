@@ -457,6 +457,20 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .nutr-proto-table td{padding:6px 8px;border-bottom:1px solid var(--b1);color:var(--tx2);vertical-align:top}
 .nutr-proto-table tr:last-child td{border-bottom:none}
 .nutr-proto-table td:first-child{font-weight:600;color:var(--tx);white-space:nowrap}
+/* ── SCIENCE RATIONALE ── */
+.sci-part{border:1px solid var(--b1);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.sci-part-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:var(--s1);gap:10px;user-select:none}
+.sci-part-hdr:active{background:var(--s2)}
+.sci-part-title{font-family:var(--fd);font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.sci-part-sub{font-size:11px;color:var(--tx3);margin-top:2px}
+.sci-part-body{display:none;padding:0 14px 14px}
+.sci-part.open .sci-part-body{display:block}
+.sci-part .nutr-toggle{flex-shrink:0;color:var(--tx3);font-size:18px;transition:transform .2s}
+.sci-part.open .nutr-toggle{transform:rotate(180deg)}
+.sci-sec{margin-top:14px;padding-top:12px;border-top:1px solid var(--b1)}
+.sci-sec:first-child{border-top:none;padding-top:2px;margin-top:8px}
+.sci-sec-title{font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;font-family:var(--fd);text-transform:uppercase;letter-spacing:.04em}
+.sci-sec-body{font-size:12px;color:var(--tx2);line-height:1.7}
 .smart-disclaimer{font-size:11px;color:var(--tx3);margin-top:8px;padding:8px 10px;background:rgba(69,123,157,.1);border-radius:5px;border-left:3px solid var(--blue)}
 .smart-sub{font-size:11px;color:var(--tx3);margin-bottom:10px}
 .smart-day-block{border:1px solid var(--b1);border-radius:6px;margin-bottom:8px;overflow:hidden}
@@ -2549,6 +2563,8 @@ function renderSmartProgram(){
 
   h+=renderNutrition();
 
+  h+=renderScience();
+
   h+=`<div class="smart-card cite"><div class="smart-hdr">Science Sources</div>
     <ul class="smart-cites">${citations.map(c=>`<li>${c}</li>`).join('')}</ul>
     <div class="smart-princ">Engine: Stimulus = tension × volume × proximity (estimated from e1RM, no RPE required). Effective reps = max(0, 5−RIR). Fatigue = volume load × intensity × compound penalty. Stall logic: volume-induced vs under-stimulation vs intensity problem. Pre-fatigue: only drop sets when weekly ≥110% target. Data-driven autoregulation.</div>
@@ -4253,6 +4269,88 @@ function renderNutrition(){
     </table>
   </div>`;
 
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCIENCE RATIONALE — Program justification
+// ═══════════════════════════════════════════════════════════
+const JEFF_SCIENCE=[
+  {title:'Part 1: Training',color:'#c77b00',sub:'Split structure, exercise selection, deload rationale',
+   sections:[
+    {t:'Why a 4-Session Body Part Split',
+     b:'A lot of people will tell you to just do full body 3x a week if you\'re over 50. The real question is about volume management, and the research actually backs the split for someone like you.\n\nSchoenfeld\'s volume data shows a clear dose-response relationship between weekly sets per muscle and hypertrophic adaptation, with the optimal range landing around 10–20 sets per muscle per week. The issue is there\'s a per-session ceiling around 10 sets for a given muscle before quality drops off. A body part split is exactly how you deliver adequate volume without cramming 20 sets into one session and watching performance fall off a cliff halfway through.\n\nA 2024 meta-analysis in the Journal of Strength and Conditioning Research looked at 14 studies across 392 subjects comparing split vs full body routines. The result was identical strength and hypertrophy outcomes when volume was equated. The split isn\'t inferior — it\'s just a different vehicle for delivering the same weekly dose. It also keeps each session under 60 minutes, which matters for recovery at your age.'},
+    {t:'Session-Based Rotation Instead of Day-Based',
+     b:'This is set up as Session 1, 2, 3, 4 on rotation instead of locking you into Monday is this, Thursday is that. Reason is simple — life happens. You have a family, a job, days that run long. A session-based rotation means you never miss because your schedule shifted. You pick up where you left off. Consistency over months is what actually moves the needle, not whether you trained on a specific day of the week.\n\nFrom a recovery standpoint this also protects you. Schoenfeld\'s data on older adults notes that recovery between sessions is meaningfully extended compared to younger trainees — there\'s evidence showing it can take longer than 48 hours to fully restore neuromuscular capacity at 50+. The rotation handles this automatically as long as you don\'t stack Session 1 back to back with Session 3.'},
+    {t:'Exercise Selection: Compound Foundation, Smart Substitutions',
+     b:'Every session is built around a primary compound movement. This isn\'t preference — this is where the actual hypertrophic stimulus lives. Mechanical tension is the primary driver of muscle protein synthesis. Schoenfeld is explicit: tension magnitude and duration activate the mechanosensors in the sarcomere, trigger integrin signaling, and phosphorylate mTOR downstream. Isolation work matters but it doesn\'t build the foundation.\n\nFor the lower body, the back squat and conventional deadlift were replaced with the trap bar deadlift and Bulgarian split squat. You have a history of lower back issues from football. Axial spinal loading on a compromised lumbar structure is how you turn a training program into a physical therapy program. The trap bar shifts load distribution so the spine isn\'t under direct vertical compression. The Bulgarian split squat delivers unilateral quad and glute stimulus with zero spinal load because the weight is held in the hands, not sitting on the upper back. These are not regressions — they are the right exercise selection for your anatomy and history.'},
+    {t:'The Deload — Why It\'s Non-Negotiable at 50',
+     b:'The deload follows a session-count trigger — every 12 sessions. This comes directly from Schoenfeld who identifies a 3:1 ratio as the standard starting point, noting that high stress applied persistently over time downregulates immune function, motor coordination, hormonal output, and anabolic intracellular signaling. The deload at 60% load and 2 sets per exercise isn\'t laziness — it\'s the mechanism by which the body supercompensates. Animal research shows chronic resistance training eventually suppresses p70S6K and mTORC1 phosphorylation, but these signals fully restore after a brief reduction in training stress.\n\nAt 50, the deload is more important than it would be for a 25-year-old. Schoenfeld\'s older adult research is clear that recovery capacity is genuinely reduced with age — it takes longer to restore neuromuscular baseline after hard training, and the penalty for chronic overreaching is steeper. Don\'t skip it.'}
+   ]},
+  {title:'Part 2: Nutrition',color:'#1a6b3c',sub:'Protein targets, anabolic resistance, carb cycling, fat intake',
+   sections:[
+    {t:'Why 200g Protein and Why It Has to Be in Every Meal',
+     b:'200g of daily protein is the target. The research on maximizing muscle growth sits at 1.6–2.2g of protein per kg of bodyweight per day. At 240 pounds that puts you in the 175–240g range. 200g is the practical middle ground.\n\nThe meal distribution piece is critical and specific to your age. In younger guys, ~20g of high quality protein per meal is enough to fully trigger muscle protein synthesis. In men over 50 that number roughly doubles. The research shows you need approximately 40g of high quality protein per meal to generate the same response a 25-year-old gets from 20g.\n\nThe reason is anabolic resistance. As you age, the mTORC1 signaling pathway becomes desensitized. mTORC1 is the master switch inside your muscle cells that tells them to start building protein. When you eat protein, the amino acid leucine travels through your bloodstream and activates that switch. At 50 the switch is harder to flip — it requires a much higher leucine concentration before it responds. Research by Katsanos showed that an amount of essential amino acids sufficient to maximize MPS in young adults literally failed to elevate MPS above resting levels in older adults until additional leucine was added. That is how real this effect is.\n\nEvery meal needs to independently hit that leucine threshold on its own. That is why every meal structure is 40–55g of protein per sitting. Not 25g, not 30g. Those numbers work for a 22-year-old. They do not work for you.'},
+    {t:'Carbohydrate Cycling: Training Days vs Rest Days',
+     b:'Carbs are higher on training days and lower on rest days. Research shows that as much as 80% of the energy your muscles need during resistance training comes from glycolysis — breaking down stored glycogen. When glycogen stores are low going into a session, your muscles cannot generate force as effectively, performance drops, and the training stimulus that drives adaptation is compromised. Come in glycogen depleted and you are leaving real gains on the table.\n\nOn rest days you do not need the same carbohydrate load. Your body has a full 24-hour window to top glycogen back up even if intake is lower. Pulling carbs down on rest days is the primary calorie lever for creating the modest deficit needed to move the scale without it feeling like you\'re dieting at every single meal.'},
+    {t:'Dietary Fat: Why It Stays at 70–80g Daily',
+     b:'Fat stays at 70–80g every day and that number does not get cut to save calories. This is intentional and the reason is hormonal. Testosterone is synthesized from cholesterol, which is a lipid — fat is literally the raw material your body uses to produce it. Low fat diets have been directly associated with reduced testosterone production in the research.\n\nAt 50, with testosterone already declining at roughly 1–2% per year from its peak, a nutritional approach that suppresses it further would be working directly against everything else in this program. The fat in your diet comes primarily from eggs, red meat, olive oil, and almonds — covering both saturated and unsaturated fat needs for cell membrane integrity, hormone synthesis, and absorption of fat-soluble vitamins D3 and K2.'},
+    {t:'Pre-Workout Collagen Protocol',
+     b:'20g of collagen peptides plus 500mg of Vitamin C, taken 30–45 minutes before every training session. The timing matters specifically.\n\nCollagen is the structural protein that makes up your tendons, ligaments, and joint capsules. After training, the mechanical stimulus triggers a repair and remodeling response in connective tissue, but that process requires amino acids to be present in the bloodstream during and immediately after the session. Vitamin C is not optional — it acts as an essential cofactor for the enzymes that cross-link collagen fibers together during synthesis. Without it the process does not complete properly.\n\n30 years of football has put cumulative wear on your connective tissue that does not just disappear. Tendons and ligaments adapt much more slowly than muscle does. Your joints are the most likely thing to break down and take you out of training before anything else does. This protocol is directly addressing that risk every single session.'},
+    {t:'Post-Workout: Protein and Carbs Together',
+     b:'50g of whey isolate plus fast carbs within 45 minutes of finishing training. After a session your muscles are acutely sensitized to nutrients in a way they are not at rest. Getting protein in quickly ensures the anabolic response from the session is not sitting there waiting for fuel that never comes.\n\nPairing carbohydrates with protein at this window is not just about replenishing glycogen. The carbohydrates drive an insulin response, and insulin at this point acts synergistically with the amino acids to maximize net protein accretion. Think of insulin here as the delivery driver that helps push nutrients into muscle cells. The honey or rice cakes in your post-workout accomplish this without sending blood sugar on a rollercoaster.'},
+    {t:'Casein Before Bed — Non-Negotiable',
+     b:'40g of casein protein or 1.5 cups of cottage cheese before sleep, every night. The overnight fast is the longest catabolic window of the day. Catabolic means your body is breaking down tissue rather than building it, and the longer you go without amino acids in your bloodstream the more time your muscles spend in that breakdown state. Casein is a slow-digesting protein that releases amino acids steadily over 6–8 hours, sustaining overnight muscle protein synthesis while you sleep.\n\nThe majority of growth hormone secretion in adults happens during deep sleep. Growth hormone drives overnight tissue repair and muscle remodeling. Having amino acids available during that window ensures the substrate is there when growth hormone is doing its work. Without the casein you are running the repair machinery without the raw materials.'}
+   ]},
+  {title:'Part 3: Supplementation',color:'#6a1b9a',sub:'Creatine, fish oil, vitamins, sleep stack, performance',
+   sections:[
+    {t:'Creatine — 5g Daily',
+     b:'Creatine monohydrate is the single most researched performance supplement that exists. It works by saturating the phosphocreatine pool inside your muscle cells — a rapid energy reserve that regenerates ATP between reps. More phosphocreatine means more reps at a given weight before fatigue shuts you down, which means more total mechanical tension per session, which is what drives hypertrophic adaptation over time.\n\n5g daily without a loading phase fully saturates your stores within 3–4 weeks and avoids the GI discomfort that a 20g loading protocol can cause. Goes in your post-workout shake on training days and with any meal on rest days.'},
+    {t:'Fish Oil — 3 to 4g EPA+DHA Daily',
+     b:'Fish oil is arguably the most important supplement in the stack for you specifically. EPA and DHA do two things that are directly relevant.\n\nFirst, they alter the composition of your muscle cell membranes. A membrane with more omega-3s incorporated is more fluid and permeable to the signaling molecules that tell muscle cells to build protein — enhancing mTOR and p70S6K signaling directly.\n\nSecond, omega-3s directly suppress NF-kB activation. NF-kB is the master regulator of the inflammatory response. When it is chronically activated it impairs satellite cell function and blunts anabolic signaling from training. For someone with a football background, the level of accumulated joint and tissue inflammation is not trivial. That inflammation is actively working against the gains from training. Fish oil is addressing both the anabolic side and the inflammatory side simultaneously.'},
+    {t:'Vitamin D3 + K2 — 5,000 IU D3 with 100–200mcg MK-7 K2',
+     b:'Vitamin D is actually a steroid hormone and the vitamin D receptor is present directly in skeletal muscle cells. D3 influences muscle protein synthesis and satellite cell activity, and low vitamin D is associated with reduced testosterone production, impaired neuromuscular function, and elevated inflammatory markers. Every one of those is already working against you at 50.\n\nK2 is included because D3 significantly increases calcium absorption and you need something directing that calcium to the right place. K2 activates the proteins that send calcium into bone and teeth rather than into soft tissue and arterial walls. D3 and K2 together, always.'},
+    {t:'Magnesium Glycinate — 400 to 500mg Before Bed',
+     b:'Magnesium is a cofactor in over 300 enzymatic reactions including ATP synthesis and protein synthesis itself. Most people eating a normal Western diet are mildly to moderately deficient without knowing.\n\nThe most relevant angle is sleep. Magnesium facilitates GABA activity in the brain — the primary inhibitory neurotransmitter responsible for initiating sleep onset and sustaining deep sleep architecture. Deep sleep is when roughly 80% of your growth hormone gets released. If your sleep quality is degraded, your hormonal recovery environment is degraded, and everything in the training program produces less than it should. Glycinate form absorbs better and does not cause the GI issues that magnesium oxide does.'},
+    {t:'Ashwagandha KSM-66 — 600mg Daily',
+     b:'KSM-66 specifically — that is the form with the actual clinical trial data behind it. Research on KSM-66 shows testosterone increases of 10–22% and cortisol reductions of around 27%.\n\nThe testosterone support matters but the cortisol reduction is more important. Cortisol is a catabolic hormone that actively breaks muscle tissue down by activating FOXO transcription factors which upregulate atrogin-1 and MuRF-1 — E3 ubiquitin ligases that tag muscle tissue for degradation. Chronically elevated cortisol also directly antagonizes mTOR signaling. So cortisol is working against you from two directions at once.\n\nAshwagandha reduces HPA axis reactivity — the hormonal stress response system that produces cortisol. This is a real mechanistic effect, not just a relaxation response. Goes in at night with the magnesium.'},
+    {t:'Zinc — 15 to 30mg Daily',
+     b:'Zinc is a direct cofactor in testosterone synthesis. The enzymatic steps that convert cholesterol into testosterone are zinc-dependent. Research on men with zinc deficiency consistently shows testosterone reductions that reverse when zinc is restored. At 50 with androgen production already declining, making sure this basic cofactor is fully available costs almost nothing and removes one more potential bottleneck on hormonal output. Taken with food to prevent nausea.'},
+    {t:'Citrulline Malate — 6 to 8g Pre-Workout',
+     b:'Citrulline gets converted to arginine in the kidney, which then gets converted to nitric oxide in blood vessel walls. Nitric oxide causes vasodilation — your blood vessels widen and blood flow to working muscles increases. More blood flow during training means better oxygen and nutrient delivery and faster clearance of metabolic waste products like lactate and hydrogen ions that accumulate between sets.\n\nThe practical result is less drop-off in performance across later sets in a session, which means more total volume accumulated at quality intensity, which feeds directly back into the mechanical tension that drives adaptation.'},
+    {t:'Tart Cherry — 480mg Before Bed',
+     b:'Tart cherry is high in anthocyanins, which inhibit COX-1 and COX-2 enzymes — the same enzymes targeted by ibuprofen and aspirin, just through a food-based pathway. For someone with a football background and decades of accumulated joint stress, chronic low-grade inflammation in the joints and connective tissue directly impairs how well you move and how well you recover between sessions. Tart cherry before bed also has data on melatonin content that supports sleep onset. Goes in the evening stack.'},
+    {t:'The Bottom Line on Supplements',
+     b:'Everything in this section is additive. None of it replaces the fundamentals and none of it works if the training is not progressing, the protein is not hitting 200g daily, and sleep is being neglected. The supplements address the margin — roughly 10–15% of total optimization — that sits on top of a foundation that is already working.\n\nThe hierarchy in order of impact: consistent progressive training → protein targets → sleep quality → supplementation. That order does not change. The supplements just improve the output at each level of the stack.'}
+   ]}
+];
+
+function renderScience(){
+  let h=`<div class="smart-card">
+    <div class="smart-hdr">Program Rationale — The Science Behind Your Plan</div>
+    <div class="smart-sub">Training methodology, nutrition protocol, and supplementation — each decision is evidence-based and age-specific.</div>`;
+
+  JEFF_SCIENCE.forEach((part,pi)=>{
+    const id=`sci-p-${pi}`;
+    h+=`<div class="sci-part" id="${id}">
+      <div class="sci-part-hdr" onclick="document.getElementById('${id}').classList.toggle('open')">
+        <div>
+          <div class="sci-part-title" style="color:${part.color}">${part.title}</div>
+          <div class="sci-part-sub">${part.sub}</div>
+        </div>
+        <div class="nutr-toggle">▾</div>
+      </div>
+      <div class="sci-part-body">
+        ${part.sections.map(sec=>`
+          <div class="sci-sec">
+            <div class="sci-sec-title">${sec.t}</div>
+            <div class="sci-sec-body">${sec.b.replace(/\n\n/g,'</div><div class="sci-sec-body" style="margin-top:8px">').replace(/\n/g,' ')}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  h+=`</div>`;
   return h;
 }
 
