@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>JEFF â€” Powerbuilding</title>
+<title>JEFF — Powerbuilding</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#e63946">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -521,7 +521,7 @@ select{color-scheme:dark}
 <!-- SWAP / ADD EXERCISE MODAL -->
 <div class="overlay" id="SWO">
   <div class="modal">
-    <div class="mhdr" id="SWH">Exercise<button class="mx" onclick="closeSW()">âœ•</button></div>
+    <div class="mhdr" id="SWH">Exercise<button class="mx" onclick="closeSW()">✕</button></div>
     <div id="SWC" style="font-size:11px;color:var(--tx3);margin-bottom:12px"></div>
 
     <!-- Scope (only shows for swap) -->
@@ -544,7 +544,7 @@ select{color-scheme:dark}
 
     <!-- CUSTOM TAB -->
     <div id="tabCustomContent" style="display:none">
-      <div style="font-size:12px;color:var(--tx3);margin-bottom:10px;line-height:1.5">Type any exercise name â€” it'll be saved to your library. Pick the body part it targets.</div>
+      <div style="font-size:12px;color:var(--tx3);margin-bottom:10px;line-height:1.5">Type any exercise name — it'll be saved to your library. Pick the body part it targets.</div>
       <input class="custom-ex-input" id="customExInput" placeholder="e.g. Pendulum Squat, Hack Squat Machine..." oninput="updateCustomBtn()">
       <label style="font-size:11px;color:var(--tx3);text-transform:uppercase;display:block;margin-top:10px;margin-bottom:6px">Body part</label>
       <select class="custom-ex-input" id="customExBodyPart" onchange="updateCustomBtn()" style="margin-bottom:12px">
@@ -567,7 +567,7 @@ select{color-scheme:dark}
 <!-- EDIT LOG MODAL -->
 <div class="overlay" id="EDLOG">
   <div class="modal">
-    <div class="mhdr">Edit Set <button class="mx" onclick="closeEditLog()">âœ•</button></div>
+    <div class="mhdr">Edit Set <button class="mx" onclick="closeEditLog()">✕</button></div>
     <div class="edit-log-form" style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
       <div id="EDSETSEL" style="display:none"><label style="font-size:11px;color:var(--tx3);text-transform:uppercase">Set to edit</label>
         <select class="custom-ex-input" id="EDSET" onchange="loadEditLogForm()" style="padding:12px"></select></div>
@@ -587,7 +587,7 @@ select{color-scheme:dark}
 <!-- EDIT CUE / NOTE MODAL -->
 <div class="overlay" id="ECN">
   <div class="modal">
-    <div class="mhdr">Edit Cue / Notes <button class="mx" onclick="closeCueEditor()">âœ•</button></div>
+    <div class="mhdr">Edit Cue / Notes <button class="mx" onclick="closeCueEditor()">✕</button></div>
     <input type="hidden" id="ECN_ID">
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
       <div><label style="font-size:11px;color:var(--tx3);text-transform:uppercase">Cue</label>
@@ -664,21 +664,21 @@ select{color-scheme:dark}
       </div>
       <div class="dl-wk-grid" id="DL_WK_GRID" style="width:100%;margin-top:10px"></div>
       <div style="display:flex;gap:12px;margin-top:8px;font-size:10px;color:var(--tx3)">
-        <span><span style="color:var(--red)">â– </span> Auto deload</span>
-        <span><span style="color:#fff">â– </span> Forced ON</span>
-        <span style="opacity:.6">â–  Forced OFF</span>
+        <span><span style="color:var(--red)">■</span> Auto deload</span>
+        <span><span style="color:#fff">■</span> Forced ON</span>
+        <span style="opacity:.6">■ Forced OFF</span>
       </div>
     </div>
 
     <div class="dl-rules">
       <div class="dl-rules-hdr">Deload protocol (Schoenfeld 2017)</div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">ðŸ“…</span><span>2 full-body sessions only â€” <strong>Monday</strong> (Full Body A) + <strong>Thursday</strong> (Full Body B)</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">âš–ï¸</span><span>Weights at <strong>~60â€“70%</strong> of your normal working loads</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">ðŸ“‰</span><span><strong>~50% of normal weekly sets</strong> â€” about half the volume</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">ðŸŽ¯</span><span>All sets stop <strong>4â€“5 reps short of failure</strong> (RIR 4â€“5) â€” no grinding</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">ðŸš«</span><span><strong>No 3-sec eccentrics</strong> â€” smooth, normal tempo only</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">ðŸš«</span><span><strong>No loaded interset stretches</strong> â€” skip the calf stretch holds etc.</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">ðŸš«</span><span><strong>No drop sets</strong> â€” straight sets only</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">📅</span><span>2 full-body sessions only — <strong>Monday</strong> (Full Body A) + <strong>Thursday</strong> (Full Body B)</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">⚖️</span><span>Weights at <strong>~60–70%</strong> of your normal working loads</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">📉</span><span><strong>~50% of normal weekly sets</strong> — about half the volume</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">🎯</span><span>All sets stop <strong>4–5 reps short of failure</strong> (RIR 4–5) — no grinding</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>No 3-sec eccentrics</strong> — smooth, normal tempo only</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>No loaded interset stretches</strong> — skip the calf stretch holds etc.</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>No drop sets</strong> — straight sets only</span></div>
     </div>
 
     <button class="btn" style="width:100%;margin-top:16px" onclick="document.getElementById('DLSET').style.display='none'">Done</button>
@@ -689,12 +689,12 @@ select{color-scheme:dark}
 <div class="pg on" id="pg-home">
   <div class="home-top">
     <div><div class="hname">Barbell<em>.</em> Bahri</div><div class="htag">Powerbuilding Program</div></div>
-    <div class="hbi"><div class="hbl" id="BL">Block 1 â€” Hypertrophy</div><div class="hwn" id="WD">W1</div></div>
+    <div class="hbi"><div class="hbl" id="BL">Block 1 — Hypertrophy</div><div class="hwn" id="WD">W1</div></div>
   </div>
   <div class="athlete-profile" id="AP">
     <div class="ap-row"><span class="ap-label">Name</span><input type="text" class="ap-val" id="AP_NAME" placeholder="Jeff Puffer" onchange="saveProfile('name',this.value)"></div>
     <div class="ap-row"><span class="ap-label">Age</span><input type="number" class="ap-val" id="AP_AGE" placeholder="22" onchange="saveProfile('age',parseInt(this.value))"></div>
-    <div class="ap-row"><span class="ap-label">Body weight (lbs)</span><input type="number" class="ap-val" id="AP_BW" placeholder="225" title="For current week â€” tap week pill to log different weeks" onchange="saveProfileBW(ST.wk,parseFloat(this.value))"></div>
+    <div class="ap-row"><span class="ap-label">Body weight (lbs)</span><input type="number" class="ap-val" id="AP_BW" placeholder="225" title="For current week — tap week pill to log different weeks" onchange="saveProfileBW(ST.wk,parseFloat(this.value))"></div>
   </div>
   <div class="stats-strip">
     <div class="sc"><div class="sv" id="SS">0</div><div class="sl">Sessions</div></div>
@@ -724,11 +724,18 @@ select{color-scheme:dark}
   </button>
   <button class="deload-cfg-btn" id="DLCFGBTN" onclick="openDeloadSettings()">
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-    <span id="DLCFGLAB">Deload Settings â€” every 3 wks Â· W3, W6, W9...</span>
+    <span id="DLCFGLAB">Deload Settings — every 3 wks · W3, W6, W9...</span>
   </button>
   <div class="pr-board" id="PRB"></div>
   <div id="FATIGUE" class="fatigue-card"></div>
   <div class="wstrip" id="WS"></div>
+  <div id="JEFF_DL" style="display:none;margin:0 0 12px;padding:14px 16px;background:rgba(230,57,70,.12);border:1px solid rgba(230,57,70,.4);border-radius:8px;font-size:13px;color:var(--tx2);line-height:1.5">
+    <strong style="color:#e63946">Deload Suggested</strong> — You've completed <strong id="JEFF_DL_N">12</strong> sessions since your last deload. A light week now will improve long-term progress and keep your joints healthy.
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button onclick="jeffStartDeload()" style="flex:1;padding:9px;background:var(--red);border:none;border-radius:4px;color:#fff;font-family:var(--fd);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer">Open Deload A</button>
+      <button onclick="jeffDismissDeload()" style="flex:1;padding:9px;background:var(--s2);border:1px solid var(--b2);border-radius:4px;color:var(--tx2);font-family:var(--fd);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer">Done / Dismiss</button>
+    </div>
+  </div>
   <div class="day-list" id="DL"></div>
 </div>
 
@@ -738,7 +745,7 @@ select{color-scheme:dark}
     <div class="wo-row">
       <button class="bk" onclick="showPg('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
       <div class="wo-t" id="WT">Workout</div>
-      <select class="wo-wk-sel" id="WWS" onchange="ST.logWk=parseInt(this.value);renderWO();const db=document.getElementById('WODLB');if(db){db.style.display=isDeloadWk(ST.logWk)?'block':'none';if(isDeloadWk(ST.logWk)){db.innerHTML='<strong>â˜… DELOAD WEEK (W'+ST.logWk+')</strong> â€” Mon &amp; Thu only Â· ~60-70% load Â· ~50% sets Â· RIR 4-5 Â· No 3-sec eccentrics Â· No loaded stretches Â· No drop sets.'}}" title="Log as week"
+      <select class="wo-wk-sel" id="WWS" onchange="ST.logWk=parseInt(this.value);renderWO();const db=document.getElementById('WODLB');if(db){db.style.display=isDeloadWk(ST.logWk)?'block':'none';if(isDeloadWk(ST.logWk)){db.innerHTML='<strong>★ DELOAD WEEK (W'+ST.logWk+')</strong> — Mon &amp; Thu only · ~60-70% load · ~50% sets · RIR 4-5 · No 3-sec eccentrics · No loaded stretches · No drop sets.'}}" title="Log as week"
         style="background:var(--s2);border:1px solid var(--b2);border-radius:3px;padding:6px 10px;font-family:var(--fm);font-size:12px;color:var(--tx2);min-width:52px">
         <!-- filled by JS -->
       </select>
@@ -776,9 +783,9 @@ select{color-scheme:dark}
     </div>
     <div class="steps">
       <h3>Connect Google Sheets</h3>
-      <div class="step"><div class="stn">1</div><div class="sttx">Go to <code>script.google.com</code> â†’ New Project â†’ paste the <code>Code.gs</code> file (delete default code first)</div></div>
-      <div class="step"><div class="stn">2</div><div class="sttx">Click <strong>Deploy â†’ New Deployment â†’ Web App</strong>. Execute as: <code>Me</code>. Access: <code>Anyone</code></div></div>
-      <div class="step"><div class="stn">3</div><div class="sttx">Create a blank Google Sheet first. Then <strong>Extensions â†’ Apps Script</strong>, paste <code>Code.gs</code>, deploy as Web App. Copy the URL, paste below, hit Save.</div></div>
+      <div class="step"><div class="stn">1</div><div class="sttx">Go to <code>script.google.com</code> → New Project → paste the <code>Code.gs</code> file (delete default code first)</div></div>
+      <div class="step"><div class="stn">2</div><div class="sttx">Click <strong>Deploy → New Deployment → Web App</strong>. Execute as: <code>Me</code>. Access: <code>Anyone</code></div></div>
+      <div class="step"><div class="stn">3</div><div class="sttx">Create a blank Google Sheet first. Then <strong>Extensions → Apps Script</strong>, paste <code>Code.gs</code>, deploy as Web App. Copy the URL, paste below, hit Save.</div></div>
       <input class="urlinp" id="SUI" placeholder="https://script.google.com/macros/s/...">
       <br><button class="savebtn" onclick="saveURL()">SAVE &amp; CONNECT</button>
     </div>
@@ -792,7 +799,7 @@ select{color-scheme:dark}
     </div>
     <div class="expcard">
       <div class="ecttl">CSV Export</div>
-      <div class="ecdesc">Every set ever logged â€” Date, Exercise, Weight, Reps, Est1RM. Open in Excel or Python for analytics and predictive modeling.</div>
+      <div class="ecdesc">Every set ever logged — Date, Exercise, Weight, Reps, Est1RM. Open in Excel or Python for analytics and predictive modeling.</div>
       <button class="expbtn p" onclick="expCSV()">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
         DOWNLOAD CSV
@@ -821,7 +828,7 @@ select{color-scheme:dark}
 
 <!-- SMART PROGRAM -->
 <div class="pg" id="pg-smart">
-  <div class="pghdr"><div class="pgt">Smart Program</div><div class="pgs">Week-by-week & within-session science. Adapts across the split â€” not afraid to diverge from the program.</div></div>
+  <div class="pghdr"><div class="pgt">Smart Program</div><div class="pgs">Week-by-week & within-session science. Adapts across the split — not afraid to diverge from the program.</div></div>
   <div class="smart-body" id="SMB"></div>
 </div>
 
@@ -841,99 +848,106 @@ select{color-scheme:dark}
 </nav>
 
 <script>
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// PROGRAM DATA â€” JEFF PUFFER (4-Day Split)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
+// PROGRAM DATA
+// ═══════════════════════════════════════════════════════════
 const P={
-  // SESSION 1 â€” SHOULDERS & CORE
+  // SESSION 1 — SHOULDERS & CORE
   mon:{key:'mon',name:'Session 1',focus:'Shoulders & Core',color:'#c77b00',exercises:[
-    {id:'m1',name:'Barbell Overhead Press',sets:4,reps:'6â€“8',rest:120,type:'h',cue:'Primary compound. Control the eccentric â€” no bouncing at bottom. Brace hard.',mech:'Heavy mechanical tension. Anterior + medial delt + tricep compound.'},
-    {id:'m2',name:'DB Arnold Press',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Full rotation hits all 3 delt heads. Start neutral, finish pronated overhead. Don\'t rush the turn.',mech:'Sequential delt head recruitment. All three heads in one movement.'},
-    {id:'m3',name:'DB Lateral Raise',sets:4,reps:'12â€“15',rest:60,type:'n',cue:'Lean slightly forward. Raise to ear height. Partial rest-pause on final set.',mech:'Middle delt isolation. Most undertrained delt head for shoulder width.'},
-    {id:'m4',name:'DB Rear Delt Fly',sets:3,reps:'15â€“20',rest:60,type:'n',cue:'Hinge 45Â°. Lead with elbows. Most neglected and most injured at 50 â€” do these every session.',mech:'Posterior delt + rotator cuff. Counterbalances pressing-dominant programs.'},
-    {id:'m5',name:'Face Pull',sets:3,reps:'15â€“20',rest:60,type:'n',cue:'External rotation emphasis at end. Pull to face level. NEVER skip â€” rotator cuff health at 50.',mech:'Posterior delt + infraspinatus. Non-negotiable pressing longevity protocol.'},
-    {id:'m6',name:'Weighted Plank',sets:3,reps:'20â€“30 sec',rest:45,type:'n',cue:'Plate on back. Squeeze glutes, brace abs, neutral spine. Anti-extension under load.',mech:'Transverse abdominis + deep spinal stabilizers. Functional core strength.'},
-    {id:'m7',name:'Cable Crunch',sets:3,reps:'12â€“15',rest:60,type:'n',cue:'Resistance at the top â€” this loads the rectus abdominis. Bodyweight crunches too easy at this level. Round down hard.',mech:'Rectus abdominis under meaningful resistance. Builds visible abdominal mass.'},
-    {id:'m8',name:'Pallof Press',sets:3,reps:'10â€“12',rest:45,type:'n',cue:'Anti-rotation core. Stand tall, press out, hold 1 sec, return. Load progressively with a heavier band over time.',mech:'Obliques + transverse abdominis anti-rotation. Protects lumbar under axial load.'}
+    {id:'m1',name:'Barbell Overhead Press',sets:4,reps:'6–8',rest:120,type:'h',cue:'Primary compound. Control the eccentric — no bouncing at bottom. Brace hard.',mech:'Heavy mechanical tension. Anterior + medial delt + tricep compound.'},
+    {id:'m2',name:'DB Arnold Press',sets:3,reps:'10–12',rest:90,type:'n',cue:"Full rotation hits all 3 delt heads. Start neutral, finish pronated overhead. Don't rush the turn.",mech:'Sequential delt head recruitment. All three heads in one movement.'},
+    {id:'m3',name:'DB Lateral Raise',sets:4,reps:'12–15',rest:60,type:'n',cue:'Lean slightly forward. Raise to ear height. Partial rest-pause on final set.',mech:'Middle delt isolation. Most undertrained delt head for shoulder width.'},
+    {id:'m4',name:'DB Rear Delt Fly',sets:3,reps:'15–20',rest:60,type:'n',cue:'Hinge 45. Lead with elbows. Most neglected and most injured at 50.',mech:'Posterior delt + rotator cuff. Counterbalances pressing-dominant programs.'},
+    {id:'m5',name:'Face Pull',sets:3,reps:'15–20',rest:60,type:'n',cue:'External rotation emphasis at end. Pull to face level. NEVER skip — rotator cuff health at 50.',mech:'Posterior delt + infraspinatus. Non-negotiable pressing longevity protocol.'},
+    {id:'m6',name:'Weighted Plank',sets:3,reps:'20–30 sec',rest:45,type:'n',cue:'Plate on back. Squeeze glutes, brace abs, neutral spine. Anti-extension under load.',mech:'Transverse abdominis + deep spinal stabilizers. Functional core strength.'},
+    {id:'m7',name:'Cable Crunch',sets:3,reps:'12–15',rest:60,type:'n',cue:'Resistance at the top loads the rectus abdominis. Round down hard on every rep.',mech:'Rectus abdominis under meaningful resistance. Builds visible abdominal mass.'},
+    {id:'m8',name:'Pallof Press',sets:3,reps:'10–12',rest:45,type:'n',cue:'Anti-rotation core. Press out, hold 1 sec, return. Load progressively over time.',mech:'Obliques + transverse abdominis anti-rotation. Protects lumbar under axial load.'}
   ]},
-  // SESSION 2 â€” BACK & BICEPS
+  // SESSION 2 — BACK & BICEPS
   tue:{key:'tue',name:'Session 2',focus:'Back & Biceps',color:'#1a6b3c',exercises:[
-    {id:'t1',name:'Trap Bar Deadlift',sets:4,reps:'5â€“6',rest:180,type:'h',cue:'More upright torso than conventional = less lumbar shear. Load it heavy â€” this is the session\'s primary strength movement. Brace hard, drive floor away.',mech:'Posterior chain + trap bar reduces lumbar moment arm. Safer for football-damaged lower back.'},
-    {id:'t2',name:'Trap Bar Shrug',sets:3,reps:'12â€“15',rest:90,type:'n',cue:'Stay loaded in the trap bar after deadlifts. Full elevation, 1-sec hold at top, slow lowering.',mech:'Traps respond to both heavy load and volume. Upper trap hypertrophy.'},
-    {id:'t3',name:'DB Single-Arm Row',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Full stretch at bottom. Loaded stretch on final set â€” hold 10 sec at full extension before each rep.',mech:'Lat + mid-back. Unilateral corrects side-to-side imbalances from football asymmetry.'},
-    {id:'t4',name:'Inverted Row',sets:3,reps:'10â€“15',rest:60,type:'n',cue:'Body under barbell in rack, heels on floor. Adjust body angle to scale difficulty. Full ROM â€” chest to bar.',mech:'Horizontal pull. Scapular retraction + rhomboid emphasis with zero spinal loading.'},
-    {id:'t5',name:'DB Incline Curl',sets:3,reps:'10â€“12',rest:60,type:'s',cue:'Humerus BEHIND body = long head maximally stretched. 3-sec eccentric. Critical for peak development.',mech:'Long head bicep at maximal length-tension. Superior mechanotransduction via titin.'},
-    {id:'t6',name:'Hammer Curl',sets:3,reps:'12â€“15',rest:60,type:'n',cue:'Neutral grip throughout. Controlled full range. Brachialis + brachioradialis for elbow health.',mech:'Elbow health + arm thickness. Different muscle emphasis to supinated curls.'},
-    {id:'t7',name:'Lat Pulldown',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Full stretch at top is the most important part. Drive elbows down and back to hips. No swinging.',mech:'Lat under full length-tension. Optional if time is tight â€” prioritize rows first.'}
+    {id:'t1',name:'Trap Bar Deadlift',sets:4,reps:'5–6',rest:180,type:'h',cue:'More upright torso than conventional — less lumbar shear. Load it heavy. Brace hard, drive floor away.',mech:'Posterior chain. Trap bar reduces lumbar moment arm. Safer for damaged lower back.'},
+    {id:'t2',name:'Trap Bar Shrug',sets:3,reps:'12–15',rest:90,type:'n',cue:'Full elevation, 1-sec hold at top, slow lowering.',mech:'Upper trap hypertrophy. Responds to both heavy load and volume.'},
+    {id:'t3',name:'DB Single-Arm Row',sets:3,reps:'10–12',rest:90,type:'n',cue:'Full stretch at bottom. Hold 10 sec at full extension on final set before each rep.',mech:'Lat + mid-back. Unilateral corrects side-to-side imbalances.'},
+    {id:'t4',name:'Inverted Row',sets:3,reps:'10–15',rest:60,type:'n',cue:'Body under barbell in rack, heels on floor. Adjust body angle to scale difficulty.',mech:'Horizontal pull. Scapular retraction with zero spinal loading.'},
+    {id:'t5',name:'DB Incline Curl',sets:3,reps:'10–12',rest:60,type:'s',cue:'Humerus BEHIND body — long head maximally stretched. 3-sec eccentric.',mech:'Long head bicep at maximal length-tension. Superior mechanotransduction via titin.'},
+    {id:'t6',name:'Hammer Curl',sets:3,reps:'12–15',rest:60,type:'n',cue:'Neutral grip throughout. Controlled full range. Elbow health priority.',mech:'Brachialis + brachioradialis. Elbow health + arm thickness.'},
+    {id:'t7',name:'Lat Pulldown',sets:3,reps:'10–12',rest:90,type:'n',cue:'Full stretch at top is the most important part. Drive elbows down and back to hips.',mech:'Lat under full length-tension. Prioritize rows first if time is tight.'}
   ]},
   wed:{key:'wed',name:'Rest',focus:'Rest & Recovery',color:'#333',rest:true,exercises:[]},
-  // SESSION 3 â€” CHEST & TRICEPS
+  // SESSION 3 — CHEST & TRICEPS
   thu:{key:'thu',name:'Session 3',focus:'Chest & Triceps',color:'#6a1b9a',exercises:[
-    {id:'h1',name:'Barbell Bench Press',sets:4,reps:'6â€“8',rest:120,type:'h',cue:'Controlled eccentric. Touch chest, no bounce. Elbows 45â€“60Â° to protect shoulder. Tight arch, lat engagement.',mech:'Horizontal press compound. Pec + anterior delt + tricep mechanical tension.'},
-    {id:'h2',name:'DB Incline Press',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'30â€“45Â° incline. Full ROM â€” the stretch at the bottom is the money position. Don\'t cut range short.',mech:'Clavicular head emphasis. Loaded stretch at bottom recruits more satellite cells.'},
-    {id:'h3',name:'DB Flat Fly',sets:3,reps:'12â€“15',rest:90,type:'s',cue:'Light weight, big stretch. Loaded stretch on final set â€” hold bottom position 10 sec. Pec stretch is the point.',mech:'Pec at lengthened position. Metabolic stress + stretch-mediated hypertrophy.'},
-    {id:'h4',name:'Diamond Push-Ups',sets:3,reps:'AMRAP',rest:90,type:'n',cue:'Hands close, elbows track BACK along the body. Go to absolute failure every set. Log the reps â€” chase them every session.',mech:'Zero joint loading vs close-grip bench. Pure tricep overload via bodyweight at failure.'},
-    {id:'h5',name:'DB Overhead Tricep Extension',sets:3,reps:'12â€“15',rest:60,type:'s',cue:'Full stretch overhead is the key position. Long head emphasis. Slow eccentric.',mech:'Tricep long head at maximal stretch. 15% more growth vs pushdowns at same volume.'},
-    {id:'h6',name:'DB Skull Crusher',sets:3,reps:'12â€“15',rest:60,type:'n',cue:'Slow eccentric â€” respect the elbow joint at 50. Lower to forehead. Controlled all the way.',mech:'Medial + lateral tricep head. Complement to overhead extension for full coverage.'}
+    {id:'h1',name:'Barbell Bench Press',sets:4,reps:'6–8',rest:120,type:'h',cue:'Controlled eccentric. Touch chest, no bounce. Elbows 45-60 to protect shoulder.',mech:'Horizontal press compound. Pec + anterior delt + tricep mechanical tension.'},
+    {id:'h2',name:'DB Incline Press',sets:3,reps:'10–12',rest:90,type:'n',cue:"30-45 incline. Full ROM — the stretch at the bottom is the money position. Don't cut range short.",mech:'Clavicular head emphasis. Loaded stretch at bottom recruits more satellite cells.'},
+    {id:'h3',name:'DB Flat Fly',sets:3,reps:'12–15',rest:90,type:'s',cue:'Light weight, big stretch. Hold bottom position 10 sec on final set.',mech:'Pec at lengthened position. Stretch-mediated hypertrophy.'},
+    {id:'h4',name:'Diamond Push-Ups',sets:3,reps:'AMRAP',rest:90,type:'n',cue:'Hands close, elbows track back along the body. Go to absolute failure every set. Log the reps.',mech:'Zero joint loading. Pure tricep overload via bodyweight at failure.'},
+    {id:'h5',name:'DB Overhead Tricep Extension',sets:3,reps:'12–15',rest:60,type:'s',cue:'Full stretch overhead is the key position. Long head emphasis. Slow eccentric.',mech:'Tricep long head at maximal stretch. 15% more growth vs pushdowns at same volume.'},
+    {id:'h6',name:'DB Skull Crusher',sets:3,reps:'12–15',rest:60,type:'n',cue:'Slow eccentric — respect the elbow joint at 50. Lower to forehead. Controlled.',mech:'Medial + lateral tricep head. Complement to overhead extension for full coverage.'}
   ]},
   fri:{key:'fri',name:'Rest',focus:'Rest & Recovery',color:'#333',rest:true,exercises:[]},
-  // SESSION 4 â€” LEGS
-  sat:{key:'sat',name:'Session 4',focus:'Legs â€” Full Lower Body',color:'#457b9d',exercises:[
-    {id:'s1',name:'DB Bulgarian Split Squat',sets:4,reps:'8â€“10',rest:120,type:'h',cue:'Rear foot on bench. DBs at sides â€” zero spinal loading. Go heavier over time as the movement becomes comfortable. This IS your squat replacement.',mech:'Unilateral quad + glute compound. No spinal compression â€” critical for football-damaged lumbar.'},
-    {id:'s2',name:'DB Romanian Deadlift',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Hinge pattern. Feel the hamstring stretch â€” don\'t chase weight. Neutral spine throughout. Soft knee.',mech:'DB instead of barbell reduces lumbar stress. Hamstring + glute at lengthened position.'},
-    {id:'s3',name:'DB Step-Up',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Onto a sturdy bench or box. Drive through the heel of the working leg. Control the descent. Functional carry-over.',mech:'Unilateral quad. Functional movement pattern â€” stairs, inclines, carries from football days.'},
-    {id:'s4',name:'DB Stiff-Leg Deadlift',sets:3,reps:'12â€“15',rest:90,type:'n',cue:'Light, full range. Soft knee. Feel the stretch at the bottom â€” don\'t round lower back.',mech:'Hamstring finisher at full stretch position. Complements the RDL stimulus.'},
-    {id:'s5',name:'Standing Calf Raise',sets:4,reps:'12â€“15',rest:60,type:'s',cue:'Heels off a plate for full stretch. Hold bottom 2 sec every rep. Controlled elevation.',mech:'Gastrocnemius. Full range + loaded stretch = 23% more growth than partial ROM.'},
-    {id:'s6',name:'Leg Extension',sets:3,reps:'12â€“15',rest:60,type:'n',cue:'Machine only. 3-sec eccentric. Good for knee joint health and quad isolation without any spinal load.',mech:'Rectus femoris â€” only exercise that loads this head. Knee health protocol at 50.'},
-    {id:'s7',name:'Seated Leg Curl',sets:3,reps:'10â€“12',rest:60,type:'n',cue:'Seated preferred â€” better hamstring stretch position than lying. Controlled eccentric.',mech:'Hamstring in shortened position â€” completes coverage with RDL + stiff-leg stretch work.'}
+  // SESSION 4 — LEGS
+  sat:{key:'sat',name:'Session 4',focus:'Legs — Full Lower Body',color:'#457b9d',exercises:[
+    {id:'s1',name:'DB Bulgarian Split Squat',sets:4,reps:'8–10',rest:120,type:'h',cue:"Rear foot on bench. DBs at sides — zero spinal loading. Go heavier over time. This IS your squat replacement.",mech:'Unilateral quad + glute compound. No spinal compression.'},
+    {id:'s2',name:'DB Romanian Deadlift',sets:3,reps:'10–12',rest:90,type:'n',cue:"Hinge pattern. Feel the hamstring stretch — don't chase weight. Neutral spine throughout.",mech:'DB reduces lumbar stress. Hamstring + glute at lengthened position.'},
+    {id:'s3',name:'DB Step-Up',sets:3,reps:'10–12',rest:90,type:'n',cue:'Onto a sturdy bench or box. Drive through the heel. Control the descent.',mech:'Unilateral quad. Functional movement pattern — stairs, inclines, carries.'},
+    {id:'s4',name:'DB Stiff-Leg Deadlift',sets:3,reps:'12–15',rest:90,type:'n',cue:"Light, full range. Soft knee. Feel the stretch at the bottom — don't round lower back.",mech:'Hamstring finisher at full stretch position.'},
+    {id:'s5',name:'Standing Calf Raise',sets:4,reps:'12–15',rest:60,type:'s',cue:'Heels off a plate for full stretch. Hold bottom 2 sec every rep.',mech:'Gastrocnemius. Full range + loaded stretch = significantly more growth.'},
+    {id:'s6',name:'Leg Extension',sets:3,reps:'12–15',rest:60,type:'n',cue:'Machine only. 3-sec eccentric. Quad isolation without spinal load.',mech:'Rectus femoris isolation. Knee health protocol at 50.'},
+    {id:'s7',name:'Seated Leg Curl',sets:3,reps:'10–12',rest:60,type:'n',cue:'Seated preferred — better hamstring stretch than lying. Controlled eccentric.',mech:'Hamstring in shortened position — completes coverage with stretch work.'}
   ]},
   sun:{key:'sun',name:'Rest',focus:'Rest & Recovery',color:'#333',rest:true,exercises:[]},
-  // â”€â”€ DELOAD TEMPLATES (full-body, Mon+Thu, ~50% vol, 60-70% load, RIR 4-5) â”€â”€
-  deload_mon:{key:'deload_mon',name:'Monday',focus:'Deload â€” Upper Body A',color:'#e63946',isDeloadDay:true,exercises:[
-    {id:'dl1',name:'Barbell Overhead Press',sets:3,reps:'8â€“10',rest:120,type:'n',cue:'Smooth, controlled reps. Stop 4-5 short of failure. NO intensity tricks. Maintain pattern.',mech:'Shoulder stimulus at reduced intensity. Maintain motor pattern.'},
-    {id:'dl2',name:'DB Lateral Raise',sets:2,reps:'15â€“18',rest:60,type:'n',cue:'Light and controlled. Stop well short of failure.',mech:'Delt maintenance. Minimal systemic fatigue.'},
-    {id:'dl3',name:'Face Pull',sets:2,reps:'15â€“20',rest:60,type:'n',cue:'Light. Full rotation. Sub-maximal. Rotator cuff health.',mech:'Posterior delt + rotator cuff. Low fatigue cost.'},
-    {id:'dl4',name:'DB Single-Arm Row',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Controlled. Full stretch. Stop 4-5 RIR. No intensity techniques.',mech:'Back + bicep maintenance. Sub-maximal for CNS recovery.'},
-    {id:'dl5',name:'Trap Bar Deadlift',sets:3,reps:'6â€“8',rest:150,type:'n',cue:'60â€“70% of working weight. Smooth reps. Stop 4-5 RIR. NO grinding.',mech:'Neural pattern maintenance. Minimal spinal load.'},
-    {id:'dl6',name:'Plank',sets:2,reps:'20â€“30 sec',rest:45,type:'n',cue:'Bodyweight only. Brace and breathe. Controlled.',mech:'Core stabilizer maintenance.'}
+  // DELOAD TEMPLATES (session-count based, suggested every 12 sessions)
+  deload_mon:{key:'deload_mon',name:'Deload A',focus:'Deload — Upper Body',color:'#e63946',isDeloadDay:true,exercises:[
+    {id:'dl1',name:'Barbell Overhead Press',sets:3,reps:'8–10',rest:120,type:'n',cue:'60-70% of normal weight. Smooth reps. Stop 4-5 short of failure.',mech:'Shoulder pattern maintenance at reduced intensity.'},
+    {id:'dl2',name:'DB Lateral Raise',sets:2,reps:'15–18',rest:60,type:'n',cue:'Light and controlled. Stop well short of failure.',mech:'Delt maintenance. Minimal fatigue.'},
+    {id:'dl3',name:'Face Pull',sets:2,reps:'15–20',rest:60,type:'n',cue:'Light. Full rotation. Rotator cuff health maintenance.',mech:'Posterior delt + rotator cuff. Low fatigue cost.'},
+    {id:'dl4',name:'DB Single-Arm Row',sets:3,reps:'10–12',rest:90,type:'n',cue:'Controlled. Full stretch. Stop 4-5 RIR.',mech:'Back maintenance at sub-maximal load.'},
+    {id:'dl5',name:'Trap Bar Deadlift',sets:3,reps:'6–8',rest:150,type:'n',cue:'60-70% of working weight. Smooth reps. Stop 4-5 RIR.',mech:'Neural pattern maintenance. Minimal spinal load.'}
   ]},
-  deload_thu:{key:'deload_thu',name:'Thursday',focus:'Deload â€” Lower Body + Chest',color:'#e63946',isDeloadDay:true,exercises:[
-    {id:'dl7',name:'DB Bulgarian Split Squat',sets:3,reps:'8â€“10',rest:120,type:'n',cue:'Lighter DBs. Smooth reps. Stop 4-5 RIR. Focus on form.',mech:'Quad pattern maintenance. Unilateral movement at reduced load.'},
-    {id:'dl8',name:'DB Romanian Deadlift',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Feel the stretch without forcing it. Stop 4-5 RIR. NO extreme stretch hold.',mech:'Hamstring lengthened position maintenance.'},
-    {id:'dl9',name:'Barbell Bench Press',sets:3,reps:'8â€“10',rest:120,type:'n',cue:'Full ROM. Smooth, controlled. Stop 4-5 short. NO intensity techniques.',mech:'Chest + tricep compound. Maintain pattern at reduced load.'},
-    {id:'dl10',name:'Standing Calf Raise',sets:2,reps:'12â€“15',rest:60,type:'n',cue:'Full range. Controlled eccentric. NO loaded stretch hold.',mech:'Gastrocnemius maintenance.'}
+  deload_thu:{key:'deload_thu',name:'Deload B',focus:'Deload — Lower Body + Chest',color:'#e63946',isDeloadDay:true,exercises:[
+    {id:'dl6',name:'DB Bulgarian Split Squat',sets:3,reps:'8–10',rest:120,type:'n',cue:'Lighter DBs. Smooth reps. Stop 4-5 RIR. Focus on form.',mech:'Quad pattern maintenance at reduced load.'},
+    {id:'dl7',name:'DB Romanian Deadlift',sets:3,reps:'10–12',rest:90,type:'n',cue:'Feel the stretch without forcing it. Stop 4-5 RIR.',mech:'Hamstring maintenance.'},
+    {id:'dl8',name:'Barbell Bench Press',sets:3,reps:'8–10',rest:120,type:'n',cue:'Full ROM. Smooth, controlled. Stop 4-5 short.',mech:'Chest + tricep maintenance at reduced load.'},
+    {id:'dl9',name:'Standing Calf Raise',sets:2,reps:'12–15',rest:60,type:'n',cue:'Full range. Controlled eccentric.',mech:'Calf maintenance.'}
   ]}
 };
 const DO=['mon','tue','wed','thu','fri','sat','sun'];
-// Dynamic deload detection â€” reads ST.deloadEvery (default 3) and ST.deloadOverrides {wk:bool}
-function isDeloadWk(wk){
-  const every=ST&&ST.deloadEvery||3;
-  const ov=ST&&ST.deloadOverrides||{};
-  if(ov[wk]!==undefined)return!!ov[wk];
-  return Number.isInteger(wk)&&wk>0&&wk<=24&&wk%every===0;
+// Dynamic deload detection — reads ST.deloadEvery (default 3) and ST.deloadOverrides {wk:bool}
+// Jeff uses session-count deloads — no automatic week-based deloads
+function isDeloadWk(wk){return false;}
+// How many total sessions Jeff has completed
+function jeffSessionsCompleted(){
+  const done=new Set();
+  ST.logs.forEach(l=>{if(l.w&&l.r&&l.wk&&l.dk)done.add(l.wk+'-'+l.dk)});
+  return done.size;
+}
+// Sessions since the last time he acknowledged a deload suggestion
+function jeffSessionsSinceDeload(){
+  const total=jeffSessionsCompleted();
+  const last=ST.lastDeloadAt||0;
+  return total-last;
 }
 function getDeloadPct(){return 0.65;}
-// Backward-compat shim â€” all DLOADS.has(w) calls still work
+// Backward-compat shim — all DLOADS.has(w) calls still work
 const DLOADS={has:w=>isDeloadWk(w)};
-// Block phases (W1â€“9 Block 1, W10â€“15 Block 2, W16â€“24 Block 3)
+// Block phases (W1–9 Block 1, W10–15 Block 2, W16–24 Block 3)
 function getBlockPhase(wk){
-  if(isDeloadWk(wk)) return {block:wk<=9?1:wk<=15?2:3,name:wk<=9?'Block 1 â€” Hypertrophy':wk<=15?'Block 2 â€” Strength':'Block 3 â€” Peak Hypertrophy',phase:'â˜… DELOAD â˜…'};
-  if(wk>=24) return {block:0,name:'Macrocycle Complete',phase:'â˜… ACTIVE RECOVERY WEEK â˜…'};
-  if(wk<=9) return {block:1,name:'Block 1 â€” Hypertrophy',phase:wk<=2?'Break-In':wk<=5?'Full Volume':wk<=8?'Push Phase':'Assessment'};
-  if(wk<=15) return {block:2,name:'Block 2 â€” Strength',phase:wk===10||wk===11?'Introduction':'Peak'};
-  return {block:3,name:'Block 3 â€” Peak Hypertrophy',phase:wk<=18?'Reload':wk>=22?'Accumulation Peak':'Volume Push'};
+  if(isDeloadWk(wk)) return {block:wk<=9?1:wk<=15?2:3,name:wk<=9?'Block 1 — Hypertrophy':wk<=15?'Block 2 — Strength':'Block 3 — Peak Hypertrophy',phase:'★ DELOAD ★'};
+  if(wk>=24) return {block:0,name:'Macrocycle Complete',phase:'★ ACTIVE RECOVERY WEEK ★'};
+  if(wk<=9) return {block:1,name:'Block 1 — Hypertrophy',phase:wk<=2?'Break-In':wk<=5?'Full Volume':wk<=8?'Push Phase':'Assessment'};
+  if(wk<=15) return {block:2,name:'Block 2 — Strength',phase:wk===10||wk===11?'Introduction':'Peak'};
+  return {block:3,name:'Block 3 — Peak Hypertrophy',phase:wk<=18?'Reload':wk>=22?'Accumulation Peak':'Volume Push'};
 }
-// Stimulus targets (research: 8â€“14 effective sets = growth zone; 18+ = diminishing returns)
+// Stimulus targets (research: 8–14 effective sets = growth zone; 18+ = diminishing returns)
 const STIMULUS_TARGET={quads:10,hamstrings:8,calves:6,glutes:6,chest:8,back:10,biceps:8,triceps:8,delts:8};
 const STIMULUS_CEILING={quads:18,hamstrings:16,calves:14,glutes:12,chest:16,back:18,biceps:14,triceps:14,delts:14};
 const VOLUME_CEILINGS={quads:22,hamstrings:20,calves:18,glutes:14,chest:18,back:20,biceps:18,triceps:18,delts:18};
 const WEEKLY_TARGETS={quads:{target:16,ceiling:22,status:'lagging',days:'Mon/Thu/Sun'},hamstrings:{target:14,ceiling:20,status:'lagging',days:'Mon/Thu/Sun'},calves:{target:12,ceiling:18,status:'lagging',days:'Mon/Thu/Sun'},glutes:{target:10,ceiling:14},back:{target:14,ceiling:20,status:'maintained',days:'Tue'},biceps:{target:12,ceiling:18,status:'maintained',days:'Wed/Sat'},triceps:{target:12,ceiling:18,status:'maintained',days:'Wed/Sat'},chest:{target:12,ceiling:18,status:'reduced',days:'Tue/Sat'},delts:{target:12,ceiling:18,status:'maintained',days:'Wed/Sat'}};
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // HYPERTROPHY SCIENCE ENGINE (Performance-driven, not RPE-dependent)
-// Stimulus = tension Ã— volume Ã— proximity (estimated from e1RM)
-// Fatigue = volume load Ã— intensity Ã— systemic cost
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Stimulus = tension × volume × proximity (estimated from e1RM)
+// Fatigue = volume load × intensity × systemic cost
+// ═══════════════════════════════════════════════════════════
 const MUSCLE_MODEL=[{keys:['Bench','Press'],muscles:{chest:.6,triceps:.25,delts:.15},len:1},
   {keys:['Incline'],muscles:{chest:.55,triceps:.2,delts:.25},len:1.05},
   {keys:['Fly','Pec Deck'],muscles:{chest:.9},len:1.1},
@@ -994,7 +1008,7 @@ function proximityFromEstimatedRIR(rir){
   if(rir<=5)return 0.8;
   return 0.5;
 }
-// Effective reps: last-5-reps model â€” EffectiveReps = max(0, 5 - RIR)
+// Effective reps: last-5-reps model — EffectiveReps = max(0, 5 - RIR)
 function getEffectiveReps(rir){
   if(rir==null)return 0;
   return Math.max(0,Math.min(5,5-rir));
@@ -1009,7 +1023,7 @@ function isHardSet(l){
   if(ex.includes('drop')||ex.includes('myo-reps'))return true;
   return false;
 }
-// Per-set stimulus: MuscleContribution Ã— EffectiveReps Ã— LengthBias Ã— TensionFactor
+// Per-set stimulus: MuscleContribution × EffectiveReps × LengthBias × TensionFactor
 function getSetStimulusUnits(l,bestE1RM){
   const mw=getMuscleWeights(l.ex);
   const lb=getLengthBias(l.ex);
@@ -1045,7 +1059,7 @@ function getSetFatigueCost(l,bestE1RM){
 }
 // Rep range bucket: 0=strength 3-6, 1=hypertrophy 6-12, 2=mid 12-20, 3=metabolic 20+
 function getRepBucket(r){return r<=6?0:r<=12?1:r<=20?2:3}
-// Weekly stimulus per muscle (EffectiveReps Ã— proximity Ã— tension â€” primary hypertrophy driver)
+// Weekly stimulus per muscle (EffectiveReps × proximity × tension — primary hypertrophy driver)
 function getWeeklyStimulus(wk){
   const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
   const logs=ST.logs.filter(l=>l.wk===wk);
@@ -1056,7 +1070,7 @@ function getWeeklyStimulus(wk){
   });
   return out;
 }
-// Local fatigue per muscle (volume load Ã— intensity Ã— multiplier Ã— muscle contribution)
+// Local fatigue per muscle (volume load × intensity × multiplier × muscle contribution)
 function getLocalFatiguePerMuscle(wk){
   const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
   const logs=ST.logs.filter(l=>l.wk===wk);
@@ -1068,7 +1082,7 @@ function getLocalFatiguePerMuscle(wk){
   });
   return out;
 }
-// Weekly fatigue (raw â€” sum of all set costs). Used for internal ratio calc.
+// Weekly fatigue (raw — sum of all set costs). Used for internal ratio calc.
 function getWeeklyFatigue(wk){
   let total=0;
   const logs=ST.logs.filter(l=>l.wk===wk);
@@ -1078,9 +1092,9 @@ function getWeeklyFatigue(wk){
   });
   return total;
 }
-// Normalized fatigue score 0â€“100 (bounded, comparable across athletes/weeks)
+// Normalized fatigue score 0–100 (bounded, comparable across athletes/weeks)
 // Components: volume_load_z, mean_intensity, proximity, failure_rate, optional sleep/stress
-// Thresholds: 0â€“39 low, 40â€“64 moderate, 65â€“79 high, 80â€“100 very high
+// Thresholds: 0–39 low, 40–64 moderate, 65–79 high, 80–100 very high
 function getNormalizedFatigueScore(wk){
   const logs=ST.logs.filter(l=>l.wk===wk);
   if(!logs.length)return 0;
@@ -1119,7 +1133,7 @@ function getNormalizedFatigueScore(wk){
   const fatigue=100*(0.35*volume_load_z+0.25*mean_intensity+0.2*proximity+0.15*failure_rate+0.05*sleepStress);
   return Math.round(Math.max(0,Math.min(100,fatigue)));
 }
-// Total effective sets (RIRâ‰¤2) and hard sets (RIRâ‰¤4) for volume gate
+// Total effective sets (RIR≤2) and hard sets (RIR≤4) for volume gate
 function getTotalEffectiveSets(wk){
   let total=0;
   ST.logs.filter(l=>l.wk===wk).forEach(l=>{
@@ -1154,7 +1168,7 @@ function getMedianRIR(wk){
   rirs.sort((a,b)=>a-b);
   return rirs[Math.floor(rirs.length/2)];
 }
-// Effective reps per muscle (last-5-reps model: Î£ max(0, 5âˆ’RIR) Ã— muscle weight)
+// Effective reps per muscle (last-5-reps model: Σ max(0, 5−RIR) × muscle weight)
 function getEffectiveRepsPerMuscle(wk){
   const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
   const logs=ST.logs.filter(l=>l.wk===wk);
@@ -1167,7 +1181,7 @@ function getEffectiveRepsPerMuscle(wk){
   });
   return out;
 }
-// e1RM trend for primary compounds (3â€“4 week slope, % change)
+// e1RM trend for primary compounds (3–4 week slope, % change)
 function getE1RMTrend(wk){
   const compounds=ST.logs.filter(l=>isCompound(l.ex)&&l.e1rm);
   if(compounds.length<4)return{slope:0,pctChange:0,trend:'unknown'};
@@ -1188,7 +1202,7 @@ function getE1RMTrend(wk){
   const pctChange=first>0?((last-first)/first)*100:0;
   return{slope:(last-first)/(wks.length-1),pctChange,trend:pctChange>1?'up':pctChange<-2?'down':'flat'};
 }
-// Stimulus-to-fatigue ratio per muscle â€” key adaptive signal. High = room to expand. Low = reduce.
+// Stimulus-to-fatigue ratio per muscle — key adaptive signal. High = room to expand. Low = reduce.
 function getStimulusToFatigueRatio(wk){
   const stimulus=getWeeklyStimulus(wk);
   const localFatigue=getLocalFatiguePerMuscle(wk);
@@ -1200,7 +1214,7 @@ function getStimulusToFatigueRatio(wk){
   });
   return out;
 }
-// Core metrics â€” the 4 foundations. systemicFatigue = normalized 0â€“100 for display/thresholds
+// Core metrics — the 4 foundations. systemicFatigue = normalized 0–100 for display/thresholds
 function getCoreMetrics(wk){
   const stimulus=getWeeklyStimulus(wk);
   const effectiveReps=getEffectiveRepsPerMuscle(wk);
@@ -1240,7 +1254,7 @@ function getPerformanceTrend(exName,nExposures){
   const slope=den?num/den:0;
   return {slope,trend:slope>2?'up':slope<-2?'down':'flat',best:pts[pts.length-1]?.[1]};
 }
-// Gated decision tree: data sufficiency â†’ understimulated â†’ deload/overreached â†’ stall systemic â†’ stall local â†’ progressing
+// Gated decision tree: data sufficiency → understimulated → deload/overreached → stall systemic → stall local → progressing
 // Volume gate: if effective sets < 30, cannot label systemic overreach from training alone
 const MIN_HARD_SETS_FOR_DATA=30;
 const MIN_EFFECTIVE_SETS_OVERREACH=30;
@@ -1369,7 +1383,7 @@ function getSessionsPerMusclePerWeek(sched){
   });
   return daysWithMuscle;
 }
-// Body part mapping (exercise name substring or exact â†’ body part)
+// Body part mapping (exercise name substring or exact → body part)
 const BODY_MAP=[
   {parts:['quads'],keys:['Squat','Leg Press','Leg Extension','Belt Squat','Pendulum','Bulgarian Split']},
   {parts:['hamstrings'],keys:['Deadlift','Leg Curl','Nordic','RDL','Stiff Leg']},
@@ -1493,11 +1507,10 @@ function getScheduleForWeek(wk){
   if(s)return s;
   // Deload weeks: only Mon (Full Body A) and Thu (Full Body B) are training days
   if(isDeloadWk(wk)){
-    // Jeff deload: Mon (upper A) + Thu (lower/chest B), rest all other days
     return {mon:'deload_mon',tue:'rest',wed:'rest',thu:'deload_thu',fri:'rest',sat:'rest',sun:'rest'};
   }
   const def={};
-  const rds=new Set(ST.restDays||['fri']);
+  const rds=new Set(ST.restDays||['wed','fri','sun']);
   DO.forEach(dk=>{def[dk]=rds.has(dk)?'rest':dk});
   return def;
 }
@@ -1516,7 +1529,7 @@ function getDayProgram(dk){
   // Deload days: use template as-is, no added exercises (strict protocol)
   if(base.isDeloadDay)return {...base,key:dk,name:DAY_NAMES[dk]};
   const added=(ST.addedExercises||{})[dk]||[];
-  const merged=base.exercises.concat(added.map(a=>({id:'ae_'+a.name.replace(/\s/g,'_'),name:a.name,sets:a.sets||3,reps:'8â€“12',rest:90,type:'n',cue:'Run perfect reps. Full ROM.',mech:'Custom.',bodyPart:a.bodyPart||'other',isAdded:true})));
+  const merged=base.exercises.concat(added.map(a=>({id:'ae_'+a.name.replace(/\s/g,'_'),name:a.name,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Run perfect reps. Full ROM.',mech:'Custom.',bodyPart:a.bodyPart||'other',isAdded:true})));
   return {...base,key:dk,name:DAY_NAMES[dk],exercises:merged};
 }
 function toggleRestDay(dk){
@@ -1536,9 +1549,9 @@ function renderRestDayBtns(){
   DO.forEach(dk=>{const b=document.querySelector('.rd-btn[data-dk="'+dk+'"]');if(b)b.classList.toggle('on',sched[dk]==='rest')});
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // DELOAD SETTINGS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function openDeloadSettings(){
   const el=document.getElementById('DLSET');
   if(!el)return;
@@ -1558,7 +1571,7 @@ function renderDeloadWkGrid(){
     const forced=ov[w];
     let cls='dl-wk-pill';
     let label=`W${w}`;
-    if(forced===true){cls+=' on';label=`W${w}âœ“`;}
+    if(forced===true){cls+=' on';label=`W${w}✓`;}
     else if(forced===false){cls+=' off';}
     else if(autoDeload){cls+=' auto';}
     h+=`<button class="${cls}" onclick="toggleDeloadOverride(${w})">${label}</button>`;
@@ -1569,7 +1582,7 @@ function renderDeloadWkGrid(){
   if(lab){
     const wks=[];
     for(let w=1;w<=24;w++){if(isDeloadWk(w))wks.push('W'+w);}
-    lab.textContent=`Deload Settings â€” every ${every} wks Â· ${wks.slice(0,5).join(', ')}${wks.length>5?'...':''}`;
+    lab.textContent=`Deload Settings — every ${every} wks · ${wks.slice(0,5).join(', ')}${wks.length>5?'...':''}`;
   }
 }
 function toggleDeloadOverride(wk){
@@ -1577,15 +1590,15 @@ function toggleDeloadOverride(wk){
   const ov=ST.deloadOverrides;
   const every=ST.deloadEvery||3;
   const autoDeload=Number.isInteger(wk)&&wk>0&&wk%every===0;
-  // Cycle: auto â†’ force ON (if not auto) / force OFF (if auto) â†’ force opposite â†’ reset
+  // Cycle: auto → force ON (if not auto) / force OFF (if auto) → force opposite → reset
   if(ov[wk]===undefined){
-    // Currently auto â€” force the opposite
+    // Currently auto — force the opposite
     ov[wk]=!autoDeload;
   }else if(ov[wk]===!autoDeload){
-    // Forced to opposite of auto â€” flip to same as auto (which cancels the force)
+    // Forced to opposite of auto — flip to same as auto (which cancels the force)
     ov[wk]=autoDeload;
   }else{
-    // Forced to same as auto â€” reset to auto
+    // Forced to same as auto — reset to auto
     delete ov[wk];
   }
   ST.deloadOverrides={...ov};
@@ -1606,7 +1619,7 @@ function openScheduleEditor(){
     const opts=workouts.map(o=>`<option value="${o.key}"${o.key===cur?' selected':''}>${o.label}</option>`).join('');
     return `<div class="sched-row"><span class="sched-day">${DAY_NAMES[dk]}</span><select class="sched-sel" id="sched-${dk}">${opts}</select></div>`;
   }).join('');
-  body.innerHTML+=`<label class="sched-copy"><input type="checkbox" id="sched-copy-all"> Apply to all future weeks (W${wk}â€“24)</label>`;
+  body.innerHTML+=`<label class="sched-copy"><input type="checkbox" id="sched-copy-all"> Apply to all future weeks (W${wk}–24)</label>`;
   document.getElementById('SCHED').style.display='flex';
 }
 function saveSchedule(){
@@ -1632,26 +1645,26 @@ function closeSchedule(){document.getElementById('SCHED').style.display='none'}
 let EL=[
   {n:'Hack Squat',m:'Quads'},{n:'Leg Press',m:'Quads'},{n:'Belt Squat',m:'Quads'},
   {n:'Bulgarian Split Squat',m:'Quads'},{n:'Pendulum Squat',m:'Quads'},
-  {n:'Leg Extension',m:'Quads â€” Rectus Femoris'},{n:'Single Leg Press',m:'Quads'},
+  {n:'Leg Extension',m:'Quads — Rectus Femoris'},{n:'Single Leg Press',m:'Quads'},
   {n:'Romanian Deadlift',m:'Hamstrings'},{n:'Nordic Hamstring Curl',m:'Hamstrings'},
   {n:'Lying Leg Curl',m:'Hamstrings'},{n:'Seated Leg Curl',m:'Hamstrings'},
-  {n:'Stiff Leg Deadlift',m:'Hamstrings'},{n:'Standing Calf Raise',m:'Calves â€” Gastroc'},
-  {n:'Seated Calf Raise',m:'Calves â€” Soleus'},{n:'Hip Abductor Machine',m:'Glutes'},
+  {n:'Stiff Leg Deadlift',m:'Hamstrings'},{n:'Standing Calf Raise',m:'Calves — Gastroc'},
+  {n:'Seated Calf Raise',m:'Calves — Soleus'},{n:'Hip Abductor Machine',m:'Glutes'},
   {n:'Hip Thrust',m:'Glutes'},{n:'Barbell Bench Press',m:'Chest'},
-  {n:'Incline Barbell Press',m:'Chest â€” Upper'},{n:'Incline Dumbbell Press',m:'Chest â€” Upper'},
-  {n:'Plate Loaded Incline Machine Press',m:'Chest â€” Upper'},{n:'Dumbbell Bench Press',m:'Chest'},{n:'Cable Fly',m:'Chest'},{n:'Pec Deck',m:'Chest'},
-  {n:'Weighted Pull-Up',m:'Back â€” Lats'},{n:'Lat Pulldown',m:'Back â€” Lats'},
-  {n:'Plate Loaded Machine Row',m:'Back â€” Mid'},{n:'Barbell Row',m:'Back â€” Mid'},
-  {n:'Dumbbell Row',m:'Back â€” Mid'},{n:'Lat Pullover',m:'Back â€” Lats'},
+  {n:'Incline Barbell Press',m:'Chest — Upper'},{n:'Incline Dumbbell Press',m:'Chest — Upper'},
+  {n:'Plate Loaded Incline Machine Press',m:'Chest — Upper'},{n:'Dumbbell Bench Press',m:'Chest'},{n:'Cable Fly',m:'Chest'},{n:'Pec Deck',m:'Chest'},
+  {n:'Weighted Pull-Up',m:'Back — Lats'},{n:'Lat Pulldown',m:'Back — Lats'},
+  {n:'Plate Loaded Machine Row',m:'Back — Mid'},{n:'Barbell Row',m:'Back — Mid'},
+  {n:'Dumbbell Row',m:'Back — Mid'},{n:'Lat Pullover',m:'Back — Lats'},
   {n:'Face Pull',m:'Rear Delt'},{n:'Barbell Curl',m:'Biceps'},{n:'EZ Bar Curl',m:'Biceps'},
-  {n:'Incline Dumbbell Curl',m:'Biceps â€” Long Head'},{n:'Cable Curl',m:'Biceps'},
+  {n:'Incline Dumbbell Curl',m:'Biceps — Long Head'},{n:'Cable Curl',m:'Biceps'},
   {n:'Hammer Curl',m:'Brachialis'},{n:'Cable Hammer Curl',m:'Brachialis'},
-  {n:'Spider Curl',m:'Biceps â€” Short'},{n:'Preacher Curl',m:'Biceps â€” Short'},
+  {n:'Spider Curl',m:'Biceps — Short'},{n:'Preacher Curl',m:'Biceps — Short'},
   {n:'Close Grip Bench Press',m:'Triceps'},{n:'Weighted Dip',m:'Triceps'},
-  {n:'Skull Crusher',m:'Triceps'},{n:'Overhead Tricep Extension',m:'Triceps â€” Long'},
-  {n:'Dumbbell Overhead Extension',m:'Triceps â€” Long'},{n:'Cable Pushdown',m:'Triceps'},
-  {n:'Lateral Raise Machine',m:'Delts â€” Mid'},{n:'Dumbbell Lateral Raise',m:'Delts â€” Mid'},
-  {n:'Rear Delt Fly',m:'Delts â€” Post'}
+  {n:'Skull Crusher',m:'Triceps'},{n:'Overhead Tricep Extension',m:'Triceps — Long'},
+  {n:'Dumbbell Overhead Extension',m:'Triceps — Long'},{n:'Cable Pushdown',m:'Triceps'},
+  {n:'Lateral Raise Machine',m:'Delts — Mid'},{n:'Dumbbell Lateral Raise',m:'Delts — Mid'},
+  {n:'Rear Delt Fly',m:'Delts — Post'}
 ];
 
 // Historic data
@@ -1720,14 +1733,14 @@ const HL=[
   {date:'2025-02-12',dk:'wed',dn:'Wednesday',wk:1,bl:1,ex:'Rear Delt Fly',sn:3,w:170,r:12}
 ];
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // STATE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbyKSyFyEdTkZhfnMrKF66zPUNn8Lf5ppYz5bAZviRzGAcN8YGZx5-hAEvIN03wTW5Ex/exec';
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
   cueCollapsed:{},restDays:['wed','fri','sun'],weekSchedules:{},weekOverride:{},weekAnchors:{},removedExercises:{},workoutsSinceBackupReminder:0,
-  deloadEvery:3,deloadOverrides:{},
+  deloadEvery:999,deloadOverrides:{},lastDeloadAt:0,
   profile:{name:'Jeff Puffer',age:50,bodyweight:200,bodyweightByWeek:{}}
 };
 let CHS={};
@@ -1735,27 +1748,27 @@ let CHS={};
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('jeffv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['wed','fri','sun']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.removedExercises=p.removedExercises||{};ST.addedExercises=p.addedExercises||{};ST.deloadEvery=p.deloadEvery||3;ST.deloadOverrides=p.deloadOverrides||{};ST.profile=p.profile||{name:'Jeff Puffer',age:50,bodyweight:200,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
+  try{const s=localStorage.getItem('jeffv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['wed','fri','sun']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.removedExercises=p.removedExercises||{};ST.addedExercises=p.addedExercises||{};ST.deloadEvery=999;ST.deloadOverrides={};ST.lastDeloadAt=p.lastDeloadAt||0;ST.profile=p.profile||{name:'Jeff Puffer',age:50,bodyweight:200,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('jeffCustomEx');
     if(ce){const arr=JSON.parse(ce);arr.forEach(e=>{if(!EL.find(x=>x.n===e.n))EL.push(e)})}
   }catch(e){}
-  try{const l=localStorage.getItem('jefflogs');if(l){ST.logs=JSON.parse(l)}else{ST.logs=[];saveLogs()}}catch(e){ST.logs=[]}
+  try{const l=localStorage.getItem('jefflogs');if(l){ST.logs=JSON.parse(l)}else{ST.logs=HL.map((h,i)=>({...h,id:'h'+i,ts:h.date+'T12:00:00Z',e1rm:h.w&&h.r?Math.round(h.w*(1+h.r/30)):null}));saveLogs()}}catch(e){ST.logs=[]}
   if(!ST.url)ST.url=SHEETS_URL;
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveSTLocal(){localStorage.setItem('jeffv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['wed','fri','sun'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},profile:ST.profile||{name:'Jeff Puffer',age:50,bodyweight:200,bodyweightByWeek:{}}}))}
+function saveSTLocal(){localStorage.setItem('jeffv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['wed','fri','sun'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},lastDeloadAt:ST.lastDeloadAt||0,profile:ST.profile||{name:'Jeff Puffer',age:50,bodyweight:200,bodyweightByWeek:{}}}))}
 function saveST(){saveSTLocal();fbSaveSettings()}
 function saveLogs(){localStorage.setItem('jefflogs',JSON.stringify(ST.logs))}
 function saveLogsLocal(){localStorage.setItem('jefflogs',JSON.stringify(ST.logs))}
 function saveCustomEx(){localStorage.setItem('jeffCustomEx',JSON.stringify(EL.filter(e=>e.custom)));fbSaveCustomEx()}
 function saveCustomExLocal(){localStorage.setItem('jeffCustomEx',JSON.stringify(EL.filter(e=>e.custom)))}
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // SHEETS SYNC
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 async function sheetsPOST(payload){
   if(!ST.url)return null;setSS('sync');
   try{
@@ -1768,13 +1781,13 @@ async function sheetsPOST(payload){
 function setSS(s){
   const dot=document.getElementById('SD'),msg=document.getElementById('SM');if(!dot)return;
   dot.className='sdot '+{conn:'conn',off:'off',sync:'sync',err:'err'}[s];
-  const m={conn:'âœ“ Connected â€” syncing live to Google Sheets',off:'Not connected â€” data saved locally',sync:'Syncing...',err:'Sync error â€” data saved locally'};
+  const m={conn:'✓ Connected — syncing live to Google Sheets',off:'Not connected — data saved locally',sync:'Syncing...',err:'Sync error — data saved locally'};
   if(msg)msg.textContent=m[s]||s;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // NAV
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function showPg(p){
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.nb').forEach(x=>x.classList.remove('on'));
@@ -1787,9 +1800,9 @@ function showPg(p){
   window.scrollTo(0,0);
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // HOME
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function saveProfile(k,v){if(!ST.profile)ST.profile={};ST.profile[k]=v;saveST()}
 function saveProfileBW(wk,v){if(!ST.profile)ST.profile={};if(!ST.profile.bodyweightByWeek)ST.profile.bodyweightByWeek={};ST.profile.bodyweightByWeek[wk]=v;ST.profile.bodyweight=v;saveST();const ap=document.getElementById('AP_BW');if(ap)ap.value=v}
 function getBodyWeightForWeek(wk){return (ST.profile?.bodyweightByWeek||{})[wk]||ST.profile?.bodyweight||225}
@@ -1820,7 +1833,7 @@ function renderHome(){
   for(let w=1;w<=24;w++){
     const p=document.createElement('button');
     p.className='wpill'+(w===ST.wk?' on':'')+(DLOADS.has(w)?' dl':'');
-    p.textContent=DLOADS.has(w)?`W${w}ðŸ”„`:`W${w}`;
+    p.textContent=DLOADS.has(w)?`W${w}🔄`:`W${w}`;
     const ww=w;p.onclick=()=>{ST.wk=ww;syncRestDaysFromSchedule(ww);saveST();renderHome();renderBodyTracker()};
     ws.appendChild(p);
   }
@@ -1830,7 +1843,7 @@ function renderHome(){
   const loggedThisWeek=new Set(weekLogs.map(l=>l.dk));
   DO.forEach(k=>{
     const d=getDayProgram(k);
-    // Session-based: skip rest days, show only the 4 workout sessions
+    // Session-based: skip rest days, only show the 4 workout sessions
     if(d.rest)return;
     const dayLogs=weekLogs.filter(l=>l.dk===k&&l.w!=null&&l.w!==''&&l.r!=null&&l.r!=='');
     const done=loggedThisWeek.has(k);
@@ -1847,8 +1860,26 @@ function renderHome(){
     <div style="display:flex;align-items:center;padding-right:14px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="${done?'var(--grn)':'var(--tx3)'}" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;
     dl.appendChild(el);
   });
+  // Session-count deload suggestion banner
+  const dlBanner=document.getElementById('JEFF_DL');
+  const dlN=document.getElementById('JEFF_DL_N');
+  if(dlBanner){
+    const since=jeffSessionsSinceDeload();
+    if(dlN)dlN.textContent=since;
+    dlBanner.style.display=since>=12?'block':'none';
+  }
   renderPRBoard();
   renderFatigueCard();
+}
+function jeffStartDeload(){
+  jeffDismissDeload();
+  openWO('mon'); // open Deload A (mapped to mon slot, deload_mon template applies if deload week)
+}
+function jeffDismissDeload(){
+  ST.lastDeloadAt=jeffSessionsCompleted();
+  saveST();
+  const b=document.getElementById('JEFF_DL');
+  if(b)b.style.display='none';
 }
 function renderPRBoard(){
   const prb=document.getElementById('PRB');
@@ -1874,7 +1905,7 @@ function renderPRBoard(){
   ).join('');
   prb.innerHTML=`<div class="pr-hdr"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> PRs This Week</div><div class="pr-list">${items}</div>`;
 }
-// Uses normalized fatigue 0â€“100. Thresholds: 0â€“39 low, 40â€“64 moderate, 65â€“79 high, 80â€“100 very high
+// Uses normalized fatigue 0–100. Thresholds: 0–39 low, 40–64 moderate, 65–79 high, 80–100 very high
 function detectOverreaching(){
   const wk=ST.wk;
   const signals=[];
@@ -1895,7 +1926,7 @@ function detectOverreaching(){
   if(recent.length<2)return {signals,fatigueScore,recommendation:null};
 
   const highRPEweeks=recent.filter(d=>d.avgCompoundRPE&&d.avgCompoundRPE>=9);
-  if(highRPEweeks.length>=2)signals.push({type:'high_compound_rpe',severity:'high',msg:`Compound RPE averaging ${highRPEweeks[highRPEweeks.length-1].avgCompoundRPE.toFixed(1)} â€” CNS fatigue accumulating.`});
+  if(highRPEweeks.length>=2)signals.push({type:'high_compound_rpe',severity:'high',msg:`Compound RPE averaging ${highRPEweeks[highRPEweeks.length-1].avgCompoundRPE.toFixed(1)} — CNS fatigue accumulating.`});
   const failureSets=recent.reduce((s,d)=>s+d.rpe10Sets,0);
   if(failureSets>=6)signals.push({type:'failure_sets',severity:'high',msg:`${failureSets} sets to failure. Cap compounds at RPE 8.5.`});
   if(recent.length>=3){
@@ -1904,15 +1935,15 @@ function detectOverreaching(){
     recent.forEach(d=>{d.logs.forEach(l=>{if(!l.e1rm||!isCompound(l.ex))return;if(!e1rmByWeek[d.wk])e1rmByWeek[d.wk]=[];e1rmByWeek[d.wk].push(l.e1rm);});});
     const avgE1rm=Object.keys(e1rmByWeek).sort().map(w=>e1rmByWeek[w].reduce((a,b)=>a+b,0)/e1rmByWeek[w].length);
     if(volTrend.length>=3&&avgE1rm.length>=3&&volTrend[volTrend.length-1]>volTrend[0]*1.1&&Math.abs(avgE1rm[avgE1rm.length-1]-avgE1rm[0])<5)
-      signals.push({type:'vol_no_strength',severity:'medium',msg:'Volume up but e1RM flat â€” junk volume risk. Reduce sets, increase intensity.'});
+      signals.push({type:'vol_no_strength',severity:'medium',msg:'Volume up but e1RM flat — junk volume risk. Reduce sets, increase intensity.'});
   }
   const stalledCount=getStalledLifts().length;
-  if(stalledCount>=3)signals.push({type:'multi_stall',severity:'medium',msg:`${stalledCount} exercises stalled â€” consider deload.`});
+  if(stalledCount>=3)signals.push({type:'multi_stall',severity:'medium',msg:`${stalledCount} exercises stalled — consider deload.`});
 
   let recommendation=null;
-  if(fatigueScore>=80)recommendation='Deload week: 40â€“60% sets, 60â€“70% load, RIR 3â€“5 target. No failure sets.';
-  else if(fatigueScore>=65)recommendation='Reduce volume 10â€“25%. Drop compound weights ~10%, cap RPE 8.';
-  else if(fatigueScore>=40)recommendation='Manageable. Keep compounds RPE 7â€“8.5.';
+  if(fatigueScore>=80)recommendation='Deload week: 40–60% sets, 60–70% load, RIR 3–5 target. No failure sets.';
+  else if(fatigueScore>=65)recommendation='Reduce volume 10–25%. Drop compound weights ~10%, cap RPE 8.';
+  else if(fatigueScore>=40)recommendation='Manageable. Keep compounds RPE 7–8.5.';
   return {signals,fatigueScore,recommendation};
 }
 
@@ -1928,7 +1959,7 @@ function renderFatigueCard(){
   }
   const level=fatigueScore>=50?'danger':fatigueScore>=25?'warn':'';
   const hdrClass=fatigueScore>=50?'red':fatigueScore>=25?'yellow':'green';
-  const label=fatigueScore>=50?'High Fatigue â€” Deload Recommended':fatigueScore>=25?'Moderate Fatigue â€” Auto-Regulate':'Manageable Fatigue';
+  const label=fatigueScore>=50?'High Fatigue — Deload Recommended':fatigueScore>=25?'Moderate Fatigue — Auto-Regulate':'Manageable Fatigue';
   let h=`<div class="ftg-box ${level}"><div class="ftg-hdr ${hdrClass}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">${fatigueScore>=25?'<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>':'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'}</svg> ${label}</div>`;
   signals.forEach(s=>{h+=`<div class="ftg-item">${s.msg}</div>`});
   if(recommendation)h+=`<div class="ftg-rec"><strong>Recommendation:</strong> ${recommendation}</div>`;
@@ -1936,10 +1967,10 @@ function renderFatigueCard(){
   el.innerHTML=h;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// SMART PROGRAM â€” Science-backed recommendations (Schoenfeld, Wernbom, etc.)
+// ═══════════════════════════════════════════════════════════
+// SMART PROGRAM — Science-backed recommendations (Schoenfeld, Wernbom, etc.)
 // Per-week, per-day, and per-exercise adaptive logic. Independent of prescribed program.
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function getAlternativesForBodyPart(bp,excludeName,favorLengthened){
   let list=EL.filter(e=>e.n&&e.n!==excludeName&&getBodyPart(e.n)===bp);
   if(favorLengthened)list=list.sort((a,b)=>((getLengthBias(b.n)||1)-(getLengthBias(a.n)||1))); // higher length bias first
@@ -1966,72 +1997,72 @@ function getSmartTipForExercise(ex,idx,allExs,dk,wk,stalledMap,actual,fatigueSco
   const weeklyOver110=weeklySets!=null&&targ>0&&weeklySets>=targ*1.1;
   const sessionSaturated=sessionStimulus>=sessionTarget*0.7;
 
-  // Cross-day: 3rd+ session â€” use data: only drop if rolling stimulus high
+  // Cross-day: 3rd+ session — use data: only drop if rolling stimulus high
   if(priorDaysCount>0&&bp!=='other'){
     if(priorDaysCount>=2&&!isDeload){
       const stimulusHigh=weeklySets!=null&&weeklySets>=targ*0.9;
       if(stimulusHigh||weeklyOver110){
-        tips.push({type:'cross_day',msg:`${bp} trained ${priorDaysCount}Ã— already. Stimulus ${stimulusHigh?'on target':'over target'}. This session = accumulation â€” pump intent or reduce sets.`});
-        if(!modulation)modulation={action:'DROP_SET',suggestion:weeklyOver110?'âˆ’1â€“2 sets':'pump focus, shorter rest',reason:'3rd+ session'};
+        tips.push({type:'cross_day',msg:`${bp} trained ${priorDaysCount}× already. Stimulus ${stimulusHigh?'on target':'over target'}. This session = accumulation — pump intent or reduce sets.`});
+        if(!modulation)modulation={action:'DROP_SET',suggestion:weeklyOver110?'−1–2 sets':'pump focus, shorter rest',reason:'3rd+ session'};
         if(weeklyOver110)programVsRec={program:prescribedSets,recommended:Math.max(1,prescribedSets-2),reason:'3rd session, over target'};
       }else{
-        tips.push({type:'cross_day',msg:`${bp} trained ${priorDaysCount}Ã— already. Stimulus still under target â€” keep sets, push progression.`});
-        if(!modulation)modulation={action:'GO_FULL',suggestion:'All sets â€” stimulus below target',reason:'3rd session under target'};
+        tips.push({type:'cross_day',msg:`${bp} trained ${priorDaysCount}× already. Stimulus still under target — keep sets, push progression.`});
+        if(!modulation)modulation={action:'GO_FULL',suggestion:'All sets — stimulus below target',reason:'3rd session under target'};
       }
     }else if(priorDaysCount===1&&prevSameMuscle.length>0&&!isDeload){
-      tips.push({type:'cross_day',msg:`${bp} hit earlier this week + same muscle before you. Double pre-fatigue â€” pump intent or âˆ’10% weight.`});
-      if(!modulation)modulation={action:'DROP_SET',suggestion:weeklyOver110?'âˆ’1 set':'pump focus',reason:'Cross-day + within-session'};
+      tips.push({type:'cross_day',msg:`${bp} hit earlier this week + same muscle before you. Double pre-fatigue — pump intent or −10% weight.`});
+      if(!modulation)modulation={action:'DROP_SET',suggestion:weeklyOver110?'−1 set':'pump focus',reason:'Cross-day + within-session'};
       if(weeklyOver110&&!programVsRec)programVsRec={program:prescribedSets,recommended:Math.max(1,prescribedSets-1),reason:'Pre-fatigue + over target'};
     }
   }
 
-  // Within-session: pre-fatigue â€” only drop sets if weekly â‰¥110% target (prevents over-cutting)
+  // Within-session: pre-fatigue — only drop sets if weekly ≥110% target (prevents over-cutting)
   if(prevSameMuscle.length>0&&!isDeload){
     const prevNames=prevSameMuscle.map(e=>e.displayName||e.name).join(', ');
     if(sessionSaturated){
-      tips.push({type:'same_muscle',msg:`${bp} already trained (${prevNames}) â€” session stimulus â‰¥70% of target. ${weeklyOver110?'Drop 1â€“2 sets.':'Shift to pump intent, controlled tempo.'}`});
-      if(!modulation)modulation={action:weeklyOver110?'DROP_SET':'DROP_WEIGHT',suggestion:weeklyOver110?'âˆ’1â€“2 sets':'âˆ’10% or pump',reason:'Stimulus saturation'};
+      tips.push({type:'same_muscle',msg:`${bp} already trained (${prevNames}) — session stimulus ≥70% of target. ${weeklyOver110?'Drop 1–2 sets.':'Shift to pump intent, controlled tempo.'}`});
+      if(!modulation)modulation={action:weeklyOver110?'DROP_SET':'DROP_WEIGHT',suggestion:weeklyOver110?'−1–2 sets':'−10% or pump',reason:'Stimulus saturation'};
       if(weeklyOver110&&!programVsRec)programVsRec={program:prescribedSets,recommended:Math.max(1,prescribedSets-1),reason:'Pre-fatigue + weekly over target'};
     }else{
-      tips.push({type:'same_muscle',msg:`${bp} already trained (${prevNames}). Pre-fatigued â€” consider âˆ’10% weight or shorter rest; keep sets if under target.`});
-      if(!modulation&&weeklyOver110)modulation={action:'DROP_SET',suggestion:'âˆ’1 set',reason:'Pre-fatigue + over target'};
+      tips.push({type:'same_muscle',msg:`${bp} already trained (${prevNames}). Pre-fatigued — consider −10% weight or shorter rest; keep sets if under target.`});
+      if(!modulation&&weeklyOver110)modulation={action:'DROP_SET',suggestion:'−1 set',reason:'Pre-fatigue + over target'};
     }
   }
 
-  // Upcoming: you're about to hit same muscle again â€” heads up for later exercises
+  // Upcoming: you're about to hit same muscle again — heads up for later exercises
   if(upcomingSameMuscle.length>0&&prevSameMuscle.length>0&&!isDeload){
-    tips.push({type:'upcoming',msg:`${upcomingSameMuscle.map(e=>e.displayName||e.name).join(', ')} still to come â€” they'll be pre-fatigued. Consider lighter weight or fewer sets on those.`});
+    tips.push({type:'upcoming',msg:`${upcomingSameMuscle.map(e=>e.displayName||e.name).join(', ')} still to come — they'll be pre-fatigued. Consider lighter weight or fewer sets on those.`});
   }
 
   // Stalled lift
   if(stalledMap[exName]){
-    tips.push({type:'stall',msg:`Stalled at ${stalledMap[exName].weight} lbs since ${stalledMap[exName].since}. Swap variation or rep scheme (e.g. 5Ã—5â†’3Ã—8).`});
-    modulation=modulation||{action:'SWAP_OR_VARY',suggestion:'Swap or 3Ã—8â€“10',reason:'Stall break'};
+    tips.push({type:'stall',msg:`Stalled at ${stalledMap[exName].weight} lbs since ${stalledMap[exName].since}. Swap variation or rep scheme (e.g. 5×5→3×8).`});
+    modulation=modulation||{action:'SWAP_OR_VARY',suggestion:'Swap or 3×8–10',reason:'Stall break'};
   }
 
   // Volume target nearly met
   if(volThisWeek>=targ*0.9&&targ>0&&!isDeload&&(prevSameMuscle.length>0||priorDaysCount>=1)){
-    tips.push({type:'volume_met',msg:`Weekly ${bp} volume complete (${volThisWeek}/${targ}). Treat as pump â€” not primary.`});
-    if(!modulation)modulation={action:'DROP_SET',suggestion:'âˆ’1 set, pump focus',reason:'Volume target met'};
+    tips.push({type:'volume_met',msg:`Weekly ${bp} volume complete (${volThisWeek}/${targ}). Treat as pump — not primary.`});
+    if(!modulation)modulation={action:'DROP_SET',suggestion:'−1 set, pump focus',reason:'Volume target met'};
   }
 
-  // Priority muscle under target â€” go full
+  // Priority muscle under target — go full
   if(volThisWeek<targ*0.5&&targ>0&&!isDeload&&idx===0&&prevSameMuscle.length===0){
-    tips.push({type:'priority',msg:`${bp} under target (${volThisWeek}/${targ}). Primary stimulus â€” hit all sets, push overload.`});
+    tips.push({type:'priority',msg:`${bp} under target (${volThisWeek}/${targ}). Primary stimulus — hit all sets, push overload.`});
     modulation={action:'GO_FULL',suggestion:'All sets, progressive overload',reason:'Priority muscle'};
   }
 
-  // Way under target, first exercise â€” consider adding
+  // Way under target, first exercise — consider adding
   if(volThisWeek<targ*0.3&&targ>0&&!isDeload&&idx===0&&prevSameMuscle.length===0&&!modulation){
     tips.push({type:'add',msg:`${bp} far below target. If recovered, add 1 set to maximize stimulus.`});
     modulation={action:'ADD_SET',suggestion:'+1 set',reason:'Under volume target'};
     programVsRec={program:prescribedSets,recommended:prescribedSets+1,reason:'Volume priority'};
   }
 
-  // Fatigue (normalized 0â€“100; 65+ = high)
+  // Fatigue (normalized 0–100; 65+ = high)
   if(fatigueScore>=65&&(ex.type==='h'||isCompound(ex.name))){
     tips.push({type:'fatigue',msg:'High fatigue. Drop compound weight 10% or cap RPE 8.'});
-    modulation=modulation||{action:'DROP_WEIGHT',suggestion:'âˆ’10% or RPE 8 cap',reason:'Fatigue management'};
+    modulation=modulation||{action:'DROP_WEIGHT',suggestion:'−10% or RPE 8 cap',reason:'Fatigue management'};
   }
 
   // Swaps: only for stalled exercises, max 2 per week, only if stall persists 2+ weeks. No swaps during deload.
@@ -2058,7 +2089,7 @@ function computeSmartRecommendations(wk){
   const isDeload=DLOADS.has(wk);
   const bp=getBlockPhase(wk);
 
-  // STEP 1 â€” GLOBAL STATE + CORE METRICS (4 foundations: e1RM trend, effective reps, stimulus, fatigue)
+  // STEP 1 — GLOBAL STATE + CORE METRICS (4 foundations: e1RM trend, effective reps, stimulus, fatigue)
   const global=getGlobalState(wk);
   const core=getCoreMetrics(wk);
   const hardSets=getWeeklyHardSets(wk);
@@ -2072,36 +2103,36 @@ function computeSmartRecommendations(wk){
   let dayPlan=[];
 
   if(isDeload){
-    weekVerdict='Deload week (Schoenfeld 3:1). Mon + Thu full-body only Â· 60â€“70% load Â· ~50% sets Â· RIR 4â€“5 Â· No eccentrics/stretches/drops.';
-    recs.push({type:'info',title:'Deload protocol (Schoenfeld 2017)',desc:`Reduce load to ~${Math.round(getDeloadPct()*100)}%, halve sets, stop 4â€“5 reps short of failure. No 3-sec eccentrics, no loaded interset stretches, no drop sets.`});
+    weekVerdict='Deload week (Schoenfeld 3:1). Mon + Thu full-body only · 60–70% load · ~50% sets · RIR 4–5 · No eccentrics/stretches/drops.';
+    recs.push({type:'info',title:'Deload protocol (Schoenfeld 2017)',desc:`Reduce load to ~${Math.round(getDeloadPct()*100)}%, halve sets, stop 4–5 reps short of failure. No 3-sec eccentrics, no loaded interset stretches, no drop sets.`});
   }else{
   const fatigueNorm=fatigueScore;
   if(fatigueNorm>=80){
-    weekVerdict='Deload week: 40â€“60% sets, 60â€“70% load, RIR 3â€“5. No failure sets.';
-    recs.push({type:'deload_plan',title:'Deload protocol',reason:'Sets: 40â€“60% of last week. Load: 60â€“70%. RIR target 3â€“5. Remove failure sets.',deloadTemplate:true});
+    weekVerdict='Deload week: 40–60% sets, 60–70% load, RIR 3–5. No failure sets.';
+    recs.push({type:'deload_plan',title:'Deload protocol',reason:'Sets: 40–60% of last week. Load: 60–70%. RIR target 3–5. Remove failure sets.',deloadTemplate:true});
   }else if(fatigueNorm>=65){
-    weekVerdict=fatigueRec||'Reduce volume 10â€“25%. Drop compound weights ~10%, cap RPE 8.';
-    recs.push({type:'caution',title:'Auto-regulate',reason:'Reduce volume 10â€“25%. Drop compound weights ~10%, cap RPE 8.'});
+    weekVerdict=fatigueRec||'Reduce volume 10–25%. Drop compound weights ~10%, cap RPE 8.';
+    recs.push({type:'caution',title:'Auto-regulate',reason:'Reduce volume 10–25%. Drop compound weights ~10%, cap RPE 8.'});
   }
   }
 
-  // STEP 2 â€” GLOBAL RESPONSE (blocks local expansion when reduce/deload/lock)
+  // STEP 2 — GLOBAL RESPONSE (blocks local expansion when reduce/deload/lock)
   if(global.programLocked){
     weekVerdict=weekVerdict||'Insufficient data. Follow program as prescribed. Collect 2 weeks and 30+ hard sets before adaptive recommendations.';
     recs.push({type:'info',title:'Data collection',reason:'30+ hard sets/week and 2+ weeks logged before volume changes.'});
   }else if(global.mustReduce&&!recs.some(r=>r.type==='deload_plan')){
     if(global.junkVolume){
-      recs.push({type:'junk_volume',title:'Junk volume',reason:'Volume up, e1RM flat 4 weeks. Reduce total sets 15â€“25%, keep intensity. No muscle-level adds.'});
+      recs.push({type:'junk_volume',title:'Junk volume',reason:'Volume up, e1RM flat 4 weeks. Reduce total sets 15–25%, keep intensity. No muscle-level adds.'});
     }else if(global.stalledCount>=2){
-      recs.push({type:'systemic_reduce',title:'Primary lifts stalled',reason:'Reduce total systemic load 10â€“20%. Do not add volume elsewhere.'});
+      recs.push({type:'systemic_reduce',title:'Primary lifts stalled',reason:'Reduce total systemic load 10–20%. Do not add volume elsewhere.'});
     }else if(global.e1rmTrend==='down'){
-      recs.push({type:'reduce_volume',title:'Strength declining',reason:'Compound e1RM down. Reduce volume 10â€“20%.'});
+      recs.push({type:'reduce_volume',title:'Strength declining',reason:'Compound e1RM down. Reduce volume 10–20%.'});
     }else{
-      recs.push({type:'reduce_volume',title:'Fatigue elevated',reason:'Reduce volume 10â€“25% before expanding.'});
+      recs.push({type:'reduce_volume',title:'Fatigue elevated',reason:'Reduce volume 10–25% before expanding.'});
     }
   }
 
-  // STEP 3 â€” LOCAL (stimulus-driven: use stimulus score, effective reps, S:F ratio)
+  // STEP 3 — LOCAL (stimulus-driven: use stimulus score, effective reps, S:F ratio)
   if(!global.programLocked){
     groups.forEach(g=>{
       const actStimulus=core.stimulus[g]||0;
@@ -2117,14 +2148,14 @@ function computeSmartRecommendations(wk){
       if(overCeiling&&!isDeload){
         const reduceOnlyIf=(fatigueFlags.perfDown||fatigueScore>=65)&&(global.e1rmTrend==='flat'||global.e1rmTrend==='down');
         if(reduceOnlyIf||fatigueScore>=65){
-          recs.push({type:'over_ceiling',muscle:g,current:actStimulus,ceiling:ceilStimulus,reason:severelyOver?`${g} stimulus ${actStimulus.toFixed(1)} >> ceiling ${ceilStimulus}. Reduce 25â€“40%.`:`${g} stimulus ${actStimulus.toFixed(1)} over ceiling + fatigue. âˆ’3â€“5 sets.`});
+          recs.push({type:'over_ceiling',muscle:g,current:actStimulus,ceiling:ceilStimulus,reason:severelyOver?`${g} stimulus ${actStimulus.toFixed(1)} >> ceiling ${ceilStimulus}. Reduce 25–40%.`:`${g} stimulus ${actStimulus.toFixed(1)} over ceiling + fatigue. −3–5 sets.`});
         }
       }
       if(underTarget&&actStimulus<ceilStimulus&&!isDeload){
         if(global.mustReduce){
           recs.push({type:'hold_volume',muscle:g,current:actStimulus,target:tarStimulus,reason:'Global: reduce. Hold volume.'});
         }else if(proximityQuality==='low'&&actSets>0){
-          recs.push({type:'proximity_priority',muscle:g,current:actStimulus,target:tarStimulus,reason:`Low proximity. Increase intensity or train closer to failure â€” not more sets. Stimulus = ${actStimulus.toFixed(1)}.`});
+          recs.push({type:'proximity_priority',muscle:g,current:actStimulus,target:tarStimulus,reason:`Low proximity. Increase intensity or train closer to failure — not more sets. Stimulus = ${actStimulus.toFixed(1)}.`});
         }else if(fatigueFlags.perfDown||fatigueFlags.highRPE>=3){
           recs.push({type:'hold_volume',muscle:g,current:actStimulus,target:tarStimulus,reason:'Performance down or high RPE. Hold volume.'});
         }else if(global.canExpand){
@@ -2151,10 +2182,10 @@ function computeSmartRecommendations(wk){
   const allCompoundsHypertrophy=weekLogs.filter(l=>isCompound(l.ex)).length?weekLogs.filter(l=>isCompound(l.ex)).every(l=>{const r=parseInt(l.r,10);return r>=6&&r<=12;}):false;
   if(!isDeload&&weekLogs.length>0){
     if(allCompoundsHypertrophy&&(global.e1rmTrend==='flat'||global.stalledCount>=1)){
-      recs.push({type:'powerbuilding',title:'Rep-range: add heavy exposure',reason:'Compounds all 8â€“12 reps and e1RM flattening. Add 1â€“2 sets at 3â€“5 reps for press, squat, pull.'});
+      recs.push({type:'powerbuilding',title:'Rep-range: add heavy exposure',reason:'Compounds all 8–12 reps and e1RM flattening. Add 1–2 sets at 3–5 reps for press, squat, pull.'});
     }else if(!hasHeavyPress||!hasHeavySquat||!hasHeavyPull){
       const miss=[];if(!hasHeavyPress)miss.push('press');if(!hasHeavySquat)miss.push('squat/hinge');if(!hasHeavyPull)miss.push('pull');
-      recs.push({type:'powerbuilding',title:'Rep-range check',reason:`Add 1â€“2 heavy sets (3â€“6 reps) for: ${miss.join(', ')}.`});
+      recs.push({type:'powerbuilding',title:'Rep-range check',reason:`Add 1–2 heavy sets (3–6 reps) for: ${miss.join(', ')}.`});
     }
   }
 
@@ -2229,8 +2260,7 @@ function computeSmartRecommendations(wk){
   return {recs,weekVerdict,dayPlan,dayDetails,isDeload,bp,weeksLogged:global.weeksLogged,hasRPE,globalState:global.globalState,globalResponse:global.globalResponse,core,citations:['Schoenfeld 2017 (J Sports Sci)','Wernbom 2007 (Sports Med)','Schoenfeld 2021 (AMPK/mTOR)']};
 }
 
-// Adaptive program generator â€” builds alongside training, improves with verdict/stalls/deload
-// Jeff's 4-day split muscle map
+// Adaptive program generator — builds alongside training, improves with verdict/stalls/deload
 const ADAM6_MUSCLES={mon:['delts','core'],tue:['back','biceps'],thu:['chest','triceps'],sat:['quads','hamstrings','calves','glutes']};
 function getExercisesForBodyPartGen(bp,exclude,stalledSet){
   const pool=EL.filter(e=>{const name=e.n||e.name;if(!name||name===exclude)return false;const elBp=getBodyPartFromMuscle(e.m);if(elBp!=='other')return elBp===bp;return getBodyPart(name)===bp;});
@@ -2259,7 +2289,7 @@ function generateAdaptiveProgram(wk){
     const templateDay=P[mapped];const templateExMap={};if(templateDay&&templateDay.exercises)templateDay.exercises.forEach(ex=>templateExMap[ex.name]=ex);
     const dayExs=selectExercisesForDayGen(muscles,stalledMap,2);
     const typeOrder={h:0,n:1,s:2,d:3};dayExs.sort((a,b)=>{if(a.compound&&!b.compound)return-1;if(!a.compound&&b.compound)return 1;const ta=typeOrder[templateExMap[a.name]?.type||'n']??1;const tb=typeOrder[templateExMap[b.name]?.type||'n']??1;return ta-tb;});
-    const exercises=dayExs.map(ex=>{const t=templateExMap[ex.name];let sets=t?t.sets||3:3;if(isDeload)sets=Math.max(1,Math.round(sets*deloadMult));else if(volumeMult!==1)sets=Math.max(1,Math.round(sets*volumeMult));const isReplacement=stalledMap[ex.muscle]&&stalledMap[ex.muscle].length&&ex.primary===ex.muscle;return{name:ex.name,sets,reps:t?t.reps||'8â€“12':'8â€“12',type:t?t.type||'n':'n',muscle:ex.muscle,primary:ex.primary,swapped:!!isReplacement};});
+    const exercises=dayExs.map(ex=>{const t=templateExMap[ex.name];let sets=t?t.sets||3:3;if(isDeload)sets=Math.max(1,Math.round(sets*deloadMult));else if(volumeMult!==1)sets=Math.max(1,Math.round(sets*volumeMult));const isReplacement=stalledMap[ex.muscle]&&stalledMap[ex.muscle].length&&ex.primary===ex.muscle;return{name:ex.name,sets,reps:t?t.reps||'8–12':'8–12',type:t?t.type||'n':'n',muscle:ex.muscle,primary:ex.primary,swapped:!!isReplacement};});
     weekProgram.days.push({dk,name:DAY_NAMES[dk],rest:false,focus:templateDay?templateDay.focus:muscles.join(' + '),exercises});
   }
   return weekProgram;
@@ -2282,17 +2312,17 @@ function renderSmartProgram(){
   }
   h+=`</select></div>`;
 
-  h+=`<div class="smart-card"><div class="smart-hdr">${bp.name} â€” W${wk}</div>
+  h+=`<div class="smart-card"><div class="smart-hdr">${bp.name} — W${wk}</div>
     <div class="smart-phase">${bp.phase}</div>
     ${weekVerdict?`<div class="smart-verdict">${weekVerdict}</div>`:''}
-    ${weeksLogged>0?`<div class="smart-meta">Global: ${globalState||'â€”'} â†’ ${globalResponse||'â€”'}. ${weeksLogged} week${weeksLogged!==1?'s':''} data. Engine: stimulus, fatigue, adaptation. RPE optional.</div>`:''}
-    <div class="smart-disclaimer">Smart Program is <strong>separate from your prescribed program</strong>. It adapts within each session (same-body-part pre-fatigue) and week-to-week. When it says "Recommended: fewer sets" or "swap," that's our algorithm â€” a reference you can follow or ignore. Your program stays intact; this is the science layer.</div>
+    ${weeksLogged>0?`<div class="smart-meta">Global: ${globalState||'—'} → ${globalResponse||'—'}. ${weeksLogged} week${weeksLogged!==1?'s':''} data. Engine: stimulus, fatigue, adaptation. RPE optional.</div>`:''}
+    <div class="smart-disclaimer">Smart Program is <strong>separate from your prescribed program</strong>. It adapts within each session (same-body-part pre-fatigue) and week-to-week. When it says "Recommended: fewer sets" or "swap," that's our algorithm — a reference you can follow or ignore. Your program stays intact; this is the science layer.</div>
   </div>`;
 
   if(core&&weeksLogged>=1){
     const cm=core;
-    h+=`<div class="smart-card"><div class="smart-hdr">4 Core Metrics (foundation â€” not RPE)</div>
-      <div class="smart-sub">e1RM trend: ${cm.e1rmTrend?.trend||'â€”'} (${(cm.e1rmTrend?.pctChange||0).toFixed(1)}%). Systemic fatigue: ${(cm.systemicFatigue||0).toLocaleString()}</div>
+    h+=`<div class="smart-card"><div class="smart-hdr">4 Core Metrics (foundation — not RPE)</div>
+      <div class="smart-sub">e1RM trend: ${cm.e1rmTrend?.trend||'—'} (${(cm.e1rmTrend?.pctChange||0).toFixed(1)}%). Systemic fatigue: ${(cm.systemicFatigue||0).toLocaleString()}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:8px;font-size:10px">
         ${['quads','hamstrings','chest','back','biceps','triceps','delts'].map(m=>`
           <div style="background:var(--s2);padding:8px;border-radius:4px">
@@ -2310,23 +2340,23 @@ function renderSmartProgram(){
     if(d.type==='rest'){
       h+=`<div class="smart-day rest"><span class="smart-day-name">${d.name}</span><span class="smart-day-badge">Rest</span></div>`;
     }else{
-      h+=`<div class="smart-day workout"><span class="smart-day-name">${d.name}</span><span class="smart-day-focus">${d.focus||''}</span>${d.done?`<span class="smart-day-done">âœ“</span>`:`<span class="smart-day-ex">${d.exCount} exercises</span>`}</div>`;
+      h+=`<div class="smart-day workout"><span class="smart-day-name">${d.name}</span><span class="smart-day-focus">${d.focus||''}</span>${d.done?`<span class="smart-day-done">✓</span>`:`<span class="smart-day-ex">${d.exCount} exercises</span>`}</div>`;
     }
   });
   h+=`</div>`;
 
   h+=`<div class="smart-card"><div class="smart-hdr">Week-Level Recommendations</div>`;
   if(!recs.length){
-    h+=`<div class="smart-rec none"><strong>On track.</strong> Hit your targets, keep compounds at RPE 7â€“8.5, and reserve failure for isolation finishers only.</div>`;
+    h+=`<div class="smart-rec none"><strong>On track.</strong> Hit your targets, keep compounds at RPE 7–8.5, and reserve failure for isolation finishers only.</div>`;
   }else{
     recs.forEach(r=>{
       const cl=r.type==='warn'?'warn':r.type==='caution'?'caution':r.type==='learned'?'learned':'';
       if(r.type==='junk_volume'){
-        h+=`<div class="smart-rec warn"><strong>âš  ${r.title}:</strong> ${r.reason}</div>`;
+        h+=`<div class="smart-rec warn"><strong>⚠ ${r.title}:</strong> ${r.reason}</div>`;
       }else if(r.type==='reduce_volume'){
-        h+=`<div class="smart-rec warn"><strong>âš  ${r.title}:</strong> ${r.reason}</div>`;
+        h+=`<div class="smart-rec warn"><strong>⚠ ${r.title}:</strong> ${r.reason}</div>`;
       }else if(r.type==='systemic_reduce'){
-        h+=`<div class="smart-rec warn"><strong>âš  ${r.title}:</strong> ${r.reason}</div>`;
+        h+=`<div class="smart-rec warn"><strong>⚠ ${r.title}:</strong> ${r.reason}</div>`;
       }else if(r.type==='proximity_priority'){
         h+=`<div class="smart-rec info"><strong>${r.muscle}:</strong> ${r.reason}</div>`;
       }else if(r.type==='over_ceiling'){
@@ -2334,7 +2364,7 @@ function renderSmartProgram(){
       }else if(r.type==='add_volume'){
         const curTxt=typeof r.current==='number'?r.current.toFixed(1):r.current;
         const tgtTxt=typeof r.target==='number'?r.target.toFixed(1):r.target;
-        h+=`<div class="smart-rec add ${cl}"><strong>${r.muscle}:</strong> ${r.reason} <span class="smart-note">(stimulus ${curTxt}â†’${tgtTxt})</span></div>`;
+        h+=`<div class="smart-rec add ${cl}"><strong>${r.muscle}:</strong> ${r.reason} <span class="smart-note">(stimulus ${curTxt}→${tgtTxt})</span></div>`;
       }else if(r.type==='hold_volume'){
         h+=`<div class="smart-rec hold ${cl}"><strong>${r.muscle}:</strong> ${r.reason}</div>`;
       }else if(r.type==='stall'){
@@ -2342,7 +2372,7 @@ function renderSmartProgram(){
       }else if(r.type==='info'){
         h+=`<div class="smart-rec info">${r.title}: ${r['Schoenfeld 2017']||r.reason||''}</div>`;
       }else if(r.type==='learned'){
-        h+=`<div class="smart-rec learned">ðŸ“ˆ ${r.title}: ${r.msg}</div>`;
+        h+=`<div class="smart-rec learned">📈 ${r.title}: ${r.msg}</div>`;
       }else{
         h+=`<div class="smart-rec ${cl}">${r.title}: ${r.reason||''}</div>`;
       }
@@ -2351,14 +2381,14 @@ function renderSmartProgram(){
   h+=`</div>`;
 
   const genProgram=generateAdaptiveProgram(wk);
-  h+=`<div class="smart-card"><div class="smart-hdr">Generated Program â€” Adapts With You</div>
+  h+=`<div class="smart-card"><div class="smart-hdr">Generated Program — Adapts With You</div>
     <div class="smart-sub">Built from verdict (${genProgram.verdict}), stalled lifts${genProgram.stalledMap?' (swaps applied)':''}, and deload status. Improves as you log more data.</div>`;
   genProgram.days.forEach(d=>{
     if(d.rest){h+=`<div class="smart-day rest"><span class="smart-day-name">${d.name}</span><span class="smart-day-badge">Rest</span></div>`;return;}
     h+=`<div class="smart-day-block"><div class="smart-day-block-hdr" onclick="this.parentElement.classList.toggle('open')">
-      <span class="smart-day-name">${d.name}</span><span class="smart-day-focus">${d.focus||''}</span><span class="smart-toggle">â–¼</span>
+      <span class="smart-day-name">${d.name}</span><span class="smart-day-focus">${d.focus||''}</span><span class="smart-toggle">▼</span>
     </div><div class="smart-day-block-body">`;
-    (d.exercises||[]).forEach((ex,i)=>h+=`<div class="smart-ex-row"><div class="smart-ex-name">${i+1}. ${ex.name} ${ex.swapped?'<span class="smart-mod swap-or-vary">SWAPPED</span>':''}</div><div style="font-size:11px;color:var(--tx2)">${ex.sets}Ã—${ex.reps}</div></div>`);
+    (d.exercises||[]).forEach((ex,i)=>h+=`<div class="smart-ex-row"><div class="smart-ex-name">${i+1}. ${ex.name} ${ex.swapped?'<span class="smart-mod swap-or-vary">SWAPPED</span>':''}</div><div style="font-size:11px;color:var(--tx2)">${ex.sets}×${ex.reps}</div></div>`);
     h+=`</div></div>`;
   });
   h+=`</div>`;
@@ -2367,7 +2397,7 @@ function renderSmartProgram(){
     <div class="smart-sub">Within-session adaptation: same-body-part pre-fatigue, set/weight modulation, exercise swaps. Independent of program.</div>`;
   (dayDetails||[]).forEach(dd=>{
     h+=`<div class="smart-day-block"><div class="smart-day-block-hdr" onclick="this.parentElement.classList.toggle('open')">
-      <span class="smart-day-name">${dd.name}</span><span class="smart-day-focus">${dd.focus||''}</span><span class="smart-toggle">â–¼</span>
+      <span class="smart-day-name">${dd.name}</span><span class="smart-day-focus">${dd.focus||''}</span><span class="smart-toggle">▼</span>
     </div><div class="smart-day-block-body">`;
     (dd.exTips||[]).forEach((et,i)=>{
       const mod=et.modulation;
@@ -2375,7 +2405,7 @@ function renderSmartProgram(){
       const swaps=et.swapOptions&&et.swapOptions.length?`<div class="smart-swaps">Swap to: ${et.swapOptions.slice(0,3).join(', ')}</div>`:'';
       const tipsHtml=et.tips&&et.tips.length?et.tips.map(t=>`<div class="smart-ex-tip ${t.type}">${t.msg}</div>`).join(''):'';
       const pvr=et.programVsRec;
-      const pvrHtml=pvr?`<div class="smart-pvr"><span class="smart-pvr-program">Program: ${pvr.program} sets</span> â†’ <span class="smart-pvr-rec">Recommended: ${pvr.recommended} sets</span> <span class="smart-pvr-why">(${pvr.reason})</span></div>`:'';
+      const pvrHtml=pvr?`<div class="smart-pvr"><span class="smart-pvr-program">Program: ${pvr.program} sets</span> → <span class="smart-pvr-rec">Recommended: ${pvr.recommended} sets</span> <span class="smart-pvr-why">(${pvr.reason})</span></div>`:'';
       h+=`<div class="smart-ex-row">
         <div class="smart-ex-name">${i+1}. ${et.displayName}</div>
         ${modTag}
@@ -2390,7 +2420,7 @@ function renderSmartProgram(){
 
   h+=`<div class="smart-card cite"><div class="smart-hdr">Science Sources</div>
     <ul class="smart-cites">${citations.map(c=>`<li>${c}</li>`).join('')}</ul>
-    <div class="smart-princ">Engine: Stimulus = tension Ã— volume Ã— proximity (estimated from e1RM, no RPE required). Effective reps = max(0, 5âˆ’RIR). Fatigue = volume load Ã— intensity Ã— compound penalty. Stall logic: volume-induced vs under-stimulation vs intensity problem. Pre-fatigue: only drop sets when weekly â‰¥110% target. Data-driven autoregulation.</div>
+    <div class="smart-princ">Engine: Stimulus = tension × volume × proximity (estimated from e1RM, no RPE required). Effective reps = max(0, 5−RIR). Fatigue = volume load × intensity × compound penalty. Stall logic: volume-induced vs under-stimulation vs intensity problem. Pre-fatigue: only drop sets when weekly ≥110% target. Data-driven autoregulation.</div>
   </div>`;
 
   el.innerHTML=h;
@@ -2485,9 +2515,9 @@ function renderBodyTracker(){
   btb.innerHTML=html||'<div style="font-size:12px;color:var(--tx3);padding:8px 0">Complete workouts to see progress</div>';
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // WORKOUT
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function getOvr(dk,ei,wk){return ST.ovr[`${dk}-${ei}-${wk}`]||ST.ovr[`${dk}-${ei}-perm`]||null}
 function getRemovedKey(wk,dk){return `W${wk}-${dk}`}
 
@@ -2568,7 +2598,7 @@ function openWO(dk){
           name,
           displayName:name,
           sets,
-          reps:'8â€“12',
+          reps:'8–12',
           rest:90,
           type:'n',
           cue:'Logged on another device.',
@@ -2602,9 +2632,9 @@ function openWO(dk){
   document.getElementById('WT').textContent=d.name;
   document.getElementById('WF').textContent=d.focus;
   const dlBanner=document.getElementById('WODLB');
-  if(dlBanner){dlBanner.style.display=isDeloadWk(ST.wk)?'block':'none';if(isDeloadWk(ST.wk)){dlBanner.innerHTML=`<strong>â˜… DELOAD WEEK (W${ST.wk})</strong> â€” Mon &amp; Thu only Â· ~60â€“70% load Â· ~50% sets Â· RIR 4â€“5 Â· No 3-sec eccentrics Â· No loaded stretches Â· No drop sets`}}
+  if(dlBanner)dlBanner.style.display='none'; // Jeff uses session-count deloads, not week-based
   const wws=document.getElementById('WWS');
-  if(wws){wws.innerHTML=Array.from({length:24},(_,i)=>`<option value="${i+1}" ${i+1===ST.wk?'selected':''}>W${i+1}${isDeloadWk(i+1)?' ðŸ”„':''}</option>`).join('');wws.value=ST.wk}
+  if(wws){wws.innerHTML=Array.from({length:24},(_,i)=>`<option value="${i+1}" ${i+1===ST.wk?'selected':''}>W${i+1}${isDeloadWk(i+1)?' 🔄':''}</option>`).join('');wws.value=ST.wk}
   renderWO();
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
   document.getElementById('pg-wo').classList.add('on');
@@ -2640,7 +2670,7 @@ function renderWO(){
     const prev=getPrevExact(ex.displayName,ST.aday);
     const prev2=ex2?getPrevExact(ex2.displayName,ST.aday):[];
     const tc={'h':'eh','s':'es','d':'ed','n':''}[ex.type]||'';
-    const bl={'h':'<span class="badge bh">HEAVY</span>','s':'<span class="badge bs">â˜… STRETCH</span>','d':'<span class="badge bd">â†“ DROP</span>','n':''}[ex.type]||'';
+    const bl={'h':'<span class="badge bh">HEAVY</span>','s':'<span class="badge bs">★ STRETCH</span>','d':'<span class="badge bd">↓ DROP</span>','n':''}[ex.type]||'';
 
     const exVol=sets.reduce((s,st)=>s+(st.w&&st.r?st.w*st.r:0),0);
     const exVol2=sets2.reduce((s,st)=>s+(st.w&&st.r?st.w*st.r:0),0);
@@ -2668,8 +2698,8 @@ function renderWO(){
       const canDel=(e===ex?sets:sets2).length>1;
       let footer='';
       if(ps||rec){footer='<div class="prev" id="pv-'+e.id+'-'+si+'">';
-        if(ps)footer+=`Prev: <span class="pv">${ps.w?ps.w+'Ã—':''}${ps.r}</span>${ps.e1?` Â· e1RM <span class="pv">${ps.e1}</span>`:''}`;
-        if(rec)footer+=`${ps?' Â· ':''}Rec: <span class="pv rec">${rec.w}Ã—${rec.r}</span> <span class="rec-hint">${isDeload?'(deload)':'(+overload)'}</span>`;
+        if(ps)footer+=`Prev: <span class="pv">${ps.w?ps.w+'×':''}${ps.r}</span>${ps.e1?` · e1RM <span class="pv">${ps.e1}</span>`:''}`;
+        if(rec)footer+=`${ps?' · ':''}Rec: <span class="pv rec">${rec.w}×${rec.r}</span> <span class="rec-hint">${isDeload?'(deload)':'(+overload)'}</span>`;
         footer+='</div>';
       }
       return `<div class="srow" id="sr-${e.id}-${si}">
@@ -2700,7 +2730,7 @@ function renderWO(){
         const s2=sets2[si]||{w:'',r:'',rpe:'',done:false};
         const row1=oneSetRow(ex,s1,si,prev,setAlreadyLogged);
         const row2=oneSetRow(ex2,s2,si,prev2,setAlreadyLogged2);
-        return `<div class="ss-row"><div class="ss-col"><div class="ss-col-lbl">A Â· ${ex.displayName}</div>${row1}</div><div class="ss-col"><div class="ss-col-lbl">B Â· ${ex2.displayName}</div>${row2}</div></div>`;
+        return `<div class="ss-row"><div class="ss-col"><div class="ss-col-lbl">A · ${ex.displayName}</div>${row1}</div><div class="ss-col"><div class="ss-col-lbl">B · ${ex2.displayName}</div>${row2}</div></div>`;
       }).join('');
     }else{
       setsHtml=sets.map((s,si)=>oneSetRow(ex,s,si,prev,setAlreadyLogged)).join('');
@@ -2730,7 +2760,7 @@ function renderWO(){
         <div class="ex-header-main">
           <div class="etop">
             <div class="ename">${isSuperset&&ex2?`<span class="ss-hdr">Superset</span> ${ex.displayName} <span style="color:var(--tx3)">+</span> ${ex2.displayName}`:ex.displayName+(ex.displayName!==ex.name?` <span style="font-size:10px;color:var(--tx3);font-weight:400;text-transform:none">(swapped)</span>`:'')}</div>
-            <div class="badges">${bl}${(isSuperset?exDone===sets.length&&exDone2===sets2.length:exDone===sets.length)&&(isSuperset?sets.length+sets2.length:sets.length)>0?'<span class="badge bpr">âœ“ DONE</span>':''}</div>
+            <div class="badges">${bl}${(isSuperset?exDone===sets.length&&exDone2===sets2.length:exDone===sets.length)&&(isSuperset?sets.length+sets2.length:sets.length)>0?'<span class="badge bpr">✓ DONE</span>':''}</div>
           </div>
           <div class="ex-actions">
             ${(isSuperset||exIdx<ST.awExs.length-1)?`<button class="ex-act-btn ${ex.supersetWith?' on':''}" onclick="toggleSuperset(${exIdx})" title="${ex.supersetWith?'Unpair superset':'Superset with next'}">
@@ -2763,7 +2793,7 @@ function renderWO(){
           </button>
           <div class="ecue${cueHidden?' collapsed':''}">${cueText||'No cue added yet.'}</div>
           ${noteText?`<div class="ecue-note${cueHidden?' collapsed':''}"><strong>Note:</strong> ${noteText}</div>`:''}
-          ${stalledMap[ex.displayName]?`<div class="stall-warn"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Stalled at ${stalledMap[ex.displayName].weight} lbs since ${stalledMap[ex.displayName].since} â€” try a variation or rep scheme change</div>`:''}
+          ${stalledMap[ex.displayName]?`<div class="stall-warn"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Stalled at ${stalledMap[ex.displayName].weight} lbs since ${stalledMap[ex.displayName].since} — try a variation or rep scheme change</div>`:''}
         </div>
       </div>
       <div class="sets-w" id="sw-${ex.id}">${setsHtml}</div>
@@ -2799,7 +2829,7 @@ function toggleCue(exId){
   renderWO();
 }
 
-// â”€â”€ SET OPERATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── SET OPERATIONS ─────────────────────────────────────────
 function upS(id,si,f,v){
   if(!ST.aws[id])return;
   ST.aws[id][si][f]=v?parseFloat(v):'';
@@ -2826,7 +2856,7 @@ function updateSummary(){
   let totalVol=0,totalSets=0,completedSets=0;
   ST.awExs.forEach(ex=>{
     const sets=ST.aws[ex.id]||[];
-    // Only count sets that have actual data â€” not empty template placeholders.
+    // Only count sets that have actual data — not empty template placeholders.
     const active=sets.filter(hasSetData);
     totalSets+=active.length;
     completedSets+=sets.filter(s=>s.done).length;
@@ -2844,8 +2874,8 @@ function getElapsed(){
 }
 function getTimerCell(){
   const el=getElapsed();
-  if(!el) return `<button class="wo-start-btn" onclick="startTimerManual()">â–¶ Start Workout</button>`;
-  return `Time: <strong>${el}</strong> <button class="wo-reset-btn" onclick="resetTimer()" title="Reset timer">â†º</button>`;
+  if(!el) return `<button class="wo-start-btn" onclick="startTimerManual()">▶ Start Workout</button>`;
+  return `Time: <strong>${el}</strong> <button class="wo-reset-btn" onclick="resetTimer()" title="Reset timer">↺</button>`;
 }
 function startTimerManual(){
   ST.woStartTime=Date.now();
@@ -2883,12 +2913,12 @@ function checkSessionDuration(){
     el.style.display='flex';
     el.className='sess-warn danger';
     el.innerHTML=`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <div><strong>2+ hours â€” AMPK interference zone.</strong> Elevated cortisol + AMPK are actively impairing mTOR signaling. Finish up now â€” additional volume here has diminishing or negative returns. (Schoenfeld, 2021)</div>`;
+      <div><strong>2+ hours — AMPK interference zone.</strong> Elevated cortisol + AMPK are actively impairing mTOR signaling. Finish up now — additional volume here has diminishing or negative returns. (Schoenfeld, 2021)</div>`;
   }else if(mins>=90){
     el.style.display='flex';
     el.className='sess-warn caution';
     el.innerHTML=`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <div><strong>Session over 90 min â€” consider wrapping up.</strong> Cortisol:testosterone ratio shifts unfavorably beyond this point. Cut remaining isolation work or superset accessories to finish faster.</div>`;
+      <div><strong>Session over 90 min — consider wrapping up.</strong> Cortisol:testosterone ratio shifts unfavorably beyond this point. Cut remaining isolation work or superset accessories to finish faster.</div>`;
   }else{
     el.style.display='none';
   }
@@ -2928,13 +2958,13 @@ function analyzeSessionRPE(){
     msgs.push(`<strong>Overreaching risk:</strong> ${compoundHighCount} compound sets at RPE 9.5-10. Persistent failure training drops IGF-1 and blunts testosterone over time (Schoenfeld). Leave 1-2 RIR on compounds.`);
   }
   warnings.forEach(w=>{
-    msgs.push(`<strong>${w.ex}</strong> hit RPE ${w.rpe} early in the session â€” high CNS fatigue early degrades performance on remaining exercises. Consider auto-regulating down 5-10%.`);
+    msgs.push(`<strong>${w.ex}</strong> hit RPE ${w.rpe} early in the session — high CNS fatigue early degrades performance on remaining exercises. Consider auto-regulating down 5-10%.`);
   });
   if(avgRPE<6.5&&rpeCount>=4){
-    msgs.push(`<strong>Average RPE ${avgRPE.toFixed(1)}</strong> â€” you may be leaving too much in the tank. Effective hypertrophy requires sets within 1-3 RIR (RPE 7-9). Consider increasing weight.`);
+    msgs.push(`<strong>Average RPE ${avgRPE.toFixed(1)}</strong> — you may be leaving too much in the tank. Effective hypertrophy requires sets within 1-3 RIR (RPE 7-9). Consider increasing weight.`);
   }
   if(lowRPEcount>rpeCount*0.6&&rpeCount>=4){
-    msgs.push(`<strong>${lowRPEcount} of ${rpeCount} sets</strong> below RPE 7 â€” most sets are submaximal. Unless this is a deload, increase intensity to drive adaptation.`);
+    msgs.push(`<strong>${lowRPEcount} of ${rpeCount} sets</strong> below RPE 7 — most sets are submaximal. Unless this is a deload, increase intensity to drive adaptation.`);
   }
 
   if(msgs.length){
@@ -2984,11 +3014,11 @@ function delSet(id,si){
   saveWorkoutProgress();
 }
 
-// â”€â”€ EXERCISE ADD/REMOVE/REORDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── EXERCISE ADD/REMOVE/REORDER ────────────────────────────
 let DEL_UNDO_DATA=null, DEL_UNDO_TIMER=null;
 
 function confirmDelEx(exIdx,name){
-  // Direct delete â€” no dialog needed. Undo toast appears for 5 seconds.
+  // Direct delete — no dialog needed. Undo toast appears for 5 seconds.
   delEx(exIdx,name);
 }
 function delEx(exIdx,name){
@@ -3069,7 +3099,7 @@ function hideDelToast(){
 }
 function openAddEx(){
   ST.isAddEx=true;ST.swt=null;
-  document.getElementById('SWH').innerHTML='Add Exercise <button class="mx" onclick="closeSW()">âœ•</button>';
+  document.getElementById('SWH').innerHTML='Add Exercise <button class="mx" onclick="closeSW()">✕</button>';
   document.getElementById('SWC').textContent='Choose from library or type a custom name';
   document.getElementById('SWScope').style.display='none';
   document.getElementById('SWQ').value='';
@@ -3080,7 +3110,7 @@ function openAddEx(){
   document.getElementById('SWO').classList.add('on');
 }
 
-// â”€â”€ DRAG & DROP REORDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── DRAG & DROP REORDER ─────────────────────────────────────
 let dragSrc=null;
 function initDrag(){
   const cards=document.querySelectorAll('#WC .ec');
@@ -3186,14 +3216,14 @@ function saveCueEditor(){
   renderWO();
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // SWAP / ADD EXERCISE MODAL
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function openSW(dk,exIdx,origName){
   ST.isAddEx=false;
   ST.swt={dk,exIdx,origName};
 
-  document.getElementById('SWH').innerHTML='Exercise <button class="mx" onclick="closeSW()">âœ•</button>';
+  document.getElementById('SWH').innerHTML='Exercise <button class="mx" onclick="closeSW()">✕</button>';
   document.getElementById('SWC').textContent=`Swap: ${origName}`;
   document.getElementById('SWScope').style.display='flex';
 
@@ -3238,7 +3268,7 @@ function renderSWL(){
     .sort((a,b)=>a.n.localeCompare(b.n));
 
   if(!items.length){
-    box.innerHTML=`<div class="empty"><div class="eico">ðŸ”Ž</div>No matches. Try a different search or use Custom Name.</div>`;
+    box.innerHTML=`<div class="empty"><div class="eico">🔎</div>No matches. Try a different search or use Custom Name.</div>`;
     return;
   }
 
@@ -3248,7 +3278,7 @@ function renderSWL(){
     el.innerHTML=`
       <div>
         <div class="sw-opt-name">${it.n}</div>
-        <div class="sw-opt-muscle">${it.m||''}${it.custom?' Â· custom':''}</div>
+        <div class="sw-opt-muscle">${it.m||''}${it.custom?' · custom':''}</div>
       </div>
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--tx3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     `;
@@ -3286,7 +3316,7 @@ function applySW(newName,isCustom=false,bodyPart=null){
       name:newName,
       displayName:newName,
       sets:3,
-      reps:'8â€“12',
+      reps:'8–12',
       rest:90,
       type:'n',
       cue:'Run perfect reps. Full ROM. Control the eccentric.',
@@ -3342,9 +3372,9 @@ function applySW(newName,isCustom=false,bodyPart=null){
   renderWO();
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // REST TIMER
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 let REST_INT=null, REST_END=0;
 
 function fmtT(sec){
@@ -3396,9 +3426,9 @@ function stopRest(){
   document.getElementById('RTG').textContent='';
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // PREVIOUS SET LOOKUP
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function getPrev(exName,dk,origName){
   const names=new Set([exName]);
   if(origName)names.add(origName);
@@ -3420,7 +3450,7 @@ function getPrevExact(exName,dk){
   const last=rows.filter(r=>r.date===lastDate).sort((a,b)=>a.sn-b.sn);
   return last.map(r=>({w:r.w||'',r:r.r||'',e1:r.e1rm||null}));
 }
-// Deload recommended weight (65â€“70% of best-ever) â€” science-backed
+// Deload recommended weight (65–70% of best-ever) — science-backed
 function getRec(exName,dk,setIdx){
   const wk=ST.logWk||ST.wk;
   if(!isDeloadWk(wk)) return null;
@@ -3443,7 +3473,7 @@ function getRec(exName,dk,setIdx){
   const recR=pr<=8?pr:pr+2;
   return {w:recW,r:recR};
 }
-// Objective stall logic: 4-week e1RM growth, stimulus, fatigue â†’ stall type + action
+// Objective stall logic: 4-week e1RM growth, stimulus, fatigue → stall type + action
 function getStalledLifts(optWk){
   const wk=optWk!=null?optWk:(ST.wk||1);
   const exWeeks={};
@@ -3474,7 +3504,7 @@ function getStalledLifts(optWk){
     const weight=weights[weights.length-1];
     const since='W'+recent[Math.max(0,recent.length-3)];
     let stallType='simple';
-    let action='Step 1: Reduce weekly volume for this lift 15%. Step 2: Change rep bracket (3â€“6â†’6â€“10 or 6â€“10â†’3â€“6). Step 3: If still stalled 2 weeks: rotate variation. Step 4: If systemic fatigue high: deload.';
+    let action='Step 1: Reduce weekly volume for this lift 15%. Step 2: Change rep bracket (3–6→6–10 or 6–10→3–6). Step 3: If still stalled 2 weeks: rotate variation. Step 4: If systemic fatigue high: deload.';
     const e1rms=exE1rm[ex];
     if(e1rms&&Object.keys(e1rms).length>=4){
       const wks=Object.keys(e1rms).map(Number).sort((a,b)=>a-b).slice(-4);
@@ -3486,13 +3516,13 @@ function getStalledLifts(optWk){
       const setsDone=actualSets[bp]||0;
       if(growth<1&&setsDone>=tar*0.9&&fatigueHigh){
         stallType='volume_induced';
-        action='Reduce volume 15â€“25% for 1â€“2 weeks. Volume-induced stall â€” fatigue accumulating.';
+        action='Reduce volume 15–25% for 1–2 weeks. Volume-induced stall — fatigue accumulating.';
       }else if(growth<1&&setsDone<tar*0.7){
         stallType='under_stimulation';
-        action='Add sets or increase intensity. Under-stimulated â€” dose below target.';
+        action='Add sets or increase intensity. Under-stimulated — dose below target.';
       }else if(growth<1&&!fatigueHigh&&setsDone>=tar*0.7){
         stallType='intensity';
-        action='Increase load or reduce reps. Intensity problem â€” capacity underutilized.';
+        action='Increase load or reduce reps. Intensity problem — capacity underutilized.';
       }else{
         stallType='simple';
       }
@@ -3529,9 +3559,9 @@ function getProgOverloadRec(exName,dk,setIdx){
   return {w:recW,r:pr};
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // FINISH WORKOUT (LOGGING)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function finWO(){
   stopWOTimer();
   const today=new Date();
@@ -3619,7 +3649,7 @@ function finWO(){
     sheetsPOST({action:'append',sheet:'Logs',rows:newRowsOnly});
   }
 
-  // Check if all non-rest days have been logged this week â†’ show weekly review
+  // Check if all non-rest days have been logged this week → show weekly review
   const finSched=getScheduleForWeek(ST.logWk||ST.wk);
   const workDays=DO.filter(d=>finSched[d]!=='rest');
   const loggedDays=new Set(ST.logs.filter(l=>l.wk===(ST.logWk||ST.wk)).map(l=>l.dk));
@@ -3655,9 +3685,9 @@ function showWeeklyReview(wk){
   // Coaching note
   const bp=getBlockPhase(wk);
   let coach='';
-  if(DLOADS.has(wk)) coach='Deload week complete. Anabolic signaling is rebounding â€” expect to feel strongest next week (supercompensation).';
-  else if(prs>=3) coach='Excellent week â€” '+prs+' exercises hit new estimated PRs. Progressive overload is working. Keep pushing.';
-  else if(prevVol&&vol>prevVol*1.05) coach='Volume increased '+(Math.round((vol/prevVol-1)*100))+'% from last week. Monitor recovery â€” if fatigue accumulates, a deload may help.';
+  if(DLOADS.has(wk)) coach='Deload week complete. Anabolic signaling is rebounding — expect to feel strongest next week (supercompensation).';
+  else if(prs>=3) coach='Excellent week — '+prs+' exercises hit new estimated PRs. Progressive overload is working. Keep pushing.';
+  else if(prevVol&&vol>prevVol*1.05) coach='Volume increased '+(Math.round((vol/prevVol-1)*100))+'% from last week. Monitor recovery — if fatigue accumulates, a deload may help.';
   else if(prevVol&&vol<prevVol*.9) coach='Volume dropped vs last week. If intentional (deload approach), that\'s fine. Otherwise, check training consistency.';
   else coach='Solid week of training. Stay consistent with progressive overload and nutrition.';
   const bwt=getBodyWeightForWeek(wk);
@@ -3666,7 +3696,7 @@ function showWeeklyReview(wk){
   const c=document.getElementById('WREVC');
   c.innerHTML=`
     <div class="review-title">Week ${wk} Complete</div>
-    <div class="review-sub">${bp.name} Â· ${bp.phase}</div>
+    <div class="review-sub">${bp.name} · ${bp.phase}</div>
     <div class="review-stat"><span>Sessions</span><span class="review-val">${sess}</span></div>
     <div class="review-stat"><span>Total sets</span><span class="review-val">${sets}</span></div>
     <div class="review-stat"><span>Volume</span><span class="review-val">${vol>1000?(vol/1000).toFixed(1)+'K':vol} lbs</span></div>
@@ -3681,9 +3711,9 @@ function showWeeklyReview(wk){
   document.getElementById('WREV').classList.add('on');
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // CONFIRM DIALOG
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 let CONF_OK_FN=null;
 function showConf(title,msg,onOK,okLabel){
   document.getElementById('CONF_T').textContent=title||'Confirm';
@@ -3705,7 +3735,7 @@ function closeConf(){
   const ok=document.getElementById('CONF_OK');if(ok)ok.textContent='Delete';
 }
 
-// â”€â”€ EDIT LOG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── EDIT LOG ─────────────────────────────────────────────
 let editLogEntries=[], editLogIdx=0;
 function openEditLog(date,exName){
   editLogEntries=ST.logs.filter(l=>l.date===date&&l.ex===exName).sort((a,b)=>a.sn-b.sn);
@@ -3715,7 +3745,7 @@ function openEditLog(date,exName){
   const selWrap=document.getElementById('EDSETSEL');
   if(editLogEntries.length>1){
     selWrap.style.display='block';
-    sel.innerHTML=editLogEntries.map((r,i)=>`<option value="${i}">Set ${r.sn}: ${r.w}Ã—${r.r}</option>`).join('');
+    sel.innerHTML=editLogEntries.map((r,i)=>`<option value="${i}">Set ${r.sn}: ${r.w}×${r.r}</option>`).join('');
     sel.value=0;
     sel.onchange=()=>{editLogIdx=parseInt(sel.value);loadEditLogForm();};
   }else selWrap.style.display='none';
@@ -3751,9 +3781,9 @@ function saveEditLog(){
   renderAN();
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // DATA PAGE (EXPORT / IMPORT / SHEETS URL)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function saveURL(){
   const v=(document.getElementById('SUI').value||'').trim();
   ST.url=v;
@@ -3869,7 +3899,7 @@ function renderES(){
   if(!es) return;
 
   const codeGs=`/**
- * ADAM Powerbuilding â€” Google Sheets Web App
+ * ADAM Powerbuilding — Google Sheets Web App
  * 1) Create new Apps Script project
  * 2) Paste this file into Code.gs (replace default)
  * 3) Deploy as Web App (Execute as Me / Anyone)
@@ -3934,9 +3964,9 @@ function copyCGS(){
   showConf('Copied','Code.gs copied to clipboard.',null);
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // ANALYTICS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function renderAN(){
   const tabs=[
     {k:'perf',t:'Perf'},
@@ -3960,7 +3990,7 @@ function renderAN(){
   });
 
   if(!ST.logs.length){
-    ab.innerHTML=`<div class="empty"><div class="eico">ðŸ“‰</div>No logs yet. Complete a workout and your analytics will show here.</div>`;
+    ab.innerHTML=`<div class="empty"><div class="eico">📉</div>No logs yet. Complete a workout and your analytics will show here.</div>`;
     return;
   }
 
@@ -3977,7 +4007,7 @@ function renderPERF(ab){
   const thisWkLogs=ST.logs.filter(l=>l.wk===wk);
   const prevWk=wk>1?wk-1:null;
   const prevWkLogs=prevWk?ST.logs.filter(l=>l.wk===prevWk):[];
-  if(!thisWkLogs.length&&!prevWkLogs.length){ab.innerHTML='<div class="empty"><div class="eico">ðŸ“Š</div>No data for W'+wk+' yet. Complete workouts to see performance comparison.</div>';return}
+  if(!thisWkLogs.length&&!prevWkLogs.length){ab.innerHTML='<div class="empty"><div class="eico">📊</div>No data for W'+wk+' yet. Complete workouts to see performance comparison.</div>';return}
   function bestE1RM(logs){const m={};logs.forEach(l=>{if(l.e1rm&&(!m[l.ex]||l.e1rm>m[l.ex].e1rm))m[l.ex]=l});return m}
   function totalVol(logs){return logs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0)}
   const thisBest=bestE1RM(thisWkLogs), prevBest=bestE1RM(prevWkLogs);
@@ -3987,7 +4017,7 @@ function renderPERF(ab){
   const prevSess=prevWk?new Set(prevWkLogs.map(l=>l.date+l.dk)).size:0;
   let ups=0,downs=0,flats=0;
   let html=`<div class="perf-summary">
-    <div style="font-family:var(--fd);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">W${wk} vs W${prevWk||'â€”'}</div>
+    <div style="font-family:var(--fd);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">W${wk} vs W${prevWk||'—'}</div>
     <div class="perf-row"><span>Sessions</span><strong>${thisSess} ${prevWk?'(prev: '+prevSess+')':''}</strong></div>
     <div class="perf-row"><span>Sets</span><strong>${thisWkLogs.length} ${prevWk?'(prev: '+prevWkLogs.length+')':''}</strong></div>
     <div class="perf-row"><span>Volume</span><strong>${thisVol>1000?(thisVol/1000).toFixed(1)+'K':thisVol} lbs ${prevWk&&prevVol?'(prev: '+(prevVol>1000?(prevVol/1000).toFixed(1)+'K':prevVol)+')':''}</strong></div>
@@ -3995,25 +4025,25 @@ function renderPERF(ab){
   allEx.forEach(ex=>{
     const curr=thisBest[ex], prev=prevBest[ex];
     const ce=curr?curr.e1rm:null, pe=prev?prev.e1rm:null;
-    let delta='â€”',cls='flat';
+    let delta='—',cls='flat';
     if(ce&&pe){const d=ce-pe;delta=(d>0?'+':'')+d+' lbs';cls=d>0?'up':d<0?'down':'flat';if(d>0)ups++;else if(d<0)downs++;else flats++}
     else if(ce&&!pe){delta='NEW';cls='up';ups++}
     html+=`<div class="perf-card">
       <div class="perf-ex">${ex}</div>
-      <div class="perf-row"><span>This week e1RM</span><span>${ce||'â€”'}</span></div>
-      <div class="perf-row"><span>Last week e1RM</span><span>${pe||'â€”'}</span></div>
+      <div class="perf-row"><span>This week e1RM</span><span>${ce||'—'}</span></div>
+      <div class="perf-row"><span>Last week e1RM</span><span>${pe||'—'}</span></div>
       <div class="perf-row"><span>Change</span><span class="perf-delta ${cls}">${delta}</span></div>
     </div>`;
   });
   const total=ups+downs+flats;
   let verdict='';
   if(total>0){
-    if(ups>=total*.6)verdict='Strong week â€” majority of lifts improving. Progressive overload on track.';
+    if(ups>=total*.6)verdict='Strong week — majority of lifts improving. Progressive overload on track.';
     else if(downs>=total*.5)verdict='Performance dipped on multiple exercises. Check sleep, nutrition, and consider if a deload is due.';
-    else verdict='Mixed performance â€” some lifts up, some down. Normal variation. Stay consistent.';
+    else verdict='Mixed performance — some lifts up, some down. Normal variation. Stay consistent.';
   }
   html=`<div class="perf-summary" style="border-left:3px solid ${ups>downs?'var(--grn2)':'var(--gold)'};margin-bottom:14px">
-    <strong>${ups}</strong> exercises improved Â· <strong>${downs}</strong> declined Â· <strong>${flats}</strong> same<br>
+    <strong>${ups}</strong> exercises improved · <strong>${downs}</strong> declined · <strong>${flats}</strong> same<br>
     <span style="font-size:11px;color:var(--tx3)">${verdict}</span>
   </div>`+html;
   ab.innerHTML=html;
@@ -4032,7 +4062,7 @@ function renderPRs(ab){
     .slice(0,10);
 
   if(!top.length){
-    ab.innerHTML=`<div class="empty"><div class="eico">ðŸ‹ï¸</div>No 1RM estimates yet. Log weight + reps and theyâ€™ll appear.</div>`;
+    ab.innerHTML=`<div class="empty"><div class="eico">🏋️</div>No 1RM estimates yet. Log weight + reps and they’ll appear.</div>`;
     return;
   }
 
@@ -4056,7 +4086,7 @@ function renderPRs(ab){
     c.innerHTML=`
       <div class="prex">${l.ex}</div>
       <div class="prwt">${l.e1rm}<span> lb</span></div>
-      <div class="prreps">${l.w} Ã— ${l.r} Â· set ${l.sn}</div>
+      <div class="prreps">${l.w} × ${l.r} · set ${l.sn}</div>
       <div class="pr1rm">${l.date}</div>
     `;
     prg.appendChild(c);
@@ -4108,7 +4138,7 @@ function renderVOL(ab){
 
   ab.innerHTML=`
     <div class="cbox">
-      <div class="cttl">Training Volume By Date (lbs Ã— reps)</div>
+      <div class="cttl">Training Volume By Date (lbs × reps)</div>
       <canvas id="VOLCH" height="170"></canvas>
     </div>
     <div class="cbox">
@@ -4158,7 +4188,7 @@ function renderHIST(ab){
     const hdr=document.createElement('div');
     hdr.className='hdtehdr';
     const headerDay=map[d][0]?.dn||new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long'});
-    hdr.textContent=`${fmtShortDate(d)} Â· ${headerDay}`;
+    hdr.textContent=`${fmtShortDate(d)} · ${headerDay}`;
     g.appendChild(hdr);
 
     // Group by exercise
@@ -4172,7 +4202,7 @@ function renderHIST(ab){
       const rows=exMap[ex].sort((a,b)=>a.sn-b.sn);
       const card=document.createElement('div');
       card.className='hexrow hexrow-editable';
-      const sets=rows.map(r=>`${r.w}Ã—${r.r}${r.e1rm?` (e1 ${r.e1rm})`:''}`).join(' Â· ');
+      const sets=rows.map(r=>`${r.w}×${r.r}${r.e1rm?` (e1 ${r.e1rm})`:''}`).join(' · ');
       const note=rows.find(r=>r.nt&&String(r.nt).trim());
       card.innerHTML=`
         <div><div class="hexname">${ex}</div><div class="hsets">${sets}${note?`<br><span style="color:var(--tx3)">Note: ${escHtml(note.nt)}</span>`:''}</div></div>
@@ -4185,9 +4215,9 @@ function renderHIST(ab){
   });
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // WEAK POINTS ANALYSIS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function renderWEAK(ab){
   const groups=['quads','hamstrings','calves','glutes','chest','back','biceps','triceps','delts'];
   const bpData={};
@@ -4228,7 +4258,7 @@ function renderWEAK(ab){
     h+=`<div class="wk-row">
       <div class="wk-label"><span class="wk-name">${s.group}</span><span class="wk-tag ${tagClr}">${tag}</span></div>
       <div class="wk-bar-bg"><div class="wk-bar-fill" style="width:${barW}%;background:${clr}"></div></div>
-      <div class="wk-stats">${s.sets} sets Â· ${(s.vol/1000).toFixed(1)}k lbs Â· ${s.exCount} exercises Â· ${s.weeksTrained} wks</div>
+      <div class="wk-stats">${s.sets} sets · ${(s.vol/1000).toFixed(1)}k lbs · ${s.exCount} exercises · ${s.weeksTrained} wks</div>
     </div>`;
   });
   h+='</div>';
@@ -4238,7 +4268,7 @@ function renderWEAK(ab){
       <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">Exercises with no weight increase for 3+ consecutive weeks.</div>`;
     stalledList.forEach(s=>{
       h+=`<div class="stall-card"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <div><strong>${s.ex}</strong> â€” stuck at ${s.weight} lbs since ${s.since}<br><span style="font-size:10px;color:var(--tx3)">Try: different rep range, tempo change, or swap to a variation</span></div>
+        <div><strong>${s.ex}</strong> — stuck at ${s.weight} lbs since ${s.since}<br><span style="font-size:10px;color:var(--tx3)">Try: different rep range, tempo change, or swap to a variation</span></div>
       </div>`;
     });
     h+='</div>';
@@ -4252,7 +4282,7 @@ function renderWEAK(ab){
     }
   });
   if(stalledList.length){
-    h+=`<li>For stalled lifts, try a <strong>deload week</strong> followed by a new rep scheme (e.g., switch from 5Ã—5 to 3Ã—8-10).</li>`;
+    h+=`<li>For stalled lifts, try a <strong>deload week</strong> followed by a new rep scheme (e.g., switch from 5×5 to 3×8-10).</li>`;
   }
   h+=`</ul></div>`;
 
@@ -4269,9 +4299,9 @@ function renderWEAK(ab){
   ab.innerHTML=h;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // STRENGTH-TO-BODYWEIGHT ANALYSIS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function renderSTRBW(ab){
   const bw=ST.profile?.bodyweight||225;
   const compoundLifts=[
@@ -4316,18 +4346,18 @@ function renderSTRBW(ab){
       </div>
       <div class="sbw-nums">
         <span>Best e1RM: <strong>${best.e1rm} lbs</strong></span>
-        <span>Ratio: <strong>${ratio.toFixed(2)}Ã—BW</strong></span>
+        <span>Ratio: <strong>${ratio.toFixed(2)}×BW</strong></span>
       </div>
       <div class="wk-bar-bg"><div class="wk-bar-fill" style="width:${pctFill}%;background:${tierClrs[tierIdx]}"></div></div>
       <div class="sbw-tiers">
-        ${lift.tier.map((t,i)=>`<span class="sbw-t${tierIdx===i?' active':''}" style="${tierIdx===i?'color:'+tierClrs[i]:''}">${(t).toFixed(2)}Ã—</span>`).join('')}
+        ${lift.tier.map((t,i)=>`<span class="sbw-t${tierIdx===i?' active':''}" style="${tierIdx===i?'color:'+tierClrs[i]:''}">${(t).toFixed(2)}×</span>`).join('')}
       </div>
       ${nextBw?`<div class="sbw-next">Next tier at <strong>${nextBw} lbs</strong> e1RM (+${nextBw-best.e1rm} lbs to go)</div>`:'<div class="sbw-next" style="color:var(--gold)">You\'ve reached elite level!</div>'}
     </div>`;
   });
 
   if(!hasData){
-    h+=`<div class="empty"><div class="eico">ðŸ‹ï¸</div>No compound lift data found. Log bench press, squats, or deadlifts to see your strength ratios.</div>`;
+    h+=`<div class="empty"><div class="eico">🏋️</div>No compound lift data found. Log bench press, squats, or deadlifts to see your strength ratios.</div>`;
   }
 
   h+='</div>';
@@ -4339,7 +4369,7 @@ function renderSTRBW(ab){
     const first=bwByWeek[bwWeeks[0]],last=bwByWeek[bwWeeks[bwWeeks.length-1]];
     const delta=last-first;
     h+=`<div style="font-size:12px;color:var(--tx2);margin-bottom:8px">
-      W${bwWeeks[0]}: ${first} lbs â†’ W${bwWeeks[bwWeeks.length-1]}: ${last} lbs
+      W${bwWeeks[0]}: ${first} lbs → W${bwWeeks[bwWeeks.length-1]}: ${last} lbs
       <span style="color:${delta>0?'var(--green)':'var(--red)'}">(${delta>0?'+':''}${delta.toFixed(1)} lbs)</span>
     </div>`;
     h+=`<div class="sbw-bw-chart">`;
@@ -4359,15 +4389,15 @@ function renderSTRBW(ab){
   ab.innerHTML=h;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // FIREBASE SYNC
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
 
 function fbSaveSettings(){
   if(!fbReady)return;
   try{
-    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
+    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['wed','fri','sun'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
     fbRef('settings').set(data);
   }catch(e){console.warn('FB settings write failed:',e)}
 }
@@ -4496,9 +4526,9 @@ function fbListenForChanges(){
   }catch(e){console.warn('FB listener failed:',e)}
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 // INIT
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════
 loadST();
 function dedupLogsIfNeeded(){
   if(!ST.logs||!ST.logs.length)return;
