@@ -640,45 +640,28 @@ select{color-scheme:dark}
       <button class="mx" onclick="document.getElementById('DLSET').style.display='none'">&times;</button>
     </div>
 
-    <div class="dl-modal-row">
-      <div>
-        <div class="dl-modal-label">Deload every</div>
-        <div class="dl-modal-sub">How many weeks between deloads (Schoenfeld 3:1 = every 3)</div>
+    <!-- Session counter display -->
+    <div style="background:var(--s2);border-radius:8px;padding:16px;margin-bottom:16px;text-align:center">
+      <div style="font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Sessions Since Last Deload</div>
+      <div style="font-family:var(--fd);font-size:40px;font-weight:900;color:var(--tx)" id="DL_SESS_COUNT">0</div>
+      <div style="font-size:12px;color:var(--tx3);margin-top:2px">Deload suggested at <strong style="color:var(--tx2)">12 sessions</strong></div>
+      <div style="margin-top:12px;height:8px;background:var(--b2);border-radius:4px;overflow:hidden">
+        <div id="DL_SESS_BAR" style="height:100%;background:var(--grn);border-radius:4px;transition:width .4s;width:0%"></div>
       </div>
-      <select class="dl-sel" id="DL_EVERY" onchange="ST.deloadEvery=parseInt(this.value)||3;saveST();renderDeloadWkGrid();renderHome()">
-        <option value="2">Every 2 wks</option>
-        <option value="3" selected>Every 3 wks</option>
-        <option value="4">Every 4 wks</option>
-        <option value="5">Every 5 wks</option>
-        <option value="6">Every 6 wks</option>
-      </select>
     </div>
 
-    <div class="dl-modal-row" style="flex-direction:column;align-items:flex-start">
-      <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
-        <div>
-          <div class="dl-modal-label">Manual overrides</div>
-          <div class="dl-modal-sub">Tap any week to force it ON or OFF as a deload. Tap again to reset to auto.</div>
-        </div>
-        <button style="font-size:11px;color:var(--tx3);background:var(--s2);border:1px solid var(--b2);border-radius:4px;padding:5px 10px;cursor:pointer" onclick="ST.deloadOverrides={};saveST();renderDeloadWkGrid();renderHome()">Reset all</button>
-      </div>
-      <div class="dl-wk-grid" id="DL_WK_GRID" style="width:100%;margin-top:10px"></div>
-      <div style="display:flex;gap:12px;margin-top:8px;font-size:10px;color:var(--tx3)">
-        <span><span style="color:var(--red)">■</span> Auto deload</span>
-        <span><span style="color:#fff">■</span> Forced ON</span>
-        <span style="opacity:.6">■ Forced OFF</span>
-      </div>
-    </div>
+    <button onclick="jeffDismissDeload();document.getElementById('DLSET').style.display='none'" style="width:100%;padding:11px;background:var(--red);border:none;border-radius:4px;color:#fff;font-family:var(--fd);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;margin-bottom:16px">Mark Deload Complete — Reset Counter</button>
 
     <div class="dl-rules">
-      <div class="dl-rules-hdr">Deload protocol (Schoenfeld 2017)</div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">📅</span><span>2 full-body sessions only — <strong>Monday</strong> (Full Body A) + <strong>Thursday</strong> (Full Body B)</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">⚖️</span><span>Weights at <strong>~60–70%</strong> of your normal working loads</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">📉</span><span><strong>~50% of normal weekly sets</strong> — about half the volume</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">🎯</span><span>All sets stop <strong>4–5 reps short of failure</strong> (RIR 4–5) — no grinding</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>No 3-sec eccentrics</strong> — smooth, normal tempo only</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>No loaded interset stretches</strong> — skip the calf stretch holds etc.</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>No drop sets</strong> — straight sets only</span></div>
+      <div class="dl-rules-hdr">Jeff's Deload Protocol — Every 12 Sessions</div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">🔄</span><span>Triggered by <strong>session count, not the calendar</strong>. Some weeks you get 2 sessions in, some 4 — the count tracks that honestly.</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">⚖️</span><span>Drop to <strong>~60%</strong> of your normal working weight</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">📉</span><span><strong>2 sets per exercise</strong> instead of 3–4</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">🎯</span><span>Stop <strong>4–5 reps short</strong> of your normal stopping point — no grinding, no failure</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">💪</span><span>Diamond push-ups: fixed <strong>15 reps</strong> — no AMRAP sets on deload</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">✅</span><span>Do <strong>all 4 sessions</strong> — deload is active recovery, not a rest week. Keep the movement patterns.</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>Skip optional exercises</strong> — leg extension, seated leg curl, lat pulldown</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">⚡</span><span><strong>Deload early</strong> regardless of session count if: joints feel beat up, sleep is degraded, or motivation is noticeably low for 2 sessions in a row. At 50 that signal is worth respecting immediately.</span></div>
     </div>
 
     <button class="btn" style="width:100%;margin-top:16px" onclick="document.getElementById('DLSET').style.display='none'">Done</button>
@@ -724,7 +707,7 @@ select{color-scheme:dark}
   </button>
   <button class="deload-cfg-btn" id="DLCFGBTN" onclick="openDeloadSettings()">
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-    <span id="DLCFGLAB">Deload Settings — every 3 wks · W3, W6, W9...</span>
+    <span id="DLCFGLAB">Deload — 0/12 sessions · every 12 sessions</span>
   </button>
   <div class="pr-board" id="PRB"></div>
   <div id="FATIGUE" class="fatigue-card"></div>
@@ -941,7 +924,8 @@ function getBlockPhase(wk){
 const STIMULUS_TARGET={quads:10,hamstrings:8,calves:6,glutes:6,chest:8,back:10,biceps:8,triceps:8,delts:8};
 const STIMULUS_CEILING={quads:18,hamstrings:16,calves:14,glutes:12,chest:16,back:18,biceps:14,triceps:14,delts:14};
 const VOLUME_CEILINGS={quads:22,hamstrings:20,calves:18,glutes:14,chest:18,back:20,biceps:18,triceps:18,delts:18};
-const WEEKLY_TARGETS={quads:{target:16,ceiling:22,status:'lagging',days:'Mon/Thu/Sun'},hamstrings:{target:14,ceiling:20,status:'lagging',days:'Mon/Thu/Sun'},calves:{target:12,ceiling:18,status:'lagging',days:'Mon/Thu/Sun'},glutes:{target:10,ceiling:14},back:{target:14,ceiling:20,status:'maintained',days:'Tue'},biceps:{target:12,ceiling:18,status:'maintained',days:'Wed/Sat'},triceps:{target:12,ceiling:18,status:'maintained',days:'Wed/Sat'},chest:{target:12,ceiling:18,status:'reduced',days:'Tue/Sat'},delts:{target:12,ceiling:18,status:'maintained',days:'Wed/Sat'}};
+// Jeff's targets — 1 session per muscle group per week, appropriate for a 50-year-old
+const WEEKLY_TARGETS={quads:{target:10,ceiling:16,status:'maintained',days:'Session 4'},hamstrings:{target:10,ceiling:16,status:'maintained',days:'Session 4'},calves:{target:8,ceiling:12,status:'maintained',days:'Session 4'},glutes:{target:8,ceiling:12,status:'maintained',days:'Session 4'},back:{target:12,ceiling:18,status:'maintained',days:'Session 2'},biceps:{target:8,ceiling:14,status:'maintained',days:'Session 2'},triceps:{target:8,ceiling:14,status:'maintained',days:'Session 3'},chest:{target:10,ceiling:16,status:'maintained',days:'Session 3'},delts:{target:12,ceiling:18,status:'maintained',days:'Session 1'},core:{target:8,ceiling:12,status:'maintained',days:'Session 1'}};
 
 // ═══════════════════════════════════════════════════════════
 // HYPERTROPHY SCIENCE ENGINE (Performance-driven, not RPE-dependent)
@@ -1555,34 +1539,22 @@ function renderRestDayBtns(){
 function openDeloadSettings(){
   const el=document.getElementById('DLSET');
   if(!el)return;
-  const sel=document.getElementById('DL_EVERY');
-  if(sel)sel.value=ST.deloadEvery||3;
-  renderDeloadWkGrid();
+  // Populate live session count and progress bar
+  const since=jeffSessionsSinceDeload();
+  const total=jeffSessionsCompleted();
+  const countEl=document.getElementById('DL_SESS_COUNT');
+  const barEl=document.getElementById('DL_SESS_BAR');
+  if(countEl)countEl.textContent=since;
+  if(barEl)barEl.style.width=Math.min(100,Math.round(since/12*100))+'%';
+  if(barEl)barEl.style.background=since>=12?'var(--red)':'var(--grn)';
   el.style.display='flex';
 }
 function renderDeloadWkGrid(){
-  const grid=document.getElementById('DL_WK_GRID');
-  if(!grid)return;
-  const every=ST.deloadEvery||3;
-  const ov=ST.deloadOverrides||{};
-  let h='';
-  for(let w=1;w<=24;w++){
-    const autoDeload=Number.isInteger(w)&&w>0&&w%every===0;
-    const forced=ov[w];
-    let cls='dl-wk-pill';
-    let label=`W${w}`;
-    if(forced===true){cls+=' on';label=`W${w}✓`;}
-    else if(forced===false){cls+=' off';}
-    else if(autoDeload){cls+=' auto';}
-    h+=`<button class="${cls}" onclick="toggleDeloadOverride(${w})">${label}</button>`;
-  }
-  grid.innerHTML=h;
-  // Also update the summary label
+  // Jeff uses session-count deloads — just update the button label
   const lab=document.getElementById('DLCFGLAB');
   if(lab){
-    const wks=[];
-    for(let w=1;w<=24;w++){if(isDeloadWk(w))wks.push('W'+w);}
-    lab.textContent=`Deload Settings — every ${every} wks · ${wks.slice(0,5).join(', ')}${wks.length>5?'...':''}`;
+    const since=jeffSessionsSinceDeload();
+    lab.textContent=`Deload — ${since}/12 sessions · every 12 sessions`;
   }
 }
 function toggleDeloadOverride(wk){
@@ -1832,8 +1804,8 @@ function renderHome(){
   const ws=document.getElementById('WS');ws.innerHTML='';
   for(let w=1;w<=24;w++){
     const p=document.createElement('button');
-    p.className='wpill'+(w===ST.wk?' on':'')+(DLOADS.has(w)?' dl':'');
-    p.textContent=DLOADS.has(w)?`W${w}🔄`:`W${w}`;
+    p.className='wpill'+(w===ST.wk?' on':'');
+    p.textContent=`Block ${w}`;
     const ww=w;p.onclick=()=>{ST.wk=ww;syncRestDaysFromSchedule(ww);saveST();renderHome();renderBodyTracker()};
     ws.appendChild(p);
   }
@@ -2308,7 +2280,7 @@ function renderSmartProgram(){
     <label style="font-size:11px;color:var(--tx3);display:block;margin-bottom:4px">Week</label>
     <select class="custom-ex-input" style="width:100%;max-width:120px" onchange="ST.smartWk=parseInt(this.value);renderSmartProgram()">`;
   for(let w=1;w<=24;w++){
-    h+=`<option value="${w}" ${w===wk?'selected':''}>W${w}${DLOADS.has(w)?' (Deload)':''}</option>`;
+    h+=`<option value="${w}" ${w===wk?'selected':''}>Block ${w}</option>`;
   }
   h+=`</select></div>`;
 
@@ -2634,7 +2606,7 @@ function openWO(dk){
   const dlBanner=document.getElementById('WODLB');
   if(dlBanner)dlBanner.style.display='none'; // Jeff uses session-count deloads, not week-based
   const wws=document.getElementById('WWS');
-  if(wws){wws.innerHTML=Array.from({length:24},(_,i)=>`<option value="${i+1}" ${i+1===ST.wk?'selected':''}>W${i+1}${isDeloadWk(i+1)?' 🔄':''}</option>`).join('');wws.value=ST.wk}
+  if(wws){wws.innerHTML=Array.from({length:24},(_,i)=>`<option value="${i+1}" ${i+1===ST.wk?'selected':''}>Block ${i+1}</option>`).join('');wws.value=ST.wk}
   renderWO();
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
   document.getElementById('pg-wo').classList.add('on');
