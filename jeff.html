@@ -942,24 +942,41 @@ const WEEKLY_TARGETS={
 // Stimulus = tension × volume × proximity (estimated from e1RM)
 // Fatigue = volume load × intensity × systemic cost
 // ═══════════════════════════════════════════════════════════
-const MUSCLE_MODEL=[{keys:['Bench','Press'],muscles:{chest:.6,triceps:.25,delts:.15},len:1},
-  {keys:['Incline'],muscles:{chest:.55,triceps:.2,delts:.25},len:1.05},
-  {keys:['Fly','Pec Deck'],muscles:{chest:.9},len:1.1},
-  {keys:['Pull-Up','Pullup','Pull Up','Lat Pulldown'],muscles:{back:.6,biceps:.25,delts:.15},len:1.05},
-  {keys:['Row','Pullover'],muscles:{back:.7,biceps:.2,delts:.1},len:1.05},
-  {keys:['Face Pull','Rear Delt'],muscles:{delts:.85},len:1},
-  {keys:['Hack Squat','Leg Press','Belt Squat','Pendulum Squat','Bulgarian Split'],muscles:{quads:.7,glutes:.25,hamstrings:.05},len:1},
-  {keys:['Leg Extension'],muscles:{quads:.95},len:1.08},
-  {keys:['Single Leg Press'],muscles:{quads:.65,glutes:.3},len:1.05},
-  {keys:['RDL','Romanian Deadlift'],muscles:{hamstrings:.6,glutes:.3,back:.1},len:1.1},
-  {keys:['Stiff Leg Deadlift','Nordic','Leg Curl'],muscles:{hamstrings:.9},len:1.05},
-  {keys:['Curl'],muscles:{biceps:.8},len:1},
-  {keys:['Incline Dumbbell Curl','Incline Curl'],muscles:{biceps:.95},len:1.1},
-  {keys:['Hammer Curl'],muscles:{biceps:.5},len:1},
-  {keys:['Close Grip','Skull','Pushdown','Extension','Overhead Extension','Dip'],muscles:{triceps:.9},len:1},
+const MUSCLE_MODEL=[
+  // Core — before 'Bench/Press' so Pallof Press doesn't hit chest
+  {keys:['Plank','Crunch','Pallof','Sit-Up','Hollow','Ab Wheel'],muscles:{core:1},len:1},
+  // Delts — before generic 'Press' so OHP/Arnold don't hit chest
+  {keys:['Overhead Press','Arnold Press','Military Press','Shoulder Press'],muscles:{delts:.7,triceps:.2,chest:.1},len:1},
+  {keys:['Face Pull','Rear Delt Fly','Rear Delt Row','Rear Delt'],muscles:{delts:.85},len:1},
   {keys:['Lateral Raise'],muscles:{delts:.95},len:1.05},
+  // Chest — specific patterns, not generic 'Press'
+  {keys:['Bench Press','Chest Press'],muscles:{chest:.6,triceps:.25,delts:.15},len:1},
+  {keys:['Incline Press','Incline Bench'],muscles:{chest:.55,triceps:.2,delts:.25},len:1.05},
+  {keys:['Diamond Push-Up','Diamond Push'],muscles:{triceps:.75,chest:.15,delts:.1},len:1},
+  {keys:['Push-Up','Pushup'],muscles:{chest:.6,triceps:.25,delts:.15},len:1},
+  {keys:['Fly','Pec Deck','Flat Fly','Chest Fly'],muscles:{chest:.9},len:1.1},
+  // Back — Trap Bar Deadlift, Shrug, Rows
+  {keys:['Trap Bar Deadlift'],muscles:{hamstrings:.45,quads:.25,back:.2,glutes:.1},len:1.05},
+  {keys:['Trap Bar Shrug','Shrug'],muscles:{back:.9},len:1},
+  {keys:['Pull-Up','Pullup','Pull Up','Lat Pulldown','Pulldown'],muscles:{back:.6,biceps:.25,delts:.15},len:1.05},
+  {keys:['Single-Arm Row','Inverted Row','Row','Pullover'],muscles:{back:.7,biceps:.2,delts:.1},len:1.05},
+  // Legs
+  {keys:['Bulgarian Split','Split Squat','Step-Up'],muscles:{quads:.6,glutes:.3,hamstrings:.1},len:1},
+  {keys:['Hack Squat','Leg Press','Belt Squat','Pendulum Squat'],muscles:{quads:.7,glutes:.25,hamstrings:.05},len:1},
+  {keys:['Squat'],muscles:{quads:.6,glutes:.3,hamstrings:.1},len:1},
+  {keys:['Leg Extension'],muscles:{quads:.95},len:1.08},
+  {keys:['Romanian Deadlift','RDL'],muscles:{hamstrings:.6,glutes:.3,back:.1},len:1.1},
+  {keys:['Stiff-Leg Deadlift','Stiff Leg Deadlift','Stiff Leg','Nordic','Leg Curl'],muscles:{hamstrings:.9},len:1.05},
   {keys:['Calf Raise'],muscles:{calves:1},len:1},
-  {keys:['Hip Abductor','Hip Thrust'],muscles:{glutes:.9},len:1}];
+  {keys:['Hip Abductor','Hip Thrust','Glute Bridge'],muscles:{glutes:.9},len:1},
+  // Biceps — after 'Leg Curl' so no conflict; 'Incline Curl' before generic 'Curl'
+  {keys:['Incline Curl','Incline Dumbbell Curl'],muscles:{biceps:.95},len:1.1},
+  {keys:['Hammer Curl'],muscles:{biceps:.5},len:1},
+  {keys:['Curl'],muscles:{biceps:.8},len:1},
+  // Triceps
+  {keys:['Skull Crusher','Skull','Pushdown','Close Grip','Overhead Tricep','Tricep Extension'],muscles:{triceps:.9},len:1},
+  {keys:['Dip'],muscles:{triceps:.6,chest:.3,delts:.1},len:1},
+];
 function getMuscleWeights(exName){
   const n=(exName||'').toLowerCase();
   for(const {keys,muscles} of MUSCLE_MODEL){
@@ -1028,7 +1045,7 @@ function getSetStimulusUnits(l,bestE1RM){
   const intensityRatio=e1rm?w/e1rm:0.8;
   const tensionFactor=intensityRatio>=0.92?1.1:intensityRatio>=0.85?1.0:intensityRatio>=0.75?0.9:0.7;
   const units=(effReps/5)*prox*tensionFactor;
-  const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
+  const out={core:0,quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
   Object.keys(mw).forEach(m=>{if(out[m]!=null)out[m]=(mw[m]||0)*lb*units;});
   return out;
 }
@@ -1055,7 +1072,7 @@ function getSetFatigueCost(l,bestE1RM){
 function getRepBucket(r){return r<=6?0:r<=12?1:r<=20?2:3}
 // Weekly stimulus per muscle (EffectiveReps × proximity × tension — primary hypertrophy driver)
 function getWeeklyStimulus(wk){
-  const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
+  const out={core:0,quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
   const logs=ST.logs.filter(l=>l.wk===wk);
   logs.forEach(l=>{
     const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
@@ -1066,7 +1083,7 @@ function getWeeklyStimulus(wk){
 }
 // Local fatigue per muscle (volume load × intensity × multiplier × muscle contribution)
 function getLocalFatiguePerMuscle(wk){
-  const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
+  const out={core:0,quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
   const logs=ST.logs.filter(l=>l.wk===wk);
   logs.forEach(l=>{
     const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
@@ -1164,7 +1181,7 @@ function getMedianRIR(wk){
 }
 // Effective reps per muscle (last-5-reps model: Σ max(0, 5−RIR) × muscle weight)
 function getEffectiveRepsPerMuscle(wk){
-  const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
+  const out={core:0,quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
   const logs=ST.logs.filter(l=>l.wk===wk);
   logs.forEach(l=>{
     const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
@@ -1220,7 +1237,7 @@ function getCoreMetrics(wk){
 }
 // Backward compat: hard sets (used by some UI)
 function getWeeklyHardSets(wk){
-  const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
+  const out={core:0,quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
   const logs=ST.logs.filter(l=>l.wk===wk);
   logs.forEach(l=>{
     const bestE1RM=getBestE1RMForExercise(l.ex,4,wk);
@@ -2069,7 +2086,7 @@ function getSmartTipForExercise(ex,idx,allExs,dk,wk,stalledMap,actual,fatigueSco
 }
 
 function computeSmartRecommendations(wk){
-  const groups=['quads','hamstrings','calves','glutes','chest','back','biceps','triceps','delts'];
+  const groups=['core','quads','hamstrings','calves','chest','back','biceps','triceps','delts'];
   const targ=WEEKLY_TARGETS;
   const actual=getActualSets(wk);
   const prescribed=getPrescribedSets();
@@ -2092,8 +2109,8 @@ function computeSmartRecommendations(wk){
   let dayPlan=[];
 
   if(isDeload){
-    weekVerdict='Deload week (Schoenfeld 3:1). Mon + Thu full-body only · 60–70% load · ~50% sets · RIR 4–5 · No eccentrics/stretches/drops.';
-    recs.push({type:'info',title:'Deload protocol (Schoenfeld 2017)',desc:`Reduce load to ~${Math.round(getDeloadPct()*100)}%, halve sets, stop 4–5 reps short of failure. No 3-sec eccentrics, no loaded interset stretches, no drop sets.`});
+    weekVerdict='Deload week · ~60% load · 2 sets per exercise · Stop 4–5 reps short · No AMRAP · Skip optional exercises · All 4 sessions.';
+    recs.push({type:'info',title:"Jeff's Deload Protocol",desc:`Drop to ~60% of working weight, 2 sets per exercise, stop 4–5 reps short of failure. No AMRAP on diamond push-ups (fixed 15). Skip optional exercises. Deload is active recovery — hit all 4 sessions.`});
   }else{
   const fatigueNorm=fatigueScore;
   if(fatigueNorm>=80){
@@ -2294,18 +2311,18 @@ function renderSmartProgram(){
   let h='';
 
   h+=`<div class="smart-wk-sel" style="margin-bottom:12px">
-    <label style="font-size:11px;color:var(--tx3);display:block;margin-bottom:4px">Week</label>
+    <label style="font-size:11px;color:var(--tx3);display:block;margin-bottom:4px">Block</label>
     <select class="custom-ex-input" style="width:100%;max-width:120px" onchange="ST.smartWk=parseInt(this.value);renderSmartProgram()">`;
   for(let w=1;w<=24;w++){
     h+=`<option value="${w}" ${w===wk?'selected':''}>Block ${w}</option>`;
   }
   h+=`</select></div>`;
 
-  h+=`<div class="smart-card"><div class="smart-hdr">${bp.name} — W${wk}</div>
+  h+=`<div class="smart-card"><div class="smart-hdr">${bp.name} — Block ${wk}</div>
     <div class="smart-phase">${bp.phase}</div>
     ${weekVerdict?`<div class="smart-verdict">${weekVerdict}</div>`:''}
-    ${weeksLogged>0?`<div class="smart-meta">Global: ${globalState||'—'} → ${globalResponse||'—'}. ${weeksLogged} week${weeksLogged!==1?'s':''} data. Engine: stimulus, fatigue, adaptation. RPE optional.</div>`:''}
-    <div class="smart-disclaimer">Smart Program is <strong>separate from your prescribed program</strong>. It adapts within each session (same-body-part pre-fatigue) and week-to-week. When it says "Recommended: fewer sets" or "swap," that's our algorithm — a reference you can follow or ignore. Your program stays intact; this is the science layer.</div>
+    ${weeksLogged>0?`<div class="smart-meta">Global: ${globalState||'—'} → ${globalResponse||'—'}. ${weeksLogged} block${weeksLogged!==1?'s':''} data. Engine: stimulus, fatigue, adaptation. RPE optional.</div>`:''}
+    <div class="smart-disclaimer">Smart Program is <strong>separate from your prescribed program</strong>. It adapts within each session (same-body-part pre-fatigue) and block-to-block. When it says "Recommended: fewer sets" or "swap," that's our algorithm — a reference you can follow or ignore. Your program stays intact; this is the science layer.</div>
   </div>`;
 
   if(core&&weeksLogged>=1){
@@ -2313,7 +2330,7 @@ function renderSmartProgram(){
     h+=`<div class="smart-card"><div class="smart-hdr">4 Core Metrics (foundation — not RPE)</div>
       <div class="smart-sub">e1RM trend: ${cm.e1rmTrend?.trend||'—'} (${(cm.e1rmTrend?.pctChange||0).toFixed(1)}%). Systemic fatigue: ${(cm.systemicFatigue||0).toLocaleString()}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:8px;font-size:10px">
-        ${['quads','hamstrings','chest','back','biceps','triceps','delts'].map(m=>`
+        ${['core','quads','hamstrings','chest','back','biceps','triceps','delts'].map(m=>`
           <div style="background:var(--s2);padding:8px;border-radius:4px">
             <strong>${m}</strong><br/>
             Stimulus: ${(cm.stimulus[m]||0).toFixed(1)}<br/>
