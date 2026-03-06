@@ -1842,7 +1842,7 @@ const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbyKSyFyEdT
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
   cueCollapsed:{},restDays:['wed','fri','sun'],weekSchedules:{},weekOverride:{},weekAnchors:{},removedExercises:{},workoutsSinceBackupReminder:0,
-  deloadEvery:999,deloadOverrides:{},lastDeloadAt:0,
+  deloadEvery:999,deloadOverrides:{},lastDeloadAt:0,cueOverrides:{},
   profile:{name:'Jeff Puffer',age:50,bodyweight:200,bodyweightByWeek:{}}
 };
 let CHS={};
@@ -1850,7 +1850,7 @@ let CHS={};
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('jeffv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['wed','fri','sun']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.removedExercises=p.removedExercises||{};ST.addedExercises=p.addedExercises||{};ST.deloadEvery=999;ST.deloadOverrides={};ST.lastDeloadAt=p.lastDeloadAt||0;ST.profile=p.profile||{name:'Jeff Puffer',age:50,bodyweight:200,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
+  try{const s=localStorage.getItem('jeffv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['wed','fri','sun']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.removedExercises=p.removedExercises||{};ST.addedExercises=p.addedExercises||{};ST.deloadEvery=999;ST.deloadOverrides={};ST.lastDeloadAt=p.lastDeloadAt||0;ST.cueOverrides=p.cueOverrides||{};ST.profile=p.profile||{name:'Jeff Puffer',age:50,bodyweight:200,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('jeffCustomEx');
@@ -2644,9 +2644,15 @@ function openWO(dk){
   }else{
     // If we're skipping a stale WIP, clear it so it doesn't interfere again
     if(wip&&finalizedLogs.length>0)clearWorkoutProgress();
+    const cueOvr=ST.cueOverrides||{};
     ST.awExs=d.exercises.map((ex,i)=>{
       const ovr=getOvr(dk,i,ST.wk);
-      return {...ex, displayName: ovr||ex.name, templateIdx: i};
+      const displayName=ovr||ex.name;
+      // Apply persistent cue/note overrides keyed by the resolved exercise name
+      const co=cueOvr[displayName]||{};
+      return {...ex, displayName, templateIdx: i,
+        cue: co.cue!==undefined?co.cue:ex.cue,
+        note: co.note!==undefined?co.note:ex.note};
     });
 
     // Pre-fill from logs if this day was already logged this week
@@ -3311,8 +3317,15 @@ function saveCueEditor(){
   const exId=document.getElementById('ECN_ID').value;
   const ex=ST.awExs.find(x=>x.id===exId);
   if(!ex)return closeCueEditor();
-  ex.cue=(document.getElementById('ECN_CUE').value||'').trim();
-  ex.note=(document.getElementById('ECN_NOTE').value||'').trim();
+  const cue=(document.getElementById('ECN_CUE').value||'').trim();
+  const note=(document.getElementById('ECN_NOTE').value||'').trim();
+  ex.cue=cue;
+  ex.note=note;
+  // Persist permanently by exercise name so it survives week changes
+  const exName=ex.displayName||ex.name;
+  if(!ST.cueOverrides)ST.cueOverrides={};
+  ST.cueOverrides[exName]={cue,note};
+  saveST();
   saveWorkoutProgress();
   closeCueEditor();
   renderWO();
