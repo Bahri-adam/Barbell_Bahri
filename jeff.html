@@ -362,6 +362,36 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .wk-stats{font-size:10px;color:var(--tx3);font-family:var(--fm)}
 .wk-recs{margin:0;padding-left:16px;font-size:12px;color:var(--tx2);line-height:1.7}
 .wk-recs li{margin-bottom:4px}
+/* ── GOALS ── */
+.goals-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:16px}
+.goals-sum-cell{background:var(--s1);border:1px solid var(--b1);border-radius:6px;padding:8px 4px;text-align:center}
+.goals-sum-num{font-family:var(--fd);font-size:22px;font-weight:900}
+.goals-sum-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);margin-top:2px}
+.goals-session-blk{margin-bottom:20px}
+.goals-session-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--s1);border-radius:6px;margin-bottom:8px;border-left:3px solid var(--b2)}
+.goals-session-name{font-family:var(--fd);font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.goals-session-focus{font-size:11px;color:var(--tx3)}
+.goals-ex-card{background:var(--s1);border:1px solid var(--b1);border-radius:6px;padding:12px 14px;margin-bottom:6px}
+.goals-ex-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
+.goals-ex-name{font-size:13px;font-weight:600;color:var(--tx);line-height:1.3;flex:1}
+.goals-tier-badge{flex-shrink:0;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.goals-tier-badge.below{background:var(--s3);color:var(--tx3)}
+.goals-tier-badge.avg{background:rgba(100,100,120,.2);color:#aaa}
+.goals-tier-badge.good{background:rgba(42,157,143,.18);color:#2a9d8f}
+.goals-tier-badge.advanced{background:rgba(233,196,106,.18);color:#e9b84a}
+.goals-tier-badge.elite{background:rgba(230,57,70,.18);color:#e63946}
+.goals-tier-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;margin-bottom:8px}
+.goals-tier-seg{flex:1;border-radius:3px;background:var(--s3);transition:background .3s}
+.goals-tier-seg.filled.avg{background:#666}
+.goals-tier-seg.filled.good{background:#2a9d8f}
+.goals-tier-seg.filled.advanced{background:#e9b84a}
+.goals-tier-seg.filled.elite{background:#e63946}
+.goals-ex-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--tx3)}
+.goals-ex-best{color:var(--tx2);font-weight:500}
+.goals-ex-next{color:var(--grn2)}
+.goals-qual-tiers{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:6px}
+.goals-qual-cell{background:var(--s2);border-radius:4px;padding:8px 10px;font-size:11px;line-height:1.4}
+.goals-qual-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
 .stall-card{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:rgba(244,162,97,.08);border:1px solid rgba(244,162,97,.2);border-radius:6px;margin-bottom:6px;font-size:11px;color:var(--tx2);line-height:1.4}
 .sbw-row{background:var(--s2);border:1px solid var(--b1);border-radius:6px;padding:10px 12px;margin-bottom:8px}
 .sbw-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
@@ -1440,6 +1470,72 @@ function getBodyPartFromMuscle(m){
 const BODY_PART_OPTIONS=[{v:'chest',l:'Chest'},{v:'back',l:'Back'},{v:'quads',l:'Quads'},{v:'hamstrings',l:'Hamstrings'},{v:'calves',l:'Calves'},{v:'glutes',l:'Glutes'},{v:'biceps',l:'Biceps'},{v:'triceps',l:'Triceps'},{v:'delts',l:'Delts'},{v:'core',l:'Core'}];
 
 const DAY_NAMES={mon:'Session 1',tue:'Session 2',wed:'Rest',thu:'Session 3',fri:'Rest',sat:'Session 4',sun:'Rest'};
+
+// ═══════════════════════════════════════════════════════════
+// JEFF STRENGTH STANDARDS — Age-adjusted for 50 yrs / 240 lbs BW
+// compare: 'e1rm' = estimated 1RM, 'weight' = best working weight,
+//          'reps' = best reps logged, 'qual' = qualitative reference
+// ═══════════════════════════════════════════════════════════
+const JEFF_GOALS=[
+  {key:'mon',name:'Session 1',focus:'Shoulders & Core',color:'#c77b00',exercises:[
+    {name:'Barbell Overhead Press',compare:'e1rm',unit:'lbs',
+      tiers:[{l:'Average',v:120,d:'0.5× BW'},{l:'Good',v:168,d:'0.7× BW'},{l:'Advanced',v:216,d:'0.9× BW'},{l:'Elite',v:264,d:'1.1× BW'}]},
+    {name:'DB Arnold Press',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:35,d:'35s × 10–12'},{l:'Good',v:50,d:'50s × 10–12'},{l:'Advanced',v:65,d:'65s × 10–12'},{l:'Elite',v:80,d:'80s × 10–12'}]},
+    {name:'DB Lateral Raise',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:20,d:'20s × 12–15'},{l:'Good',v:30,d:'30s × 12–15'},{l:'Advanced',v:40,d:'40s × 12–15'},{l:'Elite',v:50,d:'50s × 12–15'}]},
+    {name:'DB Rear Delt Fly',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:20,d:'20s × 15–20'},{l:'Good',v:30,d:'30s × 15–20'},{l:'Advanced',v:40,d:'40s × 15–20'},{l:'Elite',v:50,d:'50s × 15–20'}]},
+    {name:'Face Pull',compare:'weight',unit:'lbs',
+      tiers:[{l:'Average',v:50,d:'50 lbs × 15–20'},{l:'Good',v:80,d:'80 lbs × 15–20'},{l:'Advanced',v:110,d:'110 lbs × 15–20'},{l:'Elite',v:140,d:'140 lbs × 15–20'}]},
+    {name:'Weighted Plank',compare:'qual',
+      tiers:[{l:'Average',d:'25 lb plate / 30 sec'},{l:'Good',d:'45 lb plate / 30 sec'},{l:'Advanced',d:'45 lb plate / 60 sec'},{l:'Elite',d:'45 lb plate / 90 sec'}]},
+    {name:'Cable Crunch',compare:'weight',unit:'lbs',
+      tiers:[{l:'Average',v:25,d:'25 lbs × 15'},{l:'Good',v:45,d:'45 lbs × 15'},{l:'Advanced',v:45,d:'45 lbs × 20'},{l:'Elite',v:70,d:'70 lbs × 15'}]},
+    {name:'Pallof Press',compare:'qual',
+      tiers:[{l:'Average',d:'Light band × 12'},{l:'Good',d:'Medium band × 12'},{l:'Advanced',d:'Heavy band × 12'},{l:'Elite',d:'Heavy band + 1 sec pause × 12'}]}
+  ]},
+  {key:'tue',name:'Session 2',focus:'Back & Biceps',color:'#1a6b3c',exercises:[
+    {name:'Trap Bar Deadlift',compare:'e1rm',unit:'lbs',
+      tiers:[{l:'Average',v:240,d:'1.0× BW'},{l:'Good',v:312,d:'1.3× BW'},{l:'Advanced',v:384,d:'1.6× BW'},{l:'Elite',v:456,d:'1.9× BW'}]},
+    {name:'Trap Bar Shrug',compare:'weight',unit:'lbs',
+      tiers:[{l:'Average',v:240,d:'240 lbs × 12'},{l:'Good',v:312,d:'312 lbs × 12'},{l:'Advanced',v:384,d:'384 lbs × 12'},{l:'Elite',v:456,d:'456 lbs × 12'}]},
+    {name:'DB Single-Arm Row',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:60,d:'60s × 10'},{l:'Good',v:90,d:'90s × 10'},{l:'Advanced',v:110,d:'110s × 10'},{l:'Elite',v:130,d:'130s × 10'}]},
+    {name:'Inverted Row',compare:'qual',
+      tiers:[{l:'Average',d:'Feet flat, 3×10'},{l:'Good',d:'Feet elevated, 3×10'},{l:'Advanced',d:'Weighted vest 25 lbs × 10'},{l:'Elite',d:'Weighted vest 45 lbs × 10'}]},
+    {name:'DB Incline Curl',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:25,d:'25s × 10'},{l:'Good',v:35,d:'35s × 10'},{l:'Advanced',v:45,d:'45s × 10'},{l:'Elite',v:55,d:'55s × 10'}]},
+    {name:'Hammer Curl',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:30,d:'30s × 12'},{l:'Good',v:45,d:'45s × 12'},{l:'Advanced',v:55,d:'55s × 12'},{l:'Elite',v:65,d:'65s × 12'}]}
+  ]},
+  {key:'thu',name:'Session 3',focus:'Chest & Triceps',color:'#6a1b9a',exercises:[
+    {name:'Barbell Bench Press',compare:'e1rm',unit:'lbs',
+      tiers:[{l:'Average',v:192,d:'0.8× BW'},{l:'Good',v:240,d:'1.0× BW'},{l:'Advanced',v:288,d:'1.2× BW'},{l:'Elite',v:336,d:'1.4× BW'}]},
+    {name:'DB Incline Press',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:60,d:'60s × 10'},{l:'Good',v:80,d:'80s × 10'},{l:'Advanced',v:95,d:'95s × 10'},{l:'Elite',v:110,d:'110s × 10'}]},
+    {name:'DB Flat Fly',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:30,d:'30s × 12'},{l:'Good',v:45,d:'45s × 12'},{l:'Advanced',v:55,d:'55s × 12'},{l:'Elite',v:65,d:'65s × 12'}]},
+    {name:'Diamond Push-Ups',compare:'reps',unit:'reps',
+      tiers:[{l:'Average',v:10,d:'10 reps'},{l:'Good',v:20,d:'20 reps'},{l:'Advanced',v:30,d:'30 reps'},{l:'Elite',v:40,d:'40+ reps'}]},
+    {name:'DB Overhead Tricep Extension',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:40,d:'40s × 12'},{l:'Good',v:55,d:'55s × 12'},{l:'Advanced',v:70,d:'70s × 12'},{l:'Elite',v:85,d:'85s × 12'}]},
+    {name:'DB Skull Crusher',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:30,d:'30s × 12'},{l:'Good',v:45,d:'45s × 12'},{l:'Advanced',v:55,d:'55s × 12'},{l:'Elite',v:65,d:'65s × 12'}]}
+  ]},
+  {key:'sat',name:'Session 4',focus:'Legs',color:'#457b9d',exercises:[
+    {name:'DB Bulgarian Split Squat',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:40,d:'40s × 10/leg'},{l:'Good',v:65,d:'65s × 10/leg'},{l:'Advanced',v:85,d:'85s × 10/leg'},{l:'Elite',v:100,d:'100s × 10/leg'}]},
+    {name:'DB Romanian Deadlift',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:60,d:'60s × 12'},{l:'Good',v:85,d:'85s × 12'},{l:'Advanced',v:100,d:'100s × 12'},{l:'Elite',v:120,d:'120s × 12'}]},
+    {name:'DB Step-Up',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:40,d:'40s × 10/leg'},{l:'Good',v:60,d:'60s × 10/leg'},{l:'Advanced',v:75,d:'75s × 10/leg'},{l:'Elite',v:90,d:'90s × 10/leg'}]},
+    {name:'DB Stiff-Leg Deadlift',compare:'weight',unit:'lbs/DB',
+      tiers:[{l:'Average',v:50,d:'50s × 12'},{l:'Good',v:70,d:'70s × 12'},{l:'Advanced',v:85,d:'85s × 12'},{l:'Elite',v:100,d:'100s × 12'}]},
+    {name:'Standing Calf Raise',compare:'weight',unit:'lbs added',
+      tiers:[{l:'Average',v:50,d:'BW + 50 × 15'},{l:'Good',v:90,d:'BW + 90 × 15'},{l:'Advanced',v:120,d:'BW + 120 × 15'},{l:'Elite',v:150,d:'BW + 150 × 15'}]}
+  ]}
+];
 const DAY_INDEX={mon:0,tue:1,wed:2,thu:3,fri:4,sat:5,sun:6};
 
 function toISODate(d){
@@ -3973,8 +4069,138 @@ function copyCGS(){
 // ═══════════════════════════════════════════════════════════
 // ANALYTICS
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// GOALS — Strength Standards
+// ═══════════════════════════════════════════════════════════
+function getGoalsBest(exName,compareType){
+  const logs=ST.logs.filter(l=>l.ex===exName||(l.ex||'').toLowerCase().includes((exName||'').toLowerCase().split(' ').slice(0,2).join(' ')));
+  if(!logs.length)return null;
+  if(compareType==='e1rm'){
+    const best=logs.filter(l=>l.e1rm).sort((a,b)=>b.e1rm-a.e1rm)[0];
+    if(!best)return null;
+    return{value:best.e1rm,label:`e1RM ${best.e1rm} lbs`,raw:`${best.w} lbs × ${best.r} reps`};
+  }
+  if(compareType==='weight'){
+    const wLogs=logs.filter(l=>l.w&&parseFloat(l.w)>0&&parseInt(l.r)>=4).sort((a,b)=>parseFloat(b.w)-parseFloat(a.w));
+    if(!wLogs.length)return null;
+    const b=wLogs[0];
+    return{value:parseFloat(b.w),label:`${b.w} lbs × ${b.r} reps`,raw:null};
+  }
+  if(compareType==='reps'){
+    const rLogs=logs.filter(l=>l.r).sort((a,b)=>parseInt(b.r)-parseInt(a.r));
+    if(!rLogs.length)return null;
+    const b=rLogs[0];
+    const r=parseInt(b.r);
+    return{value:r,label:`${r} reps`,raw:b.w&&parseFloat(b.w)>0?`${b.w} lbs`:null};
+  }
+  return null;
+}
+function getTierIndex(value,tiers){
+  // Return index of highest tier met
+  let idx=-1;
+  tiers.forEach((t,i)=>{if(value>=t.v)idx=i;});
+  return idx;
+}
+const TIER_KEYS=['avg','good','advanced','elite'];
+const TIER_COLORS={avg:'#888',good:'#2a9d8f',advanced:'#e9b84a',elite:'#e63946'};
+function renderGOALS(ab){
+  let counts={below:0,avg:0,good:0,advanced:0,elite:0};
+  let sessionBlocks='';
+
+  JEFF_GOALS.forEach(session=>{
+    let exCards='';
+    session.exercises.forEach(ex=>{
+      if(ex.compare==='qual'){
+        // Qualitative — show reference tiers as text
+        const tierCells=ex.tiers.map((t,i)=>`
+          <div class="goals-qual-cell">
+            <div class="goals-qual-label" style="color:${Object.values(TIER_COLORS)[i]}">${t.l}</div>
+            <div>${t.d}</div>
+          </div>`).join('');
+        exCards+=`<div class="goals-ex-card">
+          <div class="goals-ex-top">
+            <div class="goals-ex-name">${ex.name}</div>
+            <span class="goals-tier-badge below">Reference</span>
+          </div>
+          <div class="goals-qual-tiers">${tierCells}</div>
+        </div>`;
+        return;
+      }
+      const best=getGoalsBest(ex.name,ex.compare);
+      const tierIdx=best!=null?getTierIndex(best.value,ex.tiers):-1;
+      const tierKey=tierIdx>=0?TIER_KEYS[tierIdx]:'below';
+      if(tierIdx<0)counts.below++;
+      else counts[TIER_KEYS[tierIdx]]++;
+
+      const tierLabel=tierIdx>=0?ex.tiers[tierIdx].l:'Below Average';
+      const tierColor=tierIdx>=0?Object.values(TIER_COLORS)[tierIdx]:'var(--tx3)';
+      const nextTier=tierIdx<ex.tiers.length-1?ex.tiers[tierIdx+1]:null;
+
+      // Progress bar — 4 segments
+      const segs=ex.tiers.map((t,i)=>{
+        const k=TIER_KEYS[i];
+        const filled=tierIdx>=i;
+        return`<div class="goals-tier-seg${filled?' filled '+k:''}" title="${t.l}: ${t.d}"></div>`;
+      }).join('');
+
+      // Next milestone text
+      let nextTxt='';
+      if(nextTier&&best!=null){
+        const gap=nextTier.v-best.value;
+        nextTxt=`→ ${nextTier.l}: ${nextTier.d} (+${gap.toFixed(0)} ${ex.unit||''})`;
+      }else if(!best){
+        nextTxt=`Start: ${ex.tiers[0].d}`;
+      }else{
+        nextTxt='Elite level reached!';
+      }
+
+      exCards+=`<div class="goals-ex-card">
+        <div class="goals-ex-top">
+          <div class="goals-ex-name">${ex.name}</div>
+          <span class="goals-tier-badge ${tierKey}" style="color:${tierColor};border:1px solid ${tierColor}30;background:${tierColor}18">${tierLabel}</span>
+        </div>
+        <div class="goals-tier-bar">${segs}</div>
+        <div class="goals-ex-meta">
+          <span class="goals-ex-best">${best?best.label:'No data yet'}</span>
+          <span class="goals-ex-next">${nextTxt}</span>
+        </div>
+      </div>`;
+    });
+
+    sessionBlocks+=`<div class="goals-session-blk">
+      <div class="goals-session-hdr" style="border-left-color:${session.color}">
+        <div>
+          <div class="goals-session-name" style="color:${session.color}">${session.name} — ${session.focus}</div>
+        </div>
+      </div>
+      ${exCards}
+    </div>`;
+  });
+
+  // Summary row
+  const totalTracked=counts.below+counts.avg+counts.good+counts.advanced+counts.elite;
+  const summaryRows=[
+    {k:'below',l:'Below',c:'var(--tx3)',n:counts.below},
+    {k:'avg',l:'Average',c:TIER_COLORS.avg,n:counts.avg},
+    {k:'good',l:'Good',c:TIER_COLORS.good,n:counts.good},
+    {k:'advanced',l:'Advanced',c:TIER_COLORS.advanced,n:counts.advanced},
+    {k:'elite',l:'Elite',c:TIER_COLORS.elite,n:counts.elite},
+  ];
+  const summaryHtml=`<div class="goals-summary">${summaryRows.map(s=>`
+    <div class="goals-sum-cell" style="border-top:2px solid ${s.c}">
+      <div class="goals-sum-num" style="color:${s.c}">${s.n}</div>
+      <div class="goals-sum-lbl">${s.l}</div>
+    </div>`).join('')}</div>
+    <div style="font-size:11px;color:var(--tx3);text-align:center;margin-bottom:14px">
+      Standards for 50 yrs old · age-adjusted from 240 lb BW multipliers · comparison uses best logged e1RM or working weight
+    </div>`;
+
+  ab.innerHTML=summaryHtml+sessionBlocks;
+}
+
 function renderAN(){
   const tabs=[
+    {k:'goals',t:'Goals'},
     {k:'perf',t:'Perf'},
     {k:'prs',t:'PRs'},
     {k:'vol',t:'Volume'},
@@ -3994,6 +4220,9 @@ function renderAN(){
     b.onclick=()=>{ST.atab=tb.k;renderAN()};
     ts.appendChild(b);
   });
+
+  // Goals tab always shows, even without logs
+  if(ST.atab==='goals') return renderGOALS(ab);
 
   if(!ST.logs.length){
     ab.innerHTML=`<div class="empty"><div class="eico">📉</div>No logs yet. Complete a workout and your analytics will show here.</div>`;
