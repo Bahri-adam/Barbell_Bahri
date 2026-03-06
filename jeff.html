@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -846,7 +846,7 @@ select{color-scheme:dark}
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const P={
   // SESSION 1 â€” SHOULDERS & CORE
-  mon:{key:'mon',name:'Monday',focus:'Shoulders & Core',color:'#c77b00',exercises:[
+  mon:{key:'mon',name:'Session 1',focus:'Shoulders & Core',color:'#c77b00',exercises:[
     {id:'m1',name:'Barbell Overhead Press',sets:4,reps:'6â€“8',rest:120,type:'h',cue:'Primary compound. Control the eccentric â€” no bouncing at bottom. Brace hard.',mech:'Heavy mechanical tension. Anterior + medial delt + tricep compound.'},
     {id:'m2',name:'DB Arnold Press',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Full rotation hits all 3 delt heads. Start neutral, finish pronated overhead. Don\'t rush the turn.',mech:'Sequential delt head recruitment. All three heads in one movement.'},
     {id:'m3',name:'DB Lateral Raise',sets:4,reps:'12â€“15',rest:60,type:'n',cue:'Lean slightly forward. Raise to ear height. Partial rest-pause on final set.',mech:'Middle delt isolation. Most undertrained delt head for shoulder width.'},
@@ -857,7 +857,7 @@ const P={
     {id:'m8',name:'Pallof Press',sets:3,reps:'10â€“12',rest:45,type:'n',cue:'Anti-rotation core. Stand tall, press out, hold 1 sec, return. Load progressively with a heavier band over time.',mech:'Obliques + transverse abdominis anti-rotation. Protects lumbar under axial load.'}
   ]},
   // SESSION 2 â€” BACK & BICEPS
-  tue:{key:'tue',name:'Tuesday',focus:'Back & Biceps',color:'#1a6b3c',exercises:[
+  tue:{key:'tue',name:'Session 2',focus:'Back & Biceps',color:'#1a6b3c',exercises:[
     {id:'t1',name:'Trap Bar Deadlift',sets:4,reps:'5â€“6',rest:180,type:'h',cue:'More upright torso than conventional = less lumbar shear. Load it heavy â€” this is the session\'s primary strength movement. Brace hard, drive floor away.',mech:'Posterior chain + trap bar reduces lumbar moment arm. Safer for football-damaged lower back.'},
     {id:'t2',name:'Trap Bar Shrug',sets:3,reps:'12â€“15',rest:90,type:'n',cue:'Stay loaded in the trap bar after deadlifts. Full elevation, 1-sec hold at top, slow lowering.',mech:'Traps respond to both heavy load and volume. Upper trap hypertrophy.'},
     {id:'t3',name:'DB Single-Arm Row',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Full stretch at bottom. Loaded stretch on final set â€” hold 10 sec at full extension before each rep.',mech:'Lat + mid-back. Unilateral corrects side-to-side imbalances from football asymmetry.'},
@@ -866,9 +866,9 @@ const P={
     {id:'t6',name:'Hammer Curl',sets:3,reps:'12â€“15',rest:60,type:'n',cue:'Neutral grip throughout. Controlled full range. Brachialis + brachioradialis for elbow health.',mech:'Elbow health + arm thickness. Different muscle emphasis to supinated curls.'},
     {id:'t7',name:'Lat Pulldown',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Full stretch at top is the most important part. Drive elbows down and back to hips. No swinging.',mech:'Lat under full length-tension. Optional if time is tight â€” prioritize rows first.'}
   ]},
-  wed:{key:'wed',name:'Wednesday',focus:'Rest & Recovery',color:'#333',rest:true,exercises:[]},
+  wed:{key:'wed',name:'Rest',focus:'Rest & Recovery',color:'#333',rest:true,exercises:[]},
   // SESSION 3 â€” CHEST & TRICEPS
-  thu:{key:'thu',name:'Thursday',focus:'Chest & Triceps',color:'#6a1b9a',exercises:[
+  thu:{key:'thu',name:'Session 3',focus:'Chest & Triceps',color:'#6a1b9a',exercises:[
     {id:'h1',name:'Barbell Bench Press',sets:4,reps:'6â€“8',rest:120,type:'h',cue:'Controlled eccentric. Touch chest, no bounce. Elbows 45â€“60Â° to protect shoulder. Tight arch, lat engagement.',mech:'Horizontal press compound. Pec + anterior delt + tricep mechanical tension.'},
     {id:'h2',name:'DB Incline Press',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'30â€“45Â° incline. Full ROM â€” the stretch at the bottom is the money position. Don\'t cut range short.',mech:'Clavicular head emphasis. Loaded stretch at bottom recruits more satellite cells.'},
     {id:'h3',name:'DB Flat Fly',sets:3,reps:'12â€“15',rest:90,type:'s',cue:'Light weight, big stretch. Loaded stretch on final set â€” hold bottom position 10 sec. Pec stretch is the point.',mech:'Pec at lengthened position. Metabolic stress + stretch-mediated hypertrophy.'},
@@ -876,9 +876,9 @@ const P={
     {id:'h5',name:'DB Overhead Tricep Extension',sets:3,reps:'12â€“15',rest:60,type:'s',cue:'Full stretch overhead is the key position. Long head emphasis. Slow eccentric.',mech:'Tricep long head at maximal stretch. 15% more growth vs pushdowns at same volume.'},
     {id:'h6',name:'DB Skull Crusher',sets:3,reps:'12â€“15',rest:60,type:'n',cue:'Slow eccentric â€” respect the elbow joint at 50. Lower to forehead. Controlled all the way.',mech:'Medial + lateral tricep head. Complement to overhead extension for full coverage.'}
   ]},
-  fri:{key:'fri',name:'Friday',focus:'Rest & Recovery',color:'#333',rest:true,exercises:[]},
+  fri:{key:'fri',name:'Rest',focus:'Rest & Recovery',color:'#333',rest:true,exercises:[]},
   // SESSION 4 â€” LEGS
-  sat:{key:'sat',name:'Saturday',focus:'Legs â€” Full Lower Body',color:'#457b9d',exercises:[
+  sat:{key:'sat',name:'Session 4',focus:'Legs â€” Full Lower Body',color:'#457b9d',exercises:[
     {id:'s1',name:'DB Bulgarian Split Squat',sets:4,reps:'8â€“10',rest:120,type:'h',cue:'Rear foot on bench. DBs at sides â€” zero spinal loading. Go heavier over time as the movement becomes comfortable. This IS your squat replacement.',mech:'Unilateral quad + glute compound. No spinal compression â€” critical for football-damaged lumbar.'},
     {id:'s2',name:'DB Romanian Deadlift',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Hinge pattern. Feel the hamstring stretch â€” don\'t chase weight. Neutral spine throughout. Soft knee.',mech:'DB instead of barbell reduces lumbar stress. Hamstring + glute at lengthened position.'},
     {id:'s3',name:'DB Step-Up',sets:3,reps:'10â€“12',rest:90,type:'n',cue:'Onto a sturdy bench or box. Drive through the heel of the working leg. Control the descent. Functional carry-over.',mech:'Unilateral quad. Functional movement pattern â€” stairs, inclines, carries from football days.'},
@@ -887,7 +887,7 @@ const P={
     {id:'s6',name:'Leg Extension',sets:3,reps:'12â€“15',rest:60,type:'n',cue:'Machine only. 3-sec eccentric. Good for knee joint health and quad isolation without any spinal load.',mech:'Rectus femoris â€” only exercise that loads this head. Knee health protocol at 50.'},
     {id:'s7',name:'Seated Leg Curl',sets:3,reps:'10â€“12',rest:60,type:'n',cue:'Seated preferred â€” better hamstring stretch position than lying. Controlled eccentric.',mech:'Hamstring in shortened position â€” completes coverage with RDL + stiff-leg stretch work.'}
   ]},
-  sun:{key:'sun',name:'Sunday',focus:'Rest & Recovery',color:'#333',rest:true,exercises:[]},
+  sun:{key:'sun',name:'Rest',focus:'Rest & Recovery',color:'#333',rest:true,exercises:[]},
   // â”€â”€ DELOAD TEMPLATES (full-body, Mon+Thu, ~50% vol, 60-70% load, RIR 4-5) â”€â”€
   deload_mon:{key:'deload_mon',name:'Monday',focus:'Deload â€” Upper Body A',color:'#e63946',isDeloadDay:true,exercises:[
     {id:'dl1',name:'Barbell Overhead Press',sets:3,reps:'8â€“10',rest:120,type:'n',cue:'Smooth, controlled reps. Stop 4-5 short of failure. NO intensity tricks. Maintain pattern.',mech:'Shoulder stimulus at reduced intensity. Maintain motor pattern.'},
@@ -1407,7 +1407,7 @@ function getBodyPartFromMuscle(m){
 }
 const BODY_PART_OPTIONS=[{v:'chest',l:'Chest'},{v:'back',l:'Back'},{v:'quads',l:'Quads'},{v:'hamstrings',l:'Hamstrings'},{v:'calves',l:'Calves'},{v:'glutes',l:'Glutes'},{v:'biceps',l:'Biceps'},{v:'triceps',l:'Triceps'},{v:'delts',l:'Delts'}];
 
-const DAY_NAMES={mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
+const DAY_NAMES={mon:'Session 1',tue:'Session 2',wed:'Rest',thu:'Session 3',fri:'Rest',sat:'Session 4',sun:'Rest'};
 const DAY_INDEX={mon:0,tue:1,wed:2,thu:3,fri:4,sat:5,sun:6};
 
 function toISODate(d){
@@ -1830,9 +1830,8 @@ function renderHome(){
   const loggedThisWeek=new Set(weekLogs.map(l=>l.dk));
   DO.forEach(k=>{
     const d=getDayProgram(k);
-    const dayDateIso=getDateForWeekDay(ST.wk,k);
-    const dayDate=fmtShortDate(dayDateIso);
-    if(d.rest){const el=document.createElement('div');el.className='rcard';el.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--tx3)" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><div class="rlabel">${DAY_NAMES[k]} ${dayDate?`Â· ${dayDate}`:''} â€” Rest & Recovery</div>`;dl.appendChild(el);return}
+    // Session-based: skip rest days, show only the 4 workout sessions
+    if(d.rest)return;
     const dayLogs=weekLogs.filter(l=>l.dk===k&&l.w!=null&&l.w!==''&&l.r!=null&&l.r!=='');
     const done=loggedThisWeek.has(k);
     const daySets=dayLogs.length;
@@ -1841,9 +1840,9 @@ function renderHome(){
     const lastFmt=last?fmtShortDate(last):'';
     const el=document.createElement('div');el.className='dcard'+(done?' dcard-done':'');el.onclick=()=>openWO(k);
     el.innerHTML=`<div class="dstripe" style="background:${done?'var(--grn)':d.color}"></div>
-    <div class="dbody"><div class="dnrow"><div class="dname-row"><div class="dname" style="color:${done?'var(--grn)':d.color}">${d.name}${done?' âœ“':''}</div><div class="dname-date">${dayDate}</div></div><div class="dcount">${d.exercises.length} ex</div></div>
+    <div class="dbody"><div class="dnrow"><div class="dname-row"><div class="dname" style="color:${done?'var(--grn)':d.color}">${d.name}${done?' ✓':''}</div></div><div class="dcount">${d.exercises.length} ex</div></div>
     <div class="dfocus">${d.focus}</div>
-    ${done?`<div class="dlast" style="color:var(--grn2)">${daySets} sets Â· ${dayVol>1000?(dayVol/1000).toFixed(1)+'K':dayVol} lbs volume</div>`:`<div class="dlast">${lastFmt?'Last: '+lastFmt:'Not yet logged'}</div>`}
+    ${done?`<div class="dlast" style="color:var(--grn2)">${daySets} sets · ${dayVol>1000?(dayVol/1000).toFixed(1)+'K':dayVol} lbs · ${lastFmt}</div>`:`<div class="dlast">${lastFmt?'Last done: '+lastFmt:'Not yet logged'}</div>`}
     </div>
     <div style="display:flex;align-items:center;padding-right:14px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="${done?'var(--grn)':'var(--tx3)'}" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>`;
     dl.appendChild(el);
