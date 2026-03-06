@@ -430,6 +430,33 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .smart-note{font-size:10px;color:var(--tx3)}
 .smart-card.cite .smart-cites{margin:0;padding-left:18px;font-size:11px;color:var(--tx3);line-height:1.8}
 .smart-princ{font-size:10px;color:var(--tx3);margin-top:10px;padding:8px;background:var(--s2);border-radius:4px;line-height:1.5}
+/* ── NUTRITION ── */
+.nutr-banner{background:rgba(42,157,143,.1);border:1px solid rgba(42,157,143,.3);border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:var(--tx2);line-height:1.6}
+.nutr-banner strong{color:#2a9d8f}
+.nutr-struct{border:1px solid var(--b1);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.nutr-struct-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:var(--s1);gap:10px;user-select:none}
+.nutr-struct-hdr:active{background:var(--s2)}
+.nutr-struct-title{flex:1}
+.nutr-struct-name{font-size:13px;font-weight:700;color:var(--tx);font-family:var(--fd)}
+.nutr-struct-nick{font-size:11px;color:var(--tx3);margin-top:1px}
+.nutr-macros{display:flex;gap:8px;flex-wrap:wrap;margin-top:5px}
+.nutr-macro-chip{font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;background:var(--s2);color:var(--tx2);font-family:var(--fm)}
+.nutr-macro-chip.pro{background:rgba(230,57,70,.12);color:#e63946}
+.nutr-macro-chip.carb{background:rgba(233,196,106,.12);color:#d4a53a}
+.nutr-macro-chip.fat{background:rgba(100,180,100,.12);color:#5aaa5a}
+.nutr-macro-chip.kcal{background:rgba(42,157,143,.12);color:#2a9d8f}
+.nutr-toggle{flex-shrink:0;font-size:18px;color:var(--tx3);transition:transform .2s}
+.nutr-struct.open .nutr-toggle{transform:rotate(180deg)}
+.nutr-body{display:none;padding:0 14px 14px}
+.nutr-struct.open .nutr-body{display:block}
+.nutr-meal{margin-top:10px}
+.nutr-meal-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid var(--b1)}
+.nutr-meal-items{margin:0;padding-left:14px;font-size:12px;color:var(--tx2);line-height:1.8;list-style:disc}
+.nutr-proto-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+.nutr-proto-table th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);padding:6px 8px;border-bottom:1px solid var(--b1)}
+.nutr-proto-table td{padding:6px 8px;border-bottom:1px solid var(--b1);color:var(--tx2);vertical-align:top}
+.nutr-proto-table tr:last-child td{border-bottom:none}
+.nutr-proto-table td:first-child{font-weight:600;color:var(--tx);white-space:nowrap}
 .smart-disclaimer{font-size:11px;color:var(--tx3);margin-top:8px;padding:8px 10px;background:rgba(69,123,157,.1);border-radius:5px;border-left:3px solid var(--blue)}
 .smart-sub{font-size:11px;color:var(--tx3);margin-bottom:10px}
 .smart-day-block{border:1px solid var(--b1);border-radius:6px;margin-bottom:8px;overflow:hidden}
@@ -2520,6 +2547,8 @@ function renderSmartProgram(){
   });
   h+=`</div>`;
 
+  h+=renderNutrition();
+
   h+=`<div class="smart-card cite"><div class="smart-hdr">Science Sources</div>
     <ul class="smart-cites">${citations.map(c=>`<li>${c}</li>`).join('')}</ul>
     <div class="smart-princ">Engine: Stimulus = tension × volume × proximity (estimated from e1RM, no RPE required). Effective reps = max(0, 5−RIR). Fatigue = volume load × intensity × compound penalty. Stall logic: volume-induced vs under-stimulation vs intensity problem. Pre-fatigue: only drop sets when weekly ≥110% target. Data-driven autoregulation.</div>
@@ -4082,6 +4111,151 @@ function copyCGS(){
 // ═══════════════════════════════════════════════════════════
 // ANALYTICS
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// NUTRITION — Meal Structure Guide
+// ═══════════════════════════════════════════════════════════
+const JEFF_NUTRITION=[
+  {name:'The Classic Meat and Rice Guy',nick:'Simple, repeatable, no-nonsense meals',
+   macros:{pro:'~205g',carb:'~240g',fat:'~75g',kcal:'~2,680'},
+   meals:[
+    {label:'Breakfast',items:['5 whole eggs scrambled with cheese','2 slices whole grain toast','1 cup OJ or piece of fruit']},
+    {label:'Lunch',items:['8oz grilled chicken breast','1.5 cups white rice','Side salad with olive oil']},
+    {label:'Pre-Workout',items:['Collagen + Vitamin C in water','1 banana']},
+    {label:'Post-Workout',items:['50g whey shake + 5g creatine','Rice cakes with honey']},
+    {label:'Dinner',items:['8oz 93% lean ground beef (burgers, taco bowls, etc.)','Large baked potato or 1 cup rice','Roasted broccoli and peppers']},
+    {label:'Before Bed 🌙',items:['40g casein shake']}
+   ]},
+  {name:'Steak and Potato Dad',nick:"Eats like a man, doesn't feel like he's dieting",
+   macros:{pro:'~210g',carb:'~220g',fat:'~85g',kcal:'~2,700'},
+   meals:[
+    {label:'Breakfast',items:['6oz lean sirloin or ground beef patty','3 eggs any style','1 cup oats with honey and banana']},
+    {label:'Lunch',items:['Large deli-style wrap — turkey, ham, cheese, veggies, mustard','1 cup plain full-fat Greek yogurt on the side','Apple']},
+    {label:'Pre-Workout',items:['Collagen + Vitamin C','Handful of dates or a granola bar']},
+    {label:'Post-Workout',items:['50g whey + creatine','White rice and honey']},
+    {label:'Dinner',items:['8–10oz ribeye, NY strip, or sirloin steak','Large baked potato with butter and sour cream','Asparagus or green beans']},
+    {label:'Before Bed 🌙',items:['1.5 cups cottage cheese (counts as casein)']}
+   ]},
+  {name:'Meal Prep on Sunday',nick:'Everything prepped, ready to grab and go all week',
+   macros:{pro:'~200g',carb:'~250g',fat:'~70g',kcal:'~2,650'},
+   meals:[
+    {label:'Breakfast',items:['Overnight oats — 1 cup oats, 1 scoop protein powder, milk, peanut butter, berries (prep Sunday night)']},
+    {label:'Lunch',items:['Prepped container: 6oz shredded chicken thighs + 1 cup rice + roasted vegetables + hot sauce','Make 5 on Sunday — done for the week']},
+    {label:'Pre-Workout',items:['Collagen + Vitamin C','Rice cakes with peanut butter']},
+    {label:'Post-Workout',items:['50g whey + creatine','Banana']},
+    {label:'Dinner',items:['Prepped container: 8oz ground turkey or chicken + pasta or rice + marinara/pesto','Or a fresh dinner — this slot is flexible']},
+    {label:'Snack (if needed)',items:['String cheese ×2 + beef jerky']},
+    {label:'Before Bed 🌙',items:['40g casein shake']}
+   ]},
+  {name:'The Big Breakfast Guy',nick:"Massive breakfast, not hungry at night",
+   macros:{pro:'~205g',carb:'~260g',fat:'~72g',kcal:'~2,700'},
+   meals:[
+    {label:'Breakfast — LARGE',items:['6 whole eggs any style','6oz ground beef or turkey sausage','2 cups oats or large stack of whole grain pancakes with syrup','Glass of milk']},
+    {label:'Mid-Morning Snack',items:['Greek yogurt (1 cup) + granola + berries','OR protein bar (Quest, Barebells, etc.)']},
+    {label:'Lunch',items:['8oz chicken or turkey breast','1 cup rice or large wrap','Vegetables']},
+    {label:'Pre-Workout',items:['Collagen + Vitamin C','Banana or dates']},
+    {label:'Post-Workout',items:['50g whey + creatine','Handful of rice cakes']},
+    {label:'Dinner — LIGHT',items:['6oz chicken breast or lean pork','Large salad or vegetable-heavy plate','Small portion of carbs']},
+    {label:'Before Bed 🌙',items:['40g casein shake']}
+   ]},
+  {name:'The Grill Guy',nick:'Grills everything, lives outside in summer',
+   macros:{pro:'~200g',carb:'~220g',fat:'~75g',kcal:'~2,600'},
+   meals:[
+    {label:'Breakfast',items:['4 whole eggs + 4oz grilled chicken breast or turkey sausage','Hash browns or roasted potatoes','Coffee']},
+    {label:'Lunch',items:['Grilled chicken thighs (8oz) over rice','Sliced avocado + tomato','Sparkling water']},
+    {label:'Pre-Workout',items:['Collagen + Vitamin C','Apple and peanut butter']},
+    {label:'Post-Workout',items:['50g whey + creatine','Gatorade or rice cakes']},
+    {label:'Dinner',items:['Grilled pork tenderloin (8–10oz) or chicken breast','Grilled corn, peppers, zucchini','Baked sweet potato']},
+    {label:'Before Bed 🌙',items:["40g casein shake or 1.5 cups cottage cheese"]}
+   ]},
+  {name:"I Don't Really Cook",nick:'Easy assembly meals, occasional takeout',
+   macros:{pro:'~195–205g',carb:'~230g',fat:'~75g',kcal:'~2,600'},
+   meals:[
+    {label:'Breakfast',items:['Protein shake — 50g whey with milk, banana, peanut butter blended','Hard boiled eggs ×2 (batch boil Sunday, done all week)']},
+    {label:'Lunch',items:['Rotisserie chicken — half a bird (~50g protein, already cooked)','Microwaveable rice packet','Bagged salad kit']},
+    {label:'Pre-Workout',items:['Collagen + Vitamin C','Granola bar or banana']},
+    {label:'Post-Workout',items:['50g whey + creatine','Rice cakes']},
+    {label:'Dinner',items:['Option A: Ground beef tacos — cook beef, seasoning, tortillas, cheese, salsa, sour cream (15 min)','Option B: Chipotle-style bowl at home — canned black beans, rice, shredded rotisserie chicken, cheese, salsa','Option C: Actual Chipotle — double protein chicken bowl, black beans, rice, fajita veggies, sour cream, cheese ✓']},
+    {label:'Before Bed 🌙',items:['40g casein or large glass of chocolate milk + protein powder mixed in']}
+   ]},
+  {name:'Higher Fat, Lower Carb',nick:'Feels better on more fat — not keto, just shifted',
+   macros:{pro:'~205g',carb:'~150g',fat:'~100g',kcal:'~2,500'},
+   meals:[
+    {label:'Breakfast',items:['6 whole eggs cooked in butter','4oz ground beef or chicken sausage','Avocado']},
+    {label:'Lunch',items:['Large salad — shredded chicken (8oz), hard boiled eggs, cheese, nuts, olive oil dressing','No grain, just volume from vegetables']},
+    {label:'Pre-Workout',items:['Collagen + Vitamin C','1 banana (intentional carb spike before training)']},
+    {label:'Post-Workout',items:['50g whey + creatine','1 cup rice only — not honey or rice cakes on top']},
+    {label:'Dinner',items:['8–10oz pork chops, chicken thighs, or lean beef','Roasted vegetables with olive oil','Small portion of rice or sweet potato']},
+    {label:'Before Bed 🌙',items:['40g casein + tbsp peanut butter']}
+   ]}
+];
+const JEFF_PROTEINS=[
+  {src:'Rotisserie chicken',pro:'~50g per half bird',note:'Cheapest easy protein'},
+  {src:'93% lean ground beef',pro:'~45g per 6oz',note:'Versatile, hits fat macros well'},
+  {src:'Chicken breast',pro:'~50g per 8oz',note:'Cheapest per gram of protein'},
+  {src:'Chicken thighs',pro:'~40g per 6oz',note:'More flavor, slightly more fat'},
+  {src:'Eggs',pro:'~6g each',note:'Best for breakfast, hormone support'},
+  {src:'Greek yogurt (plain)',pro:'~17g per cup',note:'Easy snack or breakfast add'},
+  {src:'Cottage cheese',pro:'~25g per cup',note:'Perfect casein substitute'},
+  {src:'Pork tenderloin',pro:'~45g per 6oz',note:'Underrated, lean, easy to grill'},
+  {src:'Deli turkey/ham',pro:'~25g per 4oz',note:'Quick lunch protein'},
+  {src:'Whey isolate',pro:'~50g per 2 scoops',note:'Post-workout non-negotiable'},
+  {src:'Casein protein',pro:'~40g per 1.5 scoops',note:'Before bed non-negotiable'},
+  {src:'Beef jerky',pro:'~15g per oz',note:'Snack, not a meal anchor'},
+  {src:'Canned tuna',pro:'~25g per can',note:'Cheap, fast, no cooking required'},
+  {src:'String cheese',pro:'~7g per stick',note:'Easy snack, pairs with anything'},
+  {src:'Colby/cheddar block',pro:'~7g per oz',note:'Adds protein + fat to any meal'}
+];
+
+function renderNutrition(){
+  let h=`<div class="smart-card">
+    <div class="smart-hdr">Nutrition Guide — 7 Meal Structures</div>
+    <div class="nutr-banner">
+      Target: <strong>~200g protein</strong> · <strong>~2,500–2,700 kcal</strong> on training days.
+      <strong>Casein before bed every night</strong> — non-negotiable regardless of which structure you pick.
+      Pick the one that fits your lifestyle. All 7 hit the same protein target.
+    </div>`;
+
+  JEFF_NUTRITION.forEach((s,idx)=>{
+    const id=`nutr-s-${idx}`;
+    h+=`<div class="nutr-struct" id="${id}">
+      <div class="nutr-struct-hdr" onclick="document.getElementById('${id}').classList.toggle('open')">
+        <div class="nutr-struct-title">
+          <div class="nutr-struct-name">${idx+1}. ${s.name}</div>
+          <div class="nutr-struct-nick">${s.nick}</div>
+          <div class="nutr-macros">
+            <span class="nutr-macro-chip pro">P ${s.macros.pro}</span>
+            <span class="nutr-macro-chip carb">C ${s.macros.carb}</span>
+            <span class="nutr-macro-chip fat">F ${s.macros.fat}</span>
+            <span class="nutr-macro-chip kcal">${s.macros.kcal} kcal</span>
+          </div>
+        </div>
+        <div class="nutr-toggle">▾</div>
+      </div>
+      <div class="nutr-body">
+        ${s.meals.map(m=>`
+          <div class="nutr-meal">
+            <div class="nutr-meal-lbl">${m.label}</div>
+            <ul class="nutr-meal-items">${m.items.map(i=>`<li>${i}</li>`).join('')}</ul>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  h+=`</div>
+  <div class="smart-card">
+    <div class="smart-hdr">Quick Reference — Best Protein Sources</div>
+    <div class="smart-sub">Ranked by ease and cost. No fish required.</div>
+    <table class="nutr-proto-table">
+      <thead><tr><th>Source</th><th>Protein</th><th>Notes</th></tr></thead>
+      <tbody>${JEFF_PROTEINS.map(p=>`
+        <tr><td>${p.src}</td><td>${p.pro}</td><td>${p.note}</td></tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+
+  return h;
+}
+
 // ═══════════════════════════════════════════════════════════
 // GOALS — Strength Standards
 // ═══════════════════════════════════════════════════════════
