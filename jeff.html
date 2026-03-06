@@ -493,6 +493,9 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .leu-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .leu-callout{background:var(--s2);border:1px solid var(--b1);border-left:3px solid var(--gold);border-radius:8px;padding:14px 14px;margin-top:14px;font-size:13px;color:var(--tx2);line-height:1.75}
 .leu-callout strong{color:var(--gold)}
+.proto-toggle-body{display:none}
+.smart-card.open .proto-toggle-body{display:block}
+.smart-card.open .nutr-toggle{transform:rotate(180deg)}
 .smart-disclaimer{font-size:11px;color:var(--tx3);margin-top:8px;padding:8px 10px;background:rgba(69,123,157,.1);border-radius:5px;border-left:3px solid var(--blue)}
 .smart-sub{font-size:11px;color:var(--tx3);margin-bottom:10px}
 .smart-day-block{border:1px solid var(--b1);border-radius:6px;margin-bottom:8px;overflow:hidden}
@@ -4302,30 +4305,37 @@ function renderNutrition(){
 
   h+=`</div>
   <div class="smart-card">
-    <div class="smart-hdr">Protein Source Reference</div>
-    <div class="smart-sub">Ranked by protein per serving. Leucine content matters most at your age — it's the amino acid that actually triggers muscle protein synthesis. Aim for sources with 3g+ leucine per serving to independently hit the threshold at every meal.</div>
-    <div class="leu-legend">
-      <div class="leu-leg-item"><div class="leu-leg-dot" style="background:#22c55e"></div>Hits 3g threshold</div>
-      <div class="leu-leg-item"><div class="leu-leg-dot" style="background:#f59e0b"></div>Needs pairing (2–3g)</div>
-      <div class="leu-leg-item"><div class="leu-leg-dot" style="background:var(--b2)"></div>Add-on / snack (&lt;2g)</div>
+    <div class="nutr-struct-hdr" style="cursor:pointer" onclick="this.closest('.smart-card').classList.toggle('open')">
+      <div class="nutr-struct-title">
+        <div class="smart-hdr" style="margin:0">Protein Source Reference</div>
+        <div class="smart-sub" style="margin-top:4px">Ranked by protein per serving. Leucine triggers MPS — aim for 3g+ per meal.</div>
+      </div>
+      <div class="nutr-toggle">▾</div>
     </div>
-    <div class="proto-list">
-      ${JEFF_PROTEINS.map(p=>`
-        <div class="proto-card leu-${p.tier}">
-          <div class="proto-hdr">
-            <div class="proto-name">${p.src}</div>
-            <div class="proto-srv">${p.srv}</div>
-          </div>
-          <div class="proto-chips">
-            <span class="proto-chip pc-pro">${p.pro} protein</span>
-            <span class="proto-chip pc-leu-${p.tier}">${p.leu} leucine${p.tier==='hit'?' ✓':''}</span>
-            <span class="proto-chip pc-bio">${p.bio} bioavailability</span>
-          </div>
-          <div class="proto-note">${p.note}</div>
-        </div>`).join('')}
-    </div>
-    <div class="leu-callout">
-      <strong>Leucine Threshold Note —</strong> At 50 the research shows you need approximately 3g of leucine per meal to trigger a meaningful muscle protein synthesis response. Younger guys get away with around 1.7 to 2g. This is why sources that look fine on paper — a cup of Greek yogurt alone, a couple of eggs alone, a protein bar alone — actually fall short for you. The leucine content does not clear the threshold independently. Every meal needs to hit 3g or more of leucine on its own, which is why the 40 to 55g protein per meal target exists. It is not just about total daily grams. It is about hitting the leucine trigger at every single feeding, four times a day.
+    <div class="proto-toggle-body">
+      <div class="leu-legend">
+        <div class="leu-leg-item"><div class="leu-leg-dot" style="background:#22c55e"></div>Hits 3g threshold</div>
+        <div class="leu-leg-item"><div class="leu-leg-dot" style="background:#f59e0b"></div>Needs pairing (2–3g)</div>
+        <div class="leu-leg-item"><div class="leu-leg-dot" style="background:var(--b2)"></div>Add-on / snack (&lt;2g)</div>
+      </div>
+      <div class="proto-list">
+        ${JEFF_PROTEINS.map(p=>`
+          <div class="proto-card leu-${p.tier}">
+            <div class="proto-hdr">
+              <div class="proto-name">${p.src}</div>
+              <div class="proto-srv">${p.srv}</div>
+            </div>
+            <div class="proto-chips">
+              <span class="proto-chip pc-pro">${p.pro} protein</span>
+              <span class="proto-chip pc-leu-${p.tier}">${p.leu} leucine${p.tier==='hit'?' ✓':''}</span>
+              <span class="proto-chip pc-bio">${p.bio} bioavailability</span>
+            </div>
+            <div class="proto-note">${p.note}</div>
+          </div>`).join('')}
+      </div>
+      <div class="leu-callout">
+        <strong>Leucine Threshold Note —</strong> At 50 the research shows you need approximately 3g of leucine per meal to trigger a meaningful muscle protein synthesis response. Younger guys get away with around 1.7 to 2g. This is why sources that look fine on paper — a cup of Greek yogurt alone, a couple of eggs alone, a protein bar alone — actually fall short for you. The leucine content does not clear the threshold independently. Every meal needs to hit 3g or more of leucine on its own, which is why the 40 to 55g protein per meal target exists. It is not just about total daily grams. It is about hitting the leucine trigger at every single feeding, four times a day.
+      </div>
     </div>
   </div>`;
 
@@ -4343,9 +4353,9 @@ const JEFF_SCIENCE=[
     {t:'Session-Based Rotation Instead of Day-Based',
      b:'This is set up as Session 1, 2, 3, 4 on rotation instead of locking you into Monday is this, Thursday is that. Reason is simple — life happens. You have a family, a job, days that run long. A session-based rotation means you never miss because your schedule shifted. You pick up where you left off. Consistency over months is what actually moves the needle, not whether you trained on a specific day of the week.\n\nFrom a recovery standpoint this also protects you. Schoenfeld\'s data on older adults notes that recovery between sessions is meaningfully extended compared to younger trainees — there\'s evidence showing it can take longer than 48 hours to fully restore neuromuscular capacity at 50+. The rotation handles this automatically as long as you don\'t stack Session 1 back to back with Session 3.'},
     {t:`Exercise Selection: Compound Foundation, Smart Substitutions`,
-     b:`Every session is built around a primary compound movement. This isn't preference — this is where the actual hypertrophic stimulus lives. Mechanical tension is the primary driver of muscle protein synthesis. Schoenfeld is explicit: tension magnitude and duration activate the mechanosensors in the sarcomere, trigger integrin signaling, and phosphorylate mTOR downstream. Isolation work matters but it doesn't build the foundation.\n\nFor the lower body I replaced the back squat and conventional deadlift with the trap bar deadlift and Bulgarian split squat. you have a history of lower back issues from football. Axial spinal loading on a compromised lumbar structure is how you turn a training program into a physical therapy program. The trap bar shifts load distribution so the spine isn't under direct vertical compression the way a barbell back squat creates it. The Bulgarian split squat delivers unilateral quad and glute stimulus with zero spinal load because the weight is held in the hands, not sitting on the upper back. These are not regressions — they are the right exercise selection for your anatomy and history.`},
+     b:`Every session is built around a primary compound movement. This isn't preference — this is where the actual hypertrophic stimulus lives. Mechanical tension is the primary driver of muscle protein synthesis. When you lift a heavy weight your muscle fibers are placed under mechanical tension. Inside each muscle fiber are structures called sarcomeres, which are the actual contractile units that generate force. When tension is applied to a sarcomere, specialized proteins embedded in the cell membrane called mechanosensors physically detect that stretch and deformation. Think of them as pressure sensors that exist specifically to detect when a muscle is being loaded hard enough to need adaptation.\n\nOnce those sensors are activated they trigger a cascade of signaling events inside the cell. One of the first steps is the activation of integrins, which are proteins that span the cell membrane and act as a physical bridge between the outside mechanical environment and the inside of the cell. Integrins essentially translate the physical force of lifting into a chemical signal the cell can read and respond to. That signal travels through several intermediate steps and ultimately phosphorylates mTOR, which stands for mechanistic target of rapamycin. Phosphorylation just means activation — a phosphate group gets attached to the protein which switches it on.\n\nmTOR is the master regulator of muscle protein synthesis. When it is activated it initiates the process of building new muscle proteins by triggering ribosome activity, which is the cellular machinery that assembles amino acids into new muscle tissue. No mTOR activation means no meaningful muscle building signal regardless of how much protein you eat. The mechanical tension from lifting is what turns the switch on in the first place. This is why compound movements that load large amounts of muscle tissue under heavy tension are the foundation of the program. Isolation movements like curls and lateral raises have their place for targeting specific muscles but they do not generate the systemic mechanical tension needed to drive the primary anabolic signal. You build the foundation with the big movements and use isolation work to fill in the gaps.\n\nFor the lower body I replaced the back squat and conventional deadlift with the trap bar deadlift and Bulgarian split squat. you have a history of lower back issues from football. Axial spinal loading on a compromised lumbar structure is how you turn a training program into a physical therapy program. The trap bar shifts load distribution so the spine isn't under direct vertical compression the way a barbell back squat creates it. The Bulgarian split squat delivers unilateral quad and glute stimulus with zero spinal load because the weight is held in the hands, not sitting on the upper back. These are not regressions — they are the right exercise selection for your anatomy and history.`},
     {t:`The Deload — Why It's Non-Negotiable at 50`,
-     b:`The deload follows a 3:1 ratio — three sessions of hard training, one deload session. This comes directly from Schoenfeld who identifies the 3:1 ratio as the standard starting point, noting that high stress applied persistently over time downregulates immune function, motor coordination, hormonal output, and anabolic intracellular signaling. The deload at 60% load and 50% volume isn't laziness — it's the mechanism by which the body supercompensates. Animal research shows chronic resistance training eventually suppresses p70S6K and mTORC1 phosphorylation, but these signals fully restore after a brief reduction in training stress. That's exactly what the deload does.\n\nFor your old ass at 50, the deload is more important than it would be for a 25 year old or a sexy young buck like me. Schoenfeld's older adult research is clear that recovery capacity is genuinely reduced with age — it takes longer to restore neuromuscular baseline after hard training, and the penalty for chronic overreaching is steeper.`}
+     b:`The deload follows a 3:1 ratio — three sessions of hard training, one deload session. This comes directly from Schoenfeld who identifies the 3:1 ratio as the standard starting point, noting that high stress applied persistently over time downregulates immune function, motor coordination, hormonal output, and anabolic intracellular signaling. The deload at 60% load and 50% volume isn't laziness — it's the mechanism by which the body supercompensates. When you train hard consistently for weeks on end without a planned reduction in stress, the body eventually starts to downregulate its own anabolic signaling. Animal research shows that chronic uninterrupted resistance training progressively suppresses the phosphorylation of mTORC1 and p70S6K, which are two of the primary proteins in the muscle building signaling cascade.\n\nHere is why that matters. mTORC1 is the master switch that initiates muscle protein synthesis. p70S6K sits directly downstream of mTORC1 and is one of the key executors of that signal, meaning it is responsible for actually ramping up the ribosomal machinery that builds new muscle proteins. When both of these proteins are chronically suppressed the anabolic response to training is blunted even if everything else in the program is perfect. You can be hitting your protein, sleeping well, training hard, and still be getting a diminished return because the intracellular signaling chain that converts all of that into actual muscle growth has been downregulated by the accumulated training stress itself.\n\nThe deload is the direct solution to this. When training stress is reduced for a week the suppression lifts, mTORC1 and p70S6K phosphorylation restores to baseline or above, and the body becomes sensitized to training again. This is called a supercompensatory response and it is the reason why people often come back from a deload feeling stronger and more responsive to training than they did in the weeks leading up to it. The deload is not rest for the sake of rest. It is a deliberate biological reset of the signaling environment that makes all subsequent hard training more productive.\n\nFor your old ass at 50, the deload is more important than it would be for a 25 year old or a sexy young buck like me. Schoenfeld's older adult research is clear that recovery capacity is genuinely reduced with age — it takes longer to restore neuromuscular baseline after hard training, and the penalty for chronic overreaching is steeper.`}
    ]},
   {title:'Part 2: Nutrition',color:'#1a6b3c',sub:'Protein targets, anabolic resistance, carb cycling, fat intake',
    sections:[
