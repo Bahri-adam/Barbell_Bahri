@@ -690,13 +690,13 @@ select{color-scheme:dark}
       <span>Weekly Muscle Coverage</span>
       <div class="rest-days-row" id="RDROW">
         <span class="rd-label">Rest:</span>
-        <button class="rd-btn" data-dk="mon" onclick="toggleRestDay('mon')">M</button>
-        <button class="rd-btn" data-dk="tue" onclick="toggleRestDay('tue')">T</button>
-        <button class="rd-btn" data-dk="wed" onclick="toggleRestDay('wed')">W</button>
-        <button class="rd-btn" data-dk="thu" onclick="toggleRestDay('thu')">T</button>
-        <button class="rd-btn" data-dk="fri" onclick="toggleRestDay('fri')">F</button>
-        <button class="rd-btn" data-dk="sat" onclick="toggleRestDay('sat')">S</button>
-        <button class="rd-btn" data-dk="sun" onclick="toggleRestDay('sun')">S</button>
+        <button class="rd-btn" data-dk="mon" onclick="toggleRestDay('mon')">S1</button>
+        <button class="rd-btn" data-dk="tue" onclick="toggleRestDay('tue')">S2</button>
+        <button class="rd-btn" data-dk="wed" onclick="toggleRestDay('wed')">R</button>
+        <button class="rd-btn" data-dk="thu" onclick="toggleRestDay('thu')">S3</button>
+        <button class="rd-btn" data-dk="fri" onclick="toggleRestDay('fri')">R</button>
+        <button class="rd-btn" data-dk="sat" onclick="toggleRestDay('sat')">S4</button>
+        <button class="rd-btn" data-dk="sun" onclick="toggleRestDay('sun')">R</button>
       </div>
     </div>
     <div class="bt-body" id="BTB"></div>
@@ -920,12 +920,22 @@ function getBlockPhase(wk){
   if(wk<=15) return {block:2,name:'Block 2 — Strength',phase:wk===10||wk===11?'Introduction':'Peak'};
   return {block:3,name:'Block 3 — Peak Hypertrophy',phase:wk<=18?'Reload':wk>=22?'Accumulation Peak':'Volume Push'};
 }
-// Stimulus targets (research: 8–14 effective sets = growth zone; 18+ = diminishing returns)
-const STIMULUS_TARGET={quads:10,hamstrings:8,calves:6,glutes:6,chest:8,back:10,biceps:8,triceps:8,delts:8};
-const STIMULUS_CEILING={quads:18,hamstrings:16,calves:14,glutes:12,chest:16,back:18,biceps:14,triceps:14,delts:14};
-const VOLUME_CEILINGS={quads:22,hamstrings:20,calves:18,glutes:14,chest:18,back:20,biceps:18,triceps:18,delts:18};
-// Jeff's targets — 1 session per muscle group per week, appropriate for a 50-year-old
-const WEEKLY_TARGETS={quads:{target:10,ceiling:16,status:'maintained',days:'Session 4'},hamstrings:{target:10,ceiling:16,status:'maintained',days:'Session 4'},calves:{target:8,ceiling:12,status:'maintained',days:'Session 4'},glutes:{target:8,ceiling:12,status:'maintained',days:'Session 4'},back:{target:12,ceiling:18,status:'maintained',days:'Session 2'},biceps:{target:8,ceiling:14,status:'maintained',days:'Session 2'},triceps:{target:8,ceiling:14,status:'maintained',days:'Session 3'},chest:{target:10,ceiling:16,status:'maintained',days:'Session 3'},delts:{target:12,ceiling:18,status:'maintained',days:'Session 1'},core:{target:8,ceiling:12,status:'maintained',days:'Session 1'}};
+// Stimulus targets for Jeff (single session per muscle group per week)
+const STIMULUS_TARGET={core:9,quads:7,hamstrings:6,calves:4,glutes:0,chest:10,back:9,biceps:6,triceps:9,delts:17};
+const STIMULUS_CEILING={core:12,quads:11,hamstrings:10,calves:6,glutes:6,chest:13,back:13,biceps:9,triceps:12,delts:20};
+const VOLUME_CEILINGS={core:12,quads:11,hamstrings:10,calves:6,glutes:6,chest:13,back:13,biceps:9,triceps:12,delts:20};
+// Jeff's prescribed weekly set targets per muscle group (session-based, 1 session per muscle)
+const WEEKLY_TARGETS={
+  delts:    {target:17,ceiling:20,status:'maintained',days:'Session 1'},  // OHP(4)+Arnold(3)+Lateral(4)+RearDelt(3)+FacePull(3)
+  core:     {target:9, ceiling:12,status:'maintained',days:'Session 1'},  // Plank(3)+Crunch(3)+Pallof(3)
+  back:     {target:9, ceiling:13,status:'maintained',days:'Session 2'},  // Shrug(3)+Row(3)+InvRow(3) +opt Pulldown(3)
+  biceps:   {target:6, ceiling:9, status:'maintained',days:'Session 2'},  // InclineCurl(3)+HammerCurl(3)
+  chest:    {target:10,ceiling:13,status:'maintained',days:'Session 3'},  // Bench(4)+InclinePress(3)+FlatFly(3)
+  triceps:  {target:9, ceiling:12,status:'maintained',days:'Session 3'},  // DiamondPU(3)+OvhdExt(3)+SkullCrusher(3)
+  quads:    {target:7, ceiling:11,status:'maintained',days:'Session 4'},  // SplitSquat(4)+StepUp(3) +opt LegExt(3)
+  hamstrings:{target:6,ceiling:10,status:'maintained',days:'Session 4'},  // RDL(3)+StiffLeg(3) +opt LegCurl(3)
+  calves:   {target:4, ceiling:6, status:'maintained',days:'Session 4'},  // CalfRaise(4)
+};
 
 // ═══════════════════════════════════════════════════════════
 // HYPERTROPHY SCIENCE ENGINE (Performance-driven, not RPE-dependent)
@@ -1368,16 +1378,22 @@ function getSessionsPerMusclePerWeek(sched){
   return daysWithMuscle;
 }
 // Body part mapping (exercise name substring or exact → body part)
+// Order matters — first match wins. Most specific/higher-priority entries come first.
 const BODY_MAP=[
-  {parts:['quads'],keys:['Squat','Leg Press','Leg Extension','Belt Squat','Pendulum','Bulgarian Split']},
-  {parts:['hamstrings'],keys:['Deadlift','Leg Curl','Nordic','RDL','Stiff Leg']},
-  {parts:['calves'],keys:['Calf Raise']},
-  {parts:['glutes'],keys:['Hip Abductor','Hip Thrust']},
-  {parts:['chest'],keys:['Bench','Press','Fly','Pec Deck','Incline']},
-  {parts:['back'],keys:['Pull','Row','Pullover','Lat Pulldown']},
-  {parts:['biceps'],keys:['Curl','Spider','Preacher']},
-  {parts:['triceps'],keys:['Pushdown','Skull','Extension','Dip','Close Grip']},
-  {parts:['delts'],keys:['Lateral Raise','Face Pull','Rear Delt']}
+  {parts:['core'],    keys:['Plank','Crunch','Pallof','Sit-Up','Hollow','Ab Wheel']},
+  {parts:['quads'],   keys:['Squat','Leg Press','Leg Extension','Belt Squat','Pendulum','Bulgarian Split','Step-Up']},
+  {parts:['hamstrings'],keys:['Romanian Deadlift','Trap Bar Deadlift','RDL','Stiff-Leg Deadlift','Stiff Leg','Leg Curl','Nordic','Deadlift']},
+  {parts:['calves'],  keys:['Calf Raise']},
+  {parts:['glutes'],  keys:['Hip Abductor','Hip Thrust','Glute Bridge']},
+  // Delts BEFORE chest/back — catches OHP, Arnold Press, Face Pull before generic 'Press'/'Pull' fire
+  {parts:['delts'],   keys:['Lateral Raise','Face Pull','Rear Delt','Overhead Press','Arnold Press','Military Press','Shoulder Press']},
+  // Triceps BEFORE chest — catches Diamond Push-Ups before chest
+  {parts:['triceps'], keys:['Diamond Push','Skull Crusher','Skull','Pushdown','Overhead Tricep','Tricep Extension','Dip','Close-Grip Bench']},
+  // Chest — specific patterns only, no generic 'Press' or 'Incline'
+  {parts:['chest'],   keys:['Bench Press','Chest Press','Pec Deck','Incline Press','Incline Bench','Flat Fly','Chest Fly','Fly','Push-Up']},
+  {parts:['back'],    keys:['Pull-Up','Chin-Up','Lat Pulldown','Pulldown','Inverted Row','Single-Arm Row','Row','Pullover','Shrug']},
+  // Biceps last — 'Curl' would otherwise catch Leg Curl but that's already in hamstrings above
+  {parts:['biceps'],  keys:['Curl','Spider','Preacher']},
 ];
 function getBodyPart(exName){
   const n=(exName||'').toLowerCase();
@@ -1387,23 +1403,24 @@ function getBodyPart(exName){
   return 'other';
 }
 // Map EL.m (muscle) or explicit body part to tracker key
-const MUSCLE_TO_BP={'quads':'quads','hamstrings':'hamstrings','calves':'calves','glutes':'glutes','chest':'chest','back':'back','biceps':'biceps','triceps':'triceps','delts':'delts'};
+const MUSCLE_TO_BP={'core':'core','quads':'quads','hamstrings':'hamstrings','calves':'calves','glutes':'glutes','chest':'chest','back':'back','biceps':'biceps','triceps':'triceps','delts':'delts'};
 function getBodyPartFromMuscle(m){
   if(!m)return 'other';
   const x=(m||'').toLowerCase();
   for(const [bp] of Object.entries(MUSCLE_TO_BP)){if(x.includes(bp))return bp}
-  if(x.includes('quad')||x.includes('rectus'))return 'quads';
+  if(x.includes('abs')||x.includes('abdom')||x.includes('oblique')||x.includes('transverse'))return 'core';
+  if(x.includes('quad')||x.includes('rectus fem'))return 'quads';
   if(x.includes('ham')||x.includes('bicep fem'))return 'hamstrings';
   if(x.includes('calf')||x.includes('gastroc')||x.includes('soleus'))return 'calves';
   if(x.includes('glute')||x.includes('hip abd'))return 'glutes';
-  if(x.includes('pec')||x.includes('upper'))return 'chest';
+  if(x.includes('pec'))return 'chest';
   if(x.includes('lat')||x.includes('rhomb')||x.includes('trap'))return 'back';
   if(x.includes('bicep')||x.includes('brachialis'))return 'biceps';
   if(x.includes('tricep'))return 'triceps';
   if(x.includes('delt')||x.includes('shoulder'))return 'delts';
   return 'other';
 }
-const BODY_PART_OPTIONS=[{v:'chest',l:'Chest'},{v:'back',l:'Back'},{v:'quads',l:'Quads'},{v:'hamstrings',l:'Hamstrings'},{v:'calves',l:'Calves'},{v:'glutes',l:'Glutes'},{v:'biceps',l:'Biceps'},{v:'triceps',l:'Triceps'},{v:'delts',l:'Delts'}];
+const BODY_PART_OPTIONS=[{v:'chest',l:'Chest'},{v:'back',l:'Back'},{v:'quads',l:'Quads'},{v:'hamstrings',l:'Hamstrings'},{v:'calves',l:'Calves'},{v:'glutes',l:'Glutes'},{v:'biceps',l:'Biceps'},{v:'triceps',l:'Triceps'},{v:'delts',l:'Delts'},{v:'core',l:'Core'}];
 
 const DAY_NAMES={mon:'Session 1',tue:'Session 2',wed:'Rest',thu:'Session 3',fri:'Rest',sat:'Session 4',sun:'Rest'};
 const DAY_INDEX={mon:0,tue:1,wed:2,thu:3,fri:4,sat:5,sun:6};
@@ -2417,7 +2434,7 @@ function calcWeekStreak(upToWk){
 
 // Prescribed sets per body part (from program, current week structure)
 function getPrescribedSets(){
-  const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
+  const out={core:0,quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
   DO.forEach(dk=>{
     const d=getDayProgram(dk);
     if(d.rest)return;
@@ -2430,7 +2447,7 @@ function getPrescribedSets(){
 }
 // Actual sets logged this week per body part
 function getActualSets(wk){
-  const out={quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
+  const out={core:0,quads:0,hamstrings:0,calves:0,glutes:0,chest:0,back:0,biceps:0,triceps:0,delts:0};
   const weekLogs=ST.logs.filter(l=>l.wk===wk);
   weekLogs.forEach(l=>{
     const bp=getBodyPart(l.ex);
@@ -2444,7 +2461,7 @@ function renderBodyTracker(){
   if(!btb)return;
   const pres=getPrescribedSets();
   const actu=getActualSets(ST.wk);
-  const labels={quads:'Quads',hamstrings:'Hams',calves:'Calves',glutes:'Glutes',chest:'Chest',back:'Back',biceps:'Biceps',triceps:'Triceps',delts:'Delts'};
+  const labels={core:'Core',quads:'Quads',hamstrings:'Hams',calves:'Calves',glutes:'Glutes',chest:'Chest',back:'Back',biceps:'Biceps',triceps:'Triceps',delts:'Delts'};
   let html='';
   for(const bp of Object.keys(pres)){
     if(pres[bp]===0)continue;
@@ -3642,7 +3659,7 @@ function showWeeklyReview(wk){
   const prevVol=prevLogs.reduce((s,l)=>s+((l.w||0)*(l.r||0)),0);
   const actu=getActualSets(wk);
   const targ=WEEKLY_TARGETS;
-  const labels={quads:'Quads',hamstrings:'Hams',calves:'Calves',glutes:'Glutes',chest:'Chest',back:'Back',biceps:'Biceps',triceps:'Triceps',delts:'Delts'};
+  const labels={core:'Core',quads:'Quads',hamstrings:'Hams',calves:'Calves',glutes:'Glutes',chest:'Chest',back:'Back',biceps:'Biceps',triceps:'Triceps',delts:'Delts'};
   // PRs this week
   const best={};weekLogs.forEach(l=>{if(l.e1rm&&(!best[l.ex]||l.e1rm>best[l.ex].e1rm))best[l.ex]=l});
   const prevBest={};prevLogs.forEach(l=>{if(l.e1rm&&(!prevBest[l.ex]||l.e1rm>prevBest[l.ex].e1rm))prevBest[l.ex]=l});
