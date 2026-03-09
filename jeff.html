@@ -1930,7 +1930,8 @@ function loadST(){
     const ce=localStorage.getItem('jeffCustomEx');
     if(ce){const arr=JSON.parse(ce);arr.forEach(e=>{if(!EL.find(x=>x.n===e.n))EL.push(e)})}
   }catch(e){}
-  try{const l=localStorage.getItem('jefflogs');if(l){ST.logs=JSON.parse(l)}else{ST.logs=[];saveLogs()}}catch(e){ST.logs=[]}
+  try{const l=localStorage.getItem('jefflogs');if(l){ST.logs=JSON.parse(l);// Auto-wipe if logs contain Adam's legacy HL data (Hack Squat, Feb 2025)
+  if(ST.logs.some(lg=>lg.date==='2025-02-10'||lg.ex==='Hack Squat'||lg.ex==='Single Leg Press')){ST.logs=[];saveLogs();if(fbReady)fbRef('logs').set(null);}}else{ST.logs=[];saveLogs()}}catch(e){ST.logs=[]}
   if(!ST.url)ST.url=SHEETS_URL;
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
