@@ -1,0 +1,18 @@
+{
+  "name": "Puffer the F**ker",
+  "short_name": "Puffer",
+  "description": "Mike Puffer — Powerbuilding program",
+  "start_url": "./jeff.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0e14",
+  "theme_color": "#e63946",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
