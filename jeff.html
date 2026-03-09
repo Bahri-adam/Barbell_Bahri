@@ -1939,7 +1939,7 @@ function loadST(){
     const ce=localStorage.getItem('jeffCustomEx');
     if(ce){const arr=JSON.parse(ce);arr.forEach(e=>{if(!EL.find(x=>x.n===e.n))EL.push(e)})}
   }catch(e){}
-  try{const l=localStorage.getItem('jefflogs');if(l){ST.logs=JSON.parse(l)}else{ST.logs=HL.map((h,i)=>({...h,id:'h'+i,ts:h.date+'T12:00:00Z',e1rm:h.w&&h.r?Math.round(h.w*(1+h.r/30)):null}));saveLogs()}}catch(e){ST.logs=[]}
+  try{const l=localStorage.getItem('jefflogs');if(l){ST.logs=JSON.parse(l)}else{ST.logs=[];saveLogs()}}catch(e){ST.logs=[]}
   if(!ST.url)ST.url=SHEETS_URL;
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
@@ -4111,13 +4111,14 @@ async function resetAllData(){
   localStorage.removeItem('jeffv3');
   localStorage.removeItem('jeffWIP');
   localStorage.removeItem('jeffCustomEx');
-  localStorage.removeItem('jeffLogs');
+  localStorage.removeItem('jefflogs');
   // 3. Reset in-memory state
   ST.wk=1;ST.bl=1;ST.logs=[];ST.ovr={};ST.restDays=['wed','fri','sun'];
   ST.weekOverride={};ST.weekSchedules={};ST.weekAnchors={};
   ST.removedExercises={};ST.addedExercises={};ST.cueOverrides={};
   ST.lastDeloadAt=0;ST.profile={};ST.url='';
   saveST();
+  saveLogs();
   renderHome();
   renderBodyTracker();
   renderAN();
