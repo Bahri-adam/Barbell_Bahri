@@ -28,16 +28,7 @@ firebase.initializeApp({
 const fbDB=firebase.database();
 const FB_ROOT='jeff-puffer';
 let fbReady=false;
-let fbUID=null;
-// If ?uid=XXX is in the URL, use that UID (lets Adam view Jeff's data from his computer)
-const _urlUID=new URLSearchParams(location.search).get('uid')||null;
-firebase.auth().signInAnonymously()
-  .then(cred=>{
-    fbReady=true;
-    fbUID=_urlUID||cred.user.uid; // override with URL param if present
-    console.log('Firebase auth OK uid:',fbUID,_urlUID?'(observer mode)':'(own device)');
-  })
-  .catch(e=>console.warn('Firebase auth failed:',e));
+firebase.auth().signInAnonymously().then(()=>{fbReady=true;console.log('Firebase auth OK')}).catch(e=>console.warn('Firebase auth failed:',e));
 </script>
 <style>
 :root{--bg:#0a0e14;--bg2:#0f1419;--s1:#151b23;--s2:#1c2430;--s3:#252f3d;--b1:#2a3544;--b2:#364556;--red:#e63946;--red-dim:rgba(230,57,70,.25);--blue:#457b9d;--blue2:#6ec1e3;--gold:#f4a261;--grn:#2a9d8f;--grn2:#52b788;--tx:#e8ecf1;--tx2:#a8b3c4;--tx3:#6b7a8f;--fd:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;--fm:'Roboto Mono',monospace;--sh:0 4px 16px rgba(0,0,0,.4);--sh2:0 2px 10px rgba(0,0,0,.3);--glass:rgba(21,27,35,.85)}
@@ -4104,7 +4095,7 @@ function confirmResetAll(){
 
 async function resetAllData(){
   // 1. Wipe Firebase branch for this UID
-  if(fbReady&&fbUID){
+  if(fbReady){
     try{await fbRef('').set(null);}catch(e){console.warn('FB wipe failed:',e)}
   }
   // 2. Wipe localStorage
@@ -4176,23 +4167,7 @@ function _err(err){
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-  const myUID=fbUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||'(loading…)';
-  const shareURL=location.origin+location.pathname+'?uid='+myUID;
-  const isObserver=!!_urlUID&&_urlUID!==myUID;
-
   es.innerHTML=`
-    <div class="expcard" style="border-left:3px solid var(--blue)">
-      <div class="ecttl" style="color:var(--blue2)">Device ID ${isObserver?'— <span style="color:var(--gold)">Observer Mode</span>':''}</div>
-      <div class="ecdesc">${isObserver
-        ?`You are viewing Jeff's data (UID: <code style="font-family:var(--fm);color:var(--gold)">${myUID}</code>). Changes you make here sync to his device.`
-        :`Share this URL with Adam so he can view your data from his computer. <strong style="color:var(--gold)">⚠ Must be copied from the home screen app, not Safari browser</strong> — they have separate IDs.`
-      }</div>
-      <input class="urlinp" id="UID_SHARE" readonly value="${isObserver?'(observer — using Jeff\'s UID)':shareURL}" onclick="this.select()" style="font-size:11px">
-      <button class="expbtn s" style="margin-top:8px" onclick="navigator.clipboard&&navigator.clipboard.writeText('${shareURL}').then(()=>showConf('Copied','Share URL copied.',null))">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><rect x="2" y="2" width="13" height="13" rx="2"/></svg>
-        COPY SHARE URL
-      </button>
-    </div>
     <div class="expcard">
       <div class="ecttl">Google Apps Script (Code.gs)</div>
       <div class="ecdesc">Copy/paste this into your Apps Script project. Then deploy as a Web App and paste the URL above.</div>
@@ -5048,12 +5023,7 @@ function renderSTRBW(ab){
 // ═══════════════════════════════════════════════════════════
 // FIREBASE SYNC
 // ═══════════════════════════════════════════════════════════
-function fbRef(path){
-  // Each device gets its own UID-scoped branch so users never overwrite each other's data
-  const uid=fbUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid);
-  if(uid)return fbDB.ref(FB_ROOT+'/'+uid+'/'+path);
-  return fbDB.ref(FB_ROOT+'/'+path); // fallback before auth resolves (never written in practice)
-}
+function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
 
 function fbSaveSettings(){
   if(!fbReady)return;
