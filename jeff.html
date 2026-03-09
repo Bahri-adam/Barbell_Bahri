@@ -28,7 +28,10 @@ firebase.initializeApp({
 const fbDB=firebase.database();
 const FB_ROOT='jeff-puffer';
 let fbReady=false;
-firebase.auth().signInAnonymously().then(()=>{fbReady=true;console.log('Firebase auth OK')}).catch(e=>console.warn('Firebase auth failed:',e));
+let fbUID=null;
+firebase.auth().signInAnonymously()
+  .then(cred=>{fbReady=true;fbUID=cred.user.uid;console.log('Firebase auth OK uid:',fbUID)})
+  .catch(e=>console.warn('Firebase auth failed:',e));
 </script>
 <style>
 :root{--bg:#0a0e14;--bg2:#0f1419;--s1:#151b23;--s2:#1c2430;--s3:#252f3d;--b1:#2a3544;--b2:#364556;--red:#e63946;--red-dim:rgba(230,57,70,.25);--blue:#457b9d;--blue2:#6ec1e3;--gold:#f4a261;--grn:#2a9d8f;--grn2:#52b788;--tx:#e8ecf1;--tx2:#a8b3c4;--tx3:#6b7a8f;--fd:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;--fm:'Roboto Mono',monospace;--sh:0 4px 16px rgba(0,0,0,.4);--sh2:0 2px 10px rgba(0,0,0,.3);--glass:rgba(21,27,35,.85)}
@@ -4984,7 +4987,12 @@ function renderSTRBW(ab){
 // ═══════════════════════════════════════════════════════════
 // FIREBASE SYNC
 // ═══════════════════════════════════════════════════════════
-function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
+function fbRef(path){
+  // Each device gets its own UID-scoped branch so users never overwrite each other's data
+  const uid=fbUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid);
+  if(uid)return fbDB.ref(FB_ROOT+'/'+uid+'/'+path);
+  return fbDB.ref(FB_ROOT+'/'+path); // fallback before auth resolves (never written in practice)
+}
 
 function fbSaveSettings(){
   if(!fbReady)return;
