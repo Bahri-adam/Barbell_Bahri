@@ -910,6 +910,14 @@ select{color-scheme:dark}
       </button>
       <input type="file" id="IMP" accept=".json" style="display:none" onchange="impJSON(event)">
     </div>
+    <div class="expcard" style="border-left:3px solid var(--red)">
+      <div class="ecttl" style="color:var(--red)">Reset All Data</div>
+      <div class="ecdesc">Wipes all logs, settings, and progress from this device <strong>and</strong> Firebase. Cannot be undone. Use this to start completely fresh.</div>
+      <button class="expbtn s" style="border-color:var(--red);color:var(--red)" onclick="confirmResetAll()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+        RESET ALL DATA
+      </button>
+    </div>
     <div id="ES" style="margin-top:8px"></div>
   </div>
 </div>
@@ -4087,6 +4095,36 @@ function impJSON(ev){
   reader.readAsText(f);
 }
 
+function confirmResetAll(){
+  showConf('Reset All Data',
+    'This will permanently delete all logs, settings, and progress from this device AND Firebase. Cannot be undone.',
+    ()=>resetAllData()
+  );
+}
+
+async function resetAllData(){
+  // 1. Wipe Firebase branch for this UID
+  if(fbReady&&fbUID){
+    try{await fbRef('').set(null);}catch(e){console.warn('FB wipe failed:',e)}
+  }
+  // 2. Wipe localStorage
+  localStorage.removeItem('jeffv3');
+  localStorage.removeItem('jeffWIP');
+  localStorage.removeItem('jeffCustomEx');
+  localStorage.removeItem('jeffLogs');
+  // 3. Reset in-memory state
+  ST.wk=1;ST.bl=1;ST.logs=[];ST.ovr={};ST.restDays=['wed','fri','sun'];
+  ST.weekOverride={};ST.weekSchedules={};ST.weekAnchors={};
+  ST.removedExercises={};ST.addedExercises={};ST.cueOverrides={};
+  ST.lastDeloadAt=0;ST.profile={};ST.url='';
+  saveST();
+  renderHome();
+  renderBodyTracker();
+  renderAN();
+  renderES();
+  showConf('Done','All data has been wiped. Starting fresh.',null);
+}
+
 function renderES(){
   // Small helper info card below exports (optional)
   const es=document.getElementById('ES');
@@ -4146,7 +4184,7 @@ function _err(err){
       <div class="ecttl" style="color:var(--blue2)">Device ID ${isObserver?'— <span style="color:var(--gold)">Observer Mode</span>':''}</div>
       <div class="ecdesc">${isObserver
         ?`You are viewing Jeff's data (UID: <code style="font-family:var(--fm);color:var(--gold)">${myUID}</code>). Changes you make here sync to his device.`
-        :`Share this URL with Adam so he can view your data from his computer.`
+        :`Share this URL with Adam so he can view your data from his computer. <strong style="color:var(--gold)">⚠ Must be copied from the home screen app, not Safari browser</strong> — they have separate IDs.`
       }</div>
       <input class="urlinp" id="UID_SHARE" readonly value="${isObserver?'(observer — using Jeff\'s UID)':shareURL}" onclick="this.select()" style="font-size:11px">
       <button class="expbtn s" style="margin-top:8px" onclick="navigator.clipboard&&navigator.clipboard.writeText('${shareURL}').then(()=>showConf('Copied','Share URL copied.',null))">
