@@ -5254,10 +5254,23 @@ renderBodyTracker();
 renderAN();
 renderES();
 
+// One-time log wipe (March 2026 reset for blank slate)
+if(!localStorage.getItem('jeff_log_reset_mar2026')){
+  ST.logs=[];ST.removedExercises={};ST.addedExercises={};
+  saveLogs();saveSTLocal();
+  localStorage.setItem('jeff_log_reset_mar2026','1');
+}
+
 // Firebase: wait for auth, then pull data and listen for changes
 firebase.auth().onAuthStateChanged(user=>{
   if(user){
     fbReady=true;
+    // Clear logs from Firebase too (blank slate)
+    if(!localStorage.getItem('jeff_fb_reset_mar2026')){
+      fbRef('logs').set(null);
+      fbSaveSettings();
+      localStorage.setItem('jeff_fb_reset_mar2026','1');
+    }
     fbPullAll().then(()=>{
       dedupLogsIfNeeded();
       renderHome();
