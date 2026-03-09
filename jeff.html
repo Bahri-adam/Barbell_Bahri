@@ -1736,7 +1736,10 @@ function getDayProgram(dk){
   // Deload days: use template as-is, no added exercises (strict protocol)
   if(base.isDeloadDay)return {...base,key:dk,name:DAY_NAMES[dk]};
   const added=(ST.addedExercises||{})[dk]||[];
-  const merged=base.exercises.concat(added.map(a=>({id:'ae_'+a.name.replace(/\s/g,'_'),name:a.name,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Run perfect reps. Full ROM.',mech:'Custom.',bodyPart:a.bodyPart||'other',isAdded:true})));
+  const remKey=getRemovedKey(ST.wk,dk);
+  const removed=new Set(((ST.removedExercises||{})[remKey]||[]).map(n=>String(n).toLowerCase()));
+  const merged=base.exercises.concat(added.map(a=>({id:'ae_'+a.name.replace(/\s/g,'_'),name:a.name,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Run perfect reps. Full ROM.',mech:'Custom.',bodyPart:a.bodyPart||'other',isAdded:true})))
+    .filter(e=>!removed.has(String(e.name||'').toLowerCase()));
   return {...base,key:dk,name:DAY_NAMES[dk],exercises:merged};
 }
 function toggleRestDay(dk){
@@ -3794,13 +3797,14 @@ function finWO(){
   const dn=DAY_NAMES[dk]||dk;
   const wk=ST.logWk||ST.wk;
 
-  // Persist added exercises for denominator / muscle coverage
-  const addedExs=ST.awExs.filter(ex=>ex.templateIdx===-1||ex.isAdded===true);
-  if(addedExs.length){
-    ST.addedExercises=ST.addedExercises||{};
-    ST.addedExercises[dk]=addedExs.map(ex=>({name:ex.displayName||ex.name,sets:ex.sets||3,bodyPart:ex.bodyPart||getBodyPart(ex.displayName||ex.name)||'other'}));
-    saveST();
-  }
+  // Persist added exercises for denominator / muscle coverage (skip any in removedExercises)
+  const remKey=getRemovedKey(wk,dk);
+  const removed=new Set(((ST.removedExercises||{})[remKey]||[]).map(n=>String(n).toLowerCase()));
+  const addedExs=ST.awExs.filter(ex=>(ex.templateIdx===-1||ex.isAdded===true)&&!removed.has(String(ex.displayName||ex.name||'').toLowerCase()));
+  ST.addedExercises=ST.addedExercises||{};
+  ST.addedExercises[dk]=addedExs.map(ex=>({name:ex.displayName||ex.name,sets:ex.sets||3,bodyPart:ex.bodyPart||getBodyPart(ex.displayName||ex.name)||'other'}));
+  if(!ST.addedExercises[dk].length)delete ST.addedExercises[dk];
+  saveST();
 
   // Preserve original id/ts/date for existing sets; only NEW sets get current timestamp
   const existing=ST.logs.filter(l=>l.dk===dk&&l.wk===wk);
@@ -5174,21 +5178,6 @@ async function fbPullSync(){
   renderHome();
   renderBodyTracker();
   renderAN();
-  if(document.getElementById('pg-wo')&&document.getElementById('pg-wo').classList.contains('on')&&ST.aday){
-    const dk=ST.aday;
-    const added=(ST.addedExercises||{})[dk]||[];
-    const known=new Set((ST.awExs||[]).map(ex=>String(ex.displayName||ex.name||'').toLowerCase()));
-    added.forEach(a=>{
-      const n=(a.name||'').trim();
-      if(!n||known.has(n.toLowerCase()))return;
-      known.add(n.toLowerCase());
-      const id=genId();
-      const ex={id,name:n,displayName:n,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Synced from another device.',mech:'',templateIdx:-1,bodyPart:a.bodyPart||'other',isAdded:true};
-      ST.awExs.push(ex);
-      ST.aws[id]=Array.from({length:ex.sets},()=>({w:'',r:'',rpe:'',done:false}));
-    });
-    renderWO();
-  }
 }
 
 function fbListenForChanges(){
@@ -5221,23 +5210,6 @@ function fbListenForChanges(){
       renderHome();
       renderBodyTracker();
       renderAN();
-      // Merge new added exercises from sync into workout view if open
-      const pgWo=document.getElementById('pg-wo');
-      if(pgWo&&pgWo.classList.contains('on')&&ST.aday){
-        const dk=ST.aday;
-        const added=(ST.addedExercises||{})[dk]||[];
-        const known=new Set((ST.awExs||[]).map(ex=>String(ex.displayName||ex.name||'').toLowerCase()));
-        added.forEach(a=>{
-          const n=(a.name||'').trim();
-          if(!n||known.has(n.toLowerCase()))return;
-          known.add(n.toLowerCase());
-          const id=genId();
-          const ex={id,name:n,displayName:n,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Synced from another device.',mech:'',templateIdx:-1,bodyPart:a.bodyPart||'other',isAdded:true};
-          ST.awExs.push(ex);
-          ST.aws[id]=Array.from({length:ex.sets},()=>({w:'',r:'',rpe:'',done:false}));
-        });
-        renderWO();
-      }
     });
   }catch(e){console.warn('FB listener failed:',e)}
 }
