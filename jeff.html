@@ -29,8 +29,14 @@ const fbDB=firebase.database();
 const FB_ROOT='jeff-puffer';
 let fbReady=false;
 let fbUID=null;
+// If ?uid=XXX is in the URL, use that UID (lets Adam view Jeff's data from his computer)
+const _urlUID=new URLSearchParams(location.search).get('uid')||null;
 firebase.auth().signInAnonymously()
-  .then(cred=>{fbReady=true;fbUID=cred.user.uid;console.log('Firebase auth OK uid:',fbUID)})
+  .then(cred=>{
+    fbReady=true;
+    fbUID=_urlUID||cred.user.uid; // override with URL param if present
+    console.log('Firebase auth OK uid:',fbUID,_urlUID?'(observer mode)':'(own device)');
+  })
   .catch(e=>console.warn('Firebase auth failed:',e));
 </script>
 <style>
@@ -4131,7 +4137,23 @@ function _err(err){
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
+  const myUID=fbUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||'(loading…)';
+  const shareURL=location.origin+location.pathname+'?uid='+myUID;
+  const isObserver=!!_urlUID&&_urlUID!==myUID;
+
   es.innerHTML=`
+    <div class="expcard" style="border-left:3px solid var(--blue)">
+      <div class="ecttl" style="color:var(--blue2)">Device ID ${isObserver?'— <span style="color:var(--gold)">Observer Mode</span>':''}</div>
+      <div class="ecdesc">${isObserver
+        ?`You are viewing Jeff's data (UID: <code style="font-family:var(--fm);color:var(--gold)">${myUID}</code>). Changes you make here sync to his device.`
+        :`Share this URL with Adam so he can view your data from his computer.`
+      }</div>
+      <input class="urlinp" id="UID_SHARE" readonly value="${isObserver?'(observer — using Jeff\'s UID)':shareURL}" onclick="this.select()" style="font-size:11px">
+      <button class="expbtn s" style="margin-top:8px" onclick="navigator.clipboard&&navigator.clipboard.writeText('${shareURL}').then(()=>showConf('Copied','Share URL copied.',null))">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><rect x="2" y="2" width="13" height="13" rx="2"/></svg>
+        COPY SHARE URL
+      </button>
+    </div>
     <div class="expcard">
       <div class="ecttl">Google Apps Script (Code.gs)</div>
       <div class="ecdesc">Copy/paste this into your Apps Script project. Then deploy as a Web App and paste the URL above.</div>
