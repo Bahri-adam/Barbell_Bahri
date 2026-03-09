@@ -3248,13 +3248,19 @@ function delEx(exIdx,name){
 
   // Record in removedExercises (week/day scoped)
   const wk=ST.logWk||ST.wk;
-  const key=getRemovedKey(wk,ST.aday);
+  const dk=ST.aday;
+  const key=getRemovedKey(wk,dk);
   const target=(ex.displayName||ex.name||'').trim();
   if(target){
     ST.removedExercises=ST.removedExercises||{};
     const arr=Array.isArray(ST.removedExercises[key])?[...ST.removedExercises[key]]:[];
     if(!arr.some(n=>String(n).toLowerCase()===target.toLowerCase()))arr.push(target);
     ST.removedExercises[key]=arr;
+    // Also remove from addedExercises so it doesn't reappear via sync
+    if(ST.addedExercises&&Array.isArray(ST.addedExercises[dk])){
+      ST.addedExercises[dk]=ST.addedExercises[dk].filter(a=>String(a.name||'').toLowerCase()!==target.toLowerCase());
+      if(!ST.addedExercises[dk].length)delete ST.addedExercises[dk];
+    }
   }
   ST.awExs.splice(exIdx,1);
   saveST();
