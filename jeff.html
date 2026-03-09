@@ -768,7 +768,12 @@ select{color-scheme:dark}
 <div class="pg on" id="pg-home">
   <div class="home-top">
     <div><div class="hname">Puffer the F**ker</div><div class="htag">Powerbuilding Program</div></div>
-    <div class="hbi"><div class="hbl" id="BL">Block 1 — Hypertrophy</div><div class="hwn" id="WD">W1</div></div>
+    <div class="hbi" style="display:flex;align-items:center;gap:8px">
+      <button onclick="fbPullSync()" title="Pull latest from cloud (phone ↔ desktop sync)" style="background:transparent;border:1px solid var(--b2);border-radius:6px;padding:6px 8px;color:var(--tx3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .2s,border-color .2s" onmouseover="this.style.color='var(--tx2)';this.style.borderColor='var(--blue)'" onmouseout="this.style.color='var(--tx3)';this.style.borderColor='var(--b2)'">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M4 9l5-5 5 5M9 14V2"/></svg>
+      </button>
+      <div><div class="hbl" id="BL">Block 1 — Hypertrophy</div><div class="hwn" id="WD">W1</div></div>
+    </div>
   </div>
   <div class="athlete-profile" id="AP">
     <div class="ap-row"><span class="ap-label">Name</span><input type="text" class="ap-val" id="AP_NAME" placeholder="Jeff Puffer" onchange="saveProfile('name',this.value)"></div>
@@ -859,6 +864,20 @@ select{color-scheme:dark}
   <div class="expbody">
     <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--s1);border:1px solid var(--b1);border-radius:4px;margin-bottom:12px;font-size:12px;color:var(--tx2)">
       <div class="sdot off" id="SD"></div><div id="SM">Not connected to Google Sheets</div>
+    </div>
+    <div class="expcard" style="margin-bottom:12px">
+      <div class="ecttl">Sync Across Devices (Firebase)</div>
+      <div class="ecdesc">Push sends all local data to the cloud. Pull downloads the latest from the cloud. Use these if phone ↔ desktop aren't in sync.</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="expbtn p" onclick="fbPushAll();alert('All local data pushed to Firebase.')" style="flex:1">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          PUSH TO CLOUD
+        </button>
+        <button class="expbtn s" onclick="fbPullSync().then(()=>alert('Pulled latest from Firebase.'))" style="flex:1">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9v-4a2 2 0 012-2h14a2 2 0 012 2v4M17 14l-5 5-5-5M12 9v10"/></svg>
+          PULL FROM CLOUD
+        </button>
+      </div>
     </div>
     <div class="steps">
       <h3>Connect Google Sheets</h3>
@@ -3521,14 +3540,19 @@ function applySW(newName,isCustom=false,bodyPart=null){
       isAdded:true
     };
     ST.awExs.push(ex);
+    // Persist added exercises immediately so they sync across devices (phone ↔ desktop)
+    const dk=ST.aday;
+    const addedExs=ST.awExs.filter(ex=>ex.templateIdx===-1||ex.isAdded===true);
+    ST.addedExercises=ST.addedExercises||{};
+    ST.addedExercises[dk]=addedExs.map(ex=>({name:ex.displayName||ex.name,sets:ex.sets||3,bodyPart:ex.bodyPart||getBodyPart(ex.displayName||ex.name)||'other'}));
     // If user re-adds something they previously deleted this week/day, un-remove it.
     const wk=ST.logWk||ST.wk;
     const remKey=getRemovedKey(wk,ST.aday);
     if(ST.removedExercises&&Array.isArray(ST.removedExercises[remKey])){
       ST.removedExercises[remKey]=ST.removedExercises[remKey].filter(n=>String(n).toLowerCase()!==String(newName).toLowerCase());
       if(!ST.removedExercises[remKey].length)delete ST.removedExercises[remKey];
-      saveST();
     }
+    saveST();
     ST.aws[id]=Array.from({length:ex.sets},()=>({w:'',r:'',done:false}));
     closeSW();
     document.getElementById('customExInput').value='';
@@ -5091,7 +5115,13 @@ async function fbPullAll(){
   try{
     const snap=await fbRef('').once('value');
     const data=snap.val();
-    if(!data)return;
+
+    // If Firebase node is empty, push all local data up (first-time sync)
+    if(!data){
+      console.log('Firebase node empty — pushing local data to cloud');
+      fbPushAll();
+      return;
+    }
     let changed=false;
 
     // Merge settings (Firebase wins if newer)
@@ -5124,6 +5154,37 @@ async function fbPullAll(){
   }catch(e){console.warn('FB pull failed (offline?):',e)}
 }
 
+function fbPushAll(){
+  if(!fbReady)return;
+  fbSaveSettings();
+  fbSaveAllLogs();
+  fbSaveCustomEx();
+  console.log('Pushed all local data to Firebase');
+}
+
+async function fbPullSync(){
+  await fbPullAll();
+  dedupLogsIfNeeded();
+  renderHome();
+  renderBodyTracker();
+  renderAN();
+  if(document.getElementById('pg-wo')&&document.getElementById('pg-wo').classList.contains('on')&&ST.aday){
+    const dk=ST.aday;
+    const added=(ST.addedExercises||{})[dk]||[];
+    const known=new Set((ST.awExs||[]).map(ex=>String(ex.displayName||ex.name||'').toLowerCase()));
+    added.forEach(a=>{
+      const n=(a.name||'').trim();
+      if(!n||known.has(n.toLowerCase()))return;
+      known.add(n.toLowerCase());
+      const id=genId();
+      const ex={id,name:n,displayName:n,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Synced from another device.',mech:'',templateIdx:-1,bodyPart:a.bodyPart||'other',isAdded:true};
+      ST.awExs.push(ex);
+      ST.aws[id]=Array.from({length:ex.sets},()=>({w:'',r:'',rpe:'',done:false}));
+    });
+    renderWO();
+  }
+}
+
 function fbListenForChanges(){
   try{
     let firstLoad=true;
@@ -5154,6 +5215,23 @@ function fbListenForChanges(){
       renderHome();
       renderBodyTracker();
       renderAN();
+      // Merge new added exercises from sync into workout view if open
+      const pgWo=document.getElementById('pg-wo');
+      if(pgWo&&pgWo.classList.contains('on')&&ST.aday){
+        const dk=ST.aday;
+        const added=(ST.addedExercises||{})[dk]||[];
+        const known=new Set((ST.awExs||[]).map(ex=>String(ex.displayName||ex.name||'').toLowerCase()));
+        added.forEach(a=>{
+          const n=(a.name||'').trim();
+          if(!n||known.has(n.toLowerCase()))return;
+          known.add(n.toLowerCase());
+          const id=genId();
+          const ex={id,name:n,displayName:n,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Synced from another device.',mech:'',templateIdx:-1,bodyPart:a.bodyPart||'other',isAdded:true};
+          ST.awExs.push(ex);
+          ST.aws[id]=Array.from({length:ex.sets},()=>({w:'',r:'',rpe:'',done:false}));
+        });
+        renderWO();
+      }
     });
   }catch(e){console.warn('FB listener failed:',e)}
 }
