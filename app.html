@@ -671,10 +671,10 @@ select{color-scheme:dark}
     </div>
 
     <div class="dl-rules">
-      <div class="dl-rules-hdr">Deload protocol (Schoenfeld 2017)</div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">📅</span><span>2 full-body sessions only — <strong>Monday</strong> (Full Body A) + <strong>Thursday</strong> (Full Body B)</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">⚖️</span><span>Weights at <strong>~60–70%</strong> of your normal working loads</span></div>
-      <div class="dl-rule-item"><span class="dl-rule-icon">📉</span><span><strong>~50% of normal weekly sets</strong> — about half the volume</span></div>
+      <div class="dl-rules-hdr">Deload Protocol</div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">📅</span><span>2 full-body sessions only — <strong>Monday</strong> (Session 1) + <strong>Thursday</strong> (Session 2)</span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">⚖️</span><span>Session 1: <strong>same loads</strong> as last accumulation, sets and reps <strong>cut in half</strong></span></div>
+      <div class="dl-rule-item"><span class="dl-rule-icon">⚖️</span><span>Session 2: <strong>~50% of working loads</strong>, further reduced sets</span></div>
       <div class="dl-rule-item"><span class="dl-rule-icon">🎯</span><span>All sets stop <strong>4–5 reps short of failure</strong> (RIR 4–5) — no grinding</span></div>
       <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>No 3-sec eccentrics</strong> — smooth, normal tempo only</span></div>
       <div class="dl-rule-item"><span class="dl-rule-icon">🚫</span><span><strong>No loaded interset stretches</strong> — skip the calf stretch holds etc.</span></div>
@@ -738,7 +738,7 @@ select{color-scheme:dark}
     <div class="wo-row">
       <button class="bk" onclick="showPg('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
       <div class="wo-t" id="WT">Workout</div>
-      <select class="wo-wk-sel" id="WWS" onchange="ST.logWk=parseInt(this.value);renderWO();const db=document.getElementById('WODLB');if(db){db.style.display=isDeloadWk(ST.logWk)?'block':'none';if(isDeloadWk(ST.logWk)){db.innerHTML='<strong>★ DELOAD WEEK (W'+ST.logWk+')</strong> — Mon &amp; Thu only · ~60-70% load · ~50% sets · RIR 4-5 · No 3-sec eccentrics · No loaded stretches · No drop sets.'}}" title="Log as week"
+      <select class="wo-wk-sel" id="WWS" onchange="ST.logWk=parseInt(this.value);renderWO();const db=document.getElementById('WODLB');if(db){db.style.display=isDeloadWk(ST.logWk)?'block':'none';if(isDeloadWk(ST.logWk)){db.innerHTML='<strong>★ DELOAD WEEK (W'+ST.logWk+')</strong> — Mon &amp; Thu full body · Session 1: same load, ~50% sets/reps · Session 2: ~50% load · RIR 4-5 · No eccentrics · No loaded stretches · No drop sets.'}}" title="Log as week"
         style="background:var(--s2);border:1px solid var(--b2);border-radius:3px;padding:6px 10px;font-family:var(--fm);font-size:12px;color:var(--tx2);min-width:52px">
         <!-- filled by JS -->
       </select>
@@ -893,22 +893,32 @@ const P={
     {id:'s7',name:'Skull Crusher',sets:4,reps:'8–10',rest:120,type:'h',cue:'3-sec eccentric to forehead. Long head stretch at bottom.',mech:'Heavy tricep. Second session. Different to CGBP.'},
     {id:'s8',name:'Dumbbell Overhead Extension',sets:3,reps:'10–12',rest:90,type:'s',cue:'Shoulder flexed overhead = long head maximally stretched. 3-sec eccentric.',mech:'Long head lengthened — second weekly exposure.'}
   ]},
-  // ── DELOAD TEMPLATES (full-body, Mon+Thu, ~50% vol, 60-70% load, RIR 4-5) ──
-  deload_mon:{key:'deload_mon',name:'Monday',focus:'Deload — Full Body A',color:'#e63946',isDeloadDay:true,exercises:[
-    {id:'dl1',name:'Hack Squat',sets:3,reps:'8–10',rest:120,type:'n',cue:'Smooth controlled reps. Stop 4-5 reps short of failure. NO 3-sec eccentric. NO loaded stretch.',mech:'Full quad stimulus at reduced intensity. Maintain motor pattern.'},
-    {id:'dl2',name:'Romanian Deadlift',sets:3,reps:'10–12',rest:120,type:'n',cue:'Controlled eccentric, feel the stretch without forcing it. Stop 4-5 RIR. NO extended stretch hold.',mech:'Hamstring lengthened position. Light load maintains neural efficiency.'},
-    {id:'dl3',name:'Barbell Bench Press',sets:3,reps:'8–10',rest:120,type:'n',cue:'Smooth eccentric. Full ROM. Stop 4-5 reps short. NO pauses or intensity tricks.',mech:'Chest + triceps compound. Maintain pattern at reduced load.'},
-    {id:'dl4',name:'Lat Pulldown',sets:3,reps:'8–10',rest:90,type:'n',cue:'Full stretch at top, full contraction at bottom. Stop 4-5 RIR. NO intensity techniques.',mech:'Back + biceps. Sub-maximal for CNS recovery.'},
-    {id:'dl5',name:'Lateral Raise',sets:2,reps:'15–18',rest:60,type:'n',cue:'Light and controlled. Stop well short of failure. Smooth movement.',mech:'Delt maintenance. Minimal systemic fatigue.'},
-    {id:'dl6',name:'Seated Calf Raise',sets:2,reps:'15–20',rest:60,type:'n',cue:'Full range of motion. Controlled. NO loaded interset stretch.',mech:'Soleus maintenance at low fatigue cost.'}
+  // ── DELOAD TEMPLATES (full-body, Mon+Thu — sets/reps ~50%, Session 1 keeps load, Session 2 cuts load ~50%) ──
+  deload_mon:{key:'deload_mon',name:'Monday',focus:'Deload — Full Body (Session 1)',color:'#e63946',isDeloadDay:true,exercises:[
+    {id:'dl1',name:'Pendulum Squat',sets:3,reps:'4',rest:120,type:'n',cue:'Same working load, half the sets and reps. Smooth controlled reps. RIR 4-5. NO eccentrics, NO loaded stretch.',mech:'Quad pattern maintenance at accumulation load.'},
+    {id:'dl2',name:'Single Leg Press',sets:2,reps:'3',rest:90,type:'n',cue:'Same load as last accumulation. Short sets, stop well before failure.',mech:'Unilateral quad. Motor pattern maintenance.'},
+    {id:'dl3',name:'Leg Extension',sets:2,reps:'5',rest:60,type:'n',cue:'Same load as last week. Half the reps. NO drop sets, NO loaded stretch.',mech:'Rectus femoris touch. Minimal fatigue.'},
+    {id:'dl4',name:'Laying Leg Curl',sets:2,reps:'5',rest:60,type:'n',cue:'Same load. Half the volume. Smooth controlled reps.',mech:'Hamstring maintenance — shortened position.'},
+    {id:'dl5',name:'Standing Leg Curl',sets:1,reps:'5',rest:60,type:'n',cue:'Same load. One easy set. In and out.',mech:'Hamstring touch at minimal cost.'},
+    {id:'dl6',name:'Standing Calf Raise',sets:2,reps:'10',rest:60,type:'n',cue:'Same load. Half the reps. NO interset stretch.',mech:'Gastrocnemius maintenance. No stretch protocol.'},
+    {id:'dl7',name:'Barbell Bench Press',sets:2,reps:'3',rest:120,type:'n',cue:'Same load as last accumulation. Short triples. RIR 4-5. NO pauses.',mech:'Chest + triceps compound. Neural pattern maintenance.'},
+    {id:'dl8',name:'Close Grip Pulldown',sets:2,reps:'4',rest:90,type:'n',cue:'Same load. Half the sets. Controlled, full ROM.',mech:'Back + biceps. Sub-maximal for CNS recovery.'},
+    {id:'dl9',name:'Dumbbell Row',sets:2,reps:'4',rest:90,type:'n',cue:'Same load. Short sets. No kipping, no grinding.',mech:'Horizontal pull maintenance.'},
+    {id:'dl10',name:'Lat Pullover',sets:2,reps:'4',rest:90,type:'n',cue:'Same load. Half the reps. Controlled stretch phase.',mech:'Lat lengthened position. Minimal volume.'},
+    {id:'dl11',name:'Face Pull',sets:2,reps:'5',rest:60,type:'n',cue:'Same load. Light and easy. Shoulder health.',mech:'Posterior delt + rotator cuff maintenance.'},
+    {id:'dl12',name:'Iso-lateral Shoulder Press',sets:2,reps:'4',rest:90,type:'n',cue:'Same load. Half the sets and reps. Smooth press.',mech:'Delt compound. Pattern maintenance.'},
+    {id:'dl13',name:'Overhead Tricep Extension',sets:2,reps:'4',rest:90,type:'n',cue:'Same load. Short sets. NO intensity techniques.',mech:'Long head tricep maintenance.'},
+    {id:'dl14',name:'Lateral Raise Machine',sets:2,reps:'5',rest:60,type:'n',cue:'Same load. Easy reps. Stop well short of failure.',mech:'Middle delt maintenance. Minimal systemic cost.'}
   ]},
-  deload_thu:{key:'deload_thu',name:'Thursday',focus:'Deload — Full Body B',color:'#e63946',isDeloadDay:true,exercises:[
-    {id:'dl7',name:'Leg Press',sets:3,reps:'10–12',rest:120,type:'n',cue:'Comfortable depth. Smooth reps. Stop 4-5 RIR. NO forced stretch hold at bottom.',mech:'Quad stimulus. Different pattern to Monday hack squat.'},
-    {id:'dl8',name:'Seated Leg Curl',sets:3,reps:'10–12',rest:90,type:'n',cue:'Controlled eccentric. Stop 4-5 reps short. NO extended stretch.',mech:'Knee-flexion hamstring. Completes lower body.'},
-    {id:'dl9',name:'Incline Dumbbell Press',sets:3,reps:'8–10',rest:120,type:'n',cue:'Full ROM. Smooth, controlled. Stop 4-5 short. NO intensity techniques.',mech:'Upper chest + delt. Different angle from Monday flat press.'},
-    {id:'dl10',name:'Cable Row',sets:3,reps:'10–12',rest:90,type:'n',cue:'Neutral grip. Row to lower chest. Controlled. Stop 4-5 RIR. NO kipping.',mech:'Mid-back rhomboids. Completes upper body pull.'},
-    {id:'dl11',name:'Face Pull',sets:2,reps:'15–20',rest:60,type:'n',cue:'Pull to face, external rotation at end. Stop well short of failure.',mech:'Posterior delt + rotator cuff. Low fatigue. Pressing health.'},
-    {id:'dl12',name:'Standing Calf Raise',sets:2,reps:'12–15',rest:60,type:'n',cue:'Full range. Controlled eccentric. NO loaded interset stretch.',mech:'Gastrocnemius maintenance.'}
+  deload_thu:{key:'deload_thu',name:'Thursday',focus:'Deload — Full Body (Session 2)',color:'#e63946',isDeloadDay:true,exercises:[
+    {id:'dl15',name:'Belt Squat',sets:1,reps:'4',rest:120,type:'n',cue:'~50% of working load. One easy set. Smooth reps. RIR 4-5.',mech:'Quad pattern at half load. Zero spinal cost.'},
+    {id:'dl16',name:'Romanian Deadlift',sets:2,reps:'4',rest:120,type:'n',cue:'~50% of working load. Controlled eccentric. NO forcing the stretch.',mech:'Hinge pattern maintenance at reduced load.'},
+    {id:'dl17',name:'Laying Leg Curl',sets:1,reps:'5',rest:60,type:'n',cue:'~50% of working load. One easy set.',mech:'Hamstring touch. Minimal fatigue.'},
+    {id:'dl18',name:'Standing Leg Curl',sets:1,reps:'5',rest:60,type:'n',cue:'~50% of working load. One easy set.',mech:'Hamstring maintenance at negligible cost.'},
+    {id:'dl19',name:'Hip Abductor Machine',sets:1,reps:'8',rest:60,type:'n',cue:'~50% of working load. Easy set. Feel glute med.',mech:'Frontal plane glute. One set, in and out.'},
+    {id:'dl20',name:'Barbell Bench Press',sets:1,reps:'3',rest:120,type:'n',cue:'~50% of working load (~135-140). Light triples. RIR 5+.',mech:'Pressing pattern. Half the load from Session 1.'},
+    {id:'dl21',name:'Close Grip Pulldown',sets:1,reps:'4',rest:90,type:'n',cue:'~50% of working load (~85-90). One easy set.',mech:'Vertical pull. Pattern maintenance only.'},
+    {id:'dl22',name:'Iso-lateral Shoulder Press',sets:1,reps:'4',rest:90,type:'n',cue:'~50% of working load (~45). One easy set. Smooth press.',mech:'Delt compound. Minimal volume, maximal recovery.'}
   ]},
   sun:{key:'sun',name:'Sunday',focus:'Legs — Volume (Metabolic Stress)',color:'#457b9d',exercises:[
     {id:'u1',name:'Leg Press',sets:4,reps:'15–20',rest:90,type:'s',cue:'LOADED STRETCH after every set — hold bottom 20-30 sec.',mech:'Type I fiber. Cell swelling → PI3K/MAPK signal.'},
@@ -928,7 +938,15 @@ function isDeloadWk(wk){
   if(ov[wk]!==undefined)return!!ov[wk];
   return Number.isInteger(wk)&&wk>0&&wk<=24&&wk%every===0;
 }
-function getDeloadPct(){return 0.65;}
+function getDeloadPct(dk){
+  if(dk){
+    const wk=ST.logWk||ST.wk;
+    const sched=getScheduleForWeek(wk);
+    const mapped=sched[dk]||dk;
+    if(mapped==='deload_thu')return 0.50;
+  }
+  return 0.75;
+}
 // Backward-compat shim — all DLOADS.has(w) calls still work
 const DLOADS={has:w=>isDeloadWk(w)};
 // Block phases (W1–9 Block 1, W10–15 Block 2, W16–24 Block 3)
@@ -2089,7 +2107,7 @@ function computeSmartRecommendations(wk){
 
   if(isDeload){
     weekVerdict='Deload week (Schoenfeld 3:1). Mon + Thu full-body only · 60–70% load · ~50% sets · RIR 4–5 · No eccentrics/stretches/drops.';
-    recs.push({type:'info',title:'Deload protocol (Schoenfeld 2017)',desc:`Reduce load to ~${Math.round(getDeloadPct()*100)}%, halve sets, stop 4–5 reps short of failure. No 3-sec eccentrics, no loaded interset stretches, no drop sets.`});
+    recs.push({type:'info',title:'Deload protocol',desc:'Session 1 (Mon): same loads, half sets/reps. Session 2 (Thu): ~50% loads, minimal sets. RIR 4–5. No eccentrics, no loaded stretches, no drop sets.'});
   }else{
   const fatigueNorm=fatigueScore;
   if(fatigueNorm>=80){
@@ -2617,7 +2635,7 @@ function openWO(dk){
   document.getElementById('WT').textContent=d.name;
   document.getElementById('WF').textContent=d.focus;
   const dlBanner=document.getElementById('WODLB');
-  if(dlBanner){dlBanner.style.display=isDeloadWk(ST.wk)?'block':'none';if(isDeloadWk(ST.wk)){dlBanner.innerHTML=`<strong>★ DELOAD WEEK (W${ST.wk})</strong> — Mon &amp; Thu only · ~60–70% load · ~50% sets · RIR 4–5 · No 3-sec eccentrics · No loaded stretches · No drop sets`}}
+  if(dlBanner){dlBanner.style.display=isDeloadWk(ST.wk)?'block':'none';if(isDeloadWk(ST.wk)){dlBanner.innerHTML=`<strong>★ DELOAD WEEK (W${ST.wk})</strong> — Mon &amp; Thu full body · Session 1: same load, ~50% sets/reps · Session 2: ~50% load · RIR 4–5 · No eccentrics · No loaded stretches · No drop sets`}}
   const wws=document.getElementById('WWS');
   if(wws){wws.innerHTML=Array.from({length:24},(_,i)=>`<option value="${i+1}" ${i+1===ST.wk?'selected':''}>W${i+1}${isDeloadWk(i+1)?' 🔄':''}</option>`).join('');wws.value=ST.wk}
   renderWO();
@@ -3435,14 +3453,14 @@ function getPrevExact(exName,dk){
   const last=rows.filter(r=>r.date===lastDate).sort((a,b)=>a.sn-b.sn);
   return last.map(r=>({w:r.w||'',r:r.r||'',e1:r.e1rm||null}));
 }
-// Deload recommended weight (65–70% of best-ever) — science-backed
+// Deload recommended weight — Session 1: ~75% of best (lower end of working range), Session 2: ~50%
 function getRec(exName,dk,setIdx){
   const wk=ST.logWk||ST.wk;
   if(!isDeloadWk(wk)) return null;
-  const pct=getDeloadPct();
-  // Use best-ever so deload is relative to peak, not a potentially light recent session
+  const pct=getDeloadPct(dk);
+  // Search ALL days for best-ever (deload exercises may come from different training days)
   const allRows=ST.logs
-    .filter(l=>(!dk||l.dk===dk) && l.ex===exName && l.w!=null && l.r!=null && parseFloat(l.w)>0);
+    .filter(l=>l.ex===exName && l.w!=null && l.r!=null && parseFloat(l.w)>0);
   if(!allRows.length) return null;
   const forSetIdx=allRows.filter(l=>l.sn===setIdx+1);
   const pool=forSetIdx.length?forSetIdx:allRows;
