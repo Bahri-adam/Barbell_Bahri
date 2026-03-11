@@ -1523,12 +1523,12 @@ function escHtml(s){
 }
 
 function getScheduleForWeek(wk){
-  const s=(ST.weekSchedules||{})[wk];
-  if(s)return s;
-  // Deload weeks: only Mon (Full Body A) and Thu (Full Body B) are training days
+  // Deload weeks: always use deload schedule (Mon + Thu full body only) — overrides custom schedules
   if(isDeloadWk(wk)){
     return {mon:'deload_mon',tue:'rest',wed:'rest',thu:'deload_thu',fri:'rest',sat:'rest',sun:'rest'};
   }
+  const s=(ST.weekSchedules||{})[wk];
+  if(s)return s;
   const def={};
   const rds=new Set(ST.restDays||['fri']);
   DO.forEach(dk=>{def[dk]=rds.has(dk)?'rest':dk});
