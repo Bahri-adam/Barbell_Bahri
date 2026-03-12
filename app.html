@@ -958,8 +958,15 @@ function getDeloadPct(dk){
 }
 const DLOADS={has:w=>isDeloadWk(w)||isFormulaReactiveDeloadWk(w)};
 // Formula split (evidence21week + evidence-formula) — W4+, reactive deload, block-based
-const FORMULA_SCHED={mon:'formula_mon',tue:'formula_tue',wed:'formula_wed',thu:'formula_thu',fri:'formula_fri',sat:'rest',sun:'formula_sun'};
-const FORMULA_DL_SCHED={mon:'formula_dl_mon',tue:'formula_dl_tue',wed:'formula_dl_wed',thu:'formula_dl_thu',fri:'formula_dl_fri',sat:'rest',sun:'formula_dl_sun'};
+const FORMULA_DAY_MAP={mon:'formula_mon',tue:'formula_tue',wed:'formula_wed',thu:'formula_thu',fri:'formula_fri',sat:'rest',sun:'formula_sun'};
+const FORMULA_DL_DAY_MAP={mon:'formula_dl_mon',tue:'formula_dl_tue',wed:'formula_dl_wed',thu:'formula_dl_thu',fri:'formula_dl_fri',sat:'rest',sun:'formula_dl_sun'};
+function getFormulaSchedule(isDeload){
+  const rds=new Set((ST.formulaRestDays||['sat']).map(d=>String(d).toLowerCase()));
+  const map=isDeload?FORMULA_DL_DAY_MAP:FORMULA_DAY_MAP;
+  const out={};
+  DO.forEach(dk=>{out[dk]=rds.has(dk)?'rest':map[dk];});
+  return out;
+}
 function getFormulaBlock(wk){
   if(!wk||wk<4)return 'b1';
   if(wk>=20)return 'peak';
@@ -1579,8 +1586,7 @@ function escHtml(s){
 
 function getScheduleForWeek(wk){
   if(ST.formulaSplit&&wk>=4){
-    if(isFormulaReactiveDeloadWk(wk))return {...FORMULA_DL_SCHED};
-    return {...FORMULA_SCHED};
+    return getFormulaSchedule(isFormulaReactiveDeloadWk(wk));
   }
   if(isDeloadWk(wk)){
     return {mon:'deload_mon',tue:'rest',wed:'rest',thu:'deload_thu',fri:'rest',sat:'rest',sun:'rest'};
@@ -1593,7 +1599,7 @@ function getScheduleForWeek(wk){
   return def;
 }
 function syncRestDaysFromSchedule(wk){
-  if(ST.formulaSplit&&wk>=4){ST.restDays=['sat'];return;}
+  if(ST.formulaSplit&&wk>=4){/* Preserve restDays; formula uses formulaRestDays */return;}
   const sched=getScheduleForWeek(wk);
   ST.restDays=DO.filter(dk=>sched[dk]==='rest');
   if(!ST.restDays.length)ST.restDays=['fri'];
@@ -1618,8 +1624,19 @@ function getDayProgram(dk){
   return {...base,key:dk,name:DAY_NAMES[dk],exercises:merged};
 }
 function toggleRestDay(dk){
-  if(!ST.weekSchedules)ST.weekSchedules={};
   const wk=ST.wk;
+  if(ST.formulaSplit&&wk>=4){
+    const rds=new Set(ST.formulaRestDays||['sat']);
+    if(rds.has(dk))rds.delete(dk);else rds.add(dk);
+    ST.formulaRestDays=DO.filter(d=>rds.has(d));
+    if(!ST.formulaRestDays.length)ST.formulaRestDays=['sat'];
+    saveST();
+    renderRestDayBtns();
+    renderHome();
+    renderBodyTracker();
+    return;
+  }
+  if(!ST.weekSchedules)ST.weekSchedules={};
   const sched={...getScheduleForWeek(wk)};
   sched[dk]=sched[dk]==='rest'?dk:'rest';
   ST.weekSchedules[wk]=sched;
@@ -1728,10 +1745,12 @@ function openScheduleEditor(){
   if(hint)hint.style.display=ST.formulaSplit?'inline':'none';
   if(ST.formulaSplit){
     const labels={mon:'Legs — Quad Focus',tue:'Chest + Back + Shoulders',wed:'Arms',thu:'Legs — Posterior',fri:'Upper Volume',sat:'Rest',sun:'Legs — Volume'};
-    body.innerHTML=DO.map(dk=>`<div class="sched-row"><span class="sched-day">${DAY_NAMES[dk]}</span><span class="sched-ev-label">${labels[dk]||'Rest'}</span></div>`).join('');
+    const rds=new Set((ST.formulaRestDays||['sat']).map(d=>String(d).toLowerCase()));
+    body.innerHTML=DO.map(dk=>{const isRest=rds.has(dk);return `<div class="sched-row"><span class="sched-day">${DAY_NAMES[dk]}</span><span class="sched-ev-label">${isRest?'Rest':(labels[dk]||'')}</span></div>`}).join('');
+    body.innerHTML+=`<div class="sched-row" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--b2,#333)"><span class="sched-day">Rest day</span><div class="rest-days-row" style="display:inline-flex;gap:4px">${DO.map(dk=>`<button type="button" class="rd-btn ${rds.has(dk)?'on':''}" data-dk="${dk}" onclick="toggleRestDay('${dk}');openScheduleEditor()">${dk.charAt(0).toUpperCase()}</button>`).join('')}</div></div>`;
     const nextWk=wk+1;
     const hasDl=nextWk<=24&&(ST.reactiveDeloadForWeek||{})[nextWk];
-    body.innerHTML+=`<p style="font-size:11px;color:var(--tx3,#888);margin:12px 0 0;padding:0 16px">Formula split active for weeks 4–24. Reactive deload. Toggle off above to return to default.</p><p style="margin:8px 0 0;padding:0 16px">${hasDl?`<span style="color:var(--red);font-size:11px">W${nextWk} reactive deload scheduled</span> <button type="button" class="ex-act-btn" onclick="cancelReactiveDeload(${nextWk});openScheduleEditor()" style="font-size:10px">Cancel</button>`:`<button type="button" class="ex-act-btn" onclick="scheduleReactiveDeload()" style="font-size:11px">Schedule reactive deload for W${nextWk}</button>`}</p>`;
+    body.innerHTML+=`<p style="font-size:11px;color:var(--tx3,#888);margin:12px 0 0;padding:0 16px">Formula split active for weeks 4–24. Toggle off above to return to default.</p><p style="margin:8px 0 0;padding:0 16px" title="Replaces next week with lighter sessions (~60% load, fewer sets) for recovery">${hasDl?`<span style="color:var(--red);font-size:11px">W${nextWk} reactive deload scheduled</span> <button type="button" class="ex-act-btn" onclick="cancelReactiveDeload(${nextWk});openScheduleEditor()" style="font-size:10px">Cancel</button>`:`<button type="button" class="ex-act-btn" onclick="scheduleReactiveDeload()" style="font-size:11px" title="Replaces next week with lighter sessions for recovery">Schedule reactive deload for W${nextWk}</button>`}</p>`;
     if(footer)footer.style.display='none';
   }else{
     const sched=getScheduleForWeek(wk);
@@ -1866,7 +1885,7 @@ const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbyKSyFyEdT
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
   cueCollapsed:{},restDays:['fri'],weekSchedules:{},weekOverride:{},weekAnchors:{},removedExercises:{},workoutsSinceBackupReminder:0,
-  deloadEvery:3,deloadOverrides:{},formulaSplit:false,
+  deloadEvery:3,deloadOverrides:{},formulaSplit:false,formulaRestDays:['sat'],
   deloadHistory:[],lastDeloadWeek:0,reactiveDeloadForWeek:{},weeklyVolume:{},
   profile:{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}
 };
@@ -1875,7 +1894,7 @@ let CHS={};
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.removedExercises=p.removedExercises||{};ST.addedExercises=p.addedExercises||{};ST.deloadEvery=p.deloadEvery||3;ST.deloadOverrides=p.deloadOverrides||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};ST.formulaSplit=!!p.formulaSplit;ST.deloadHistory=p.deloadHistory||[];ST.lastDeloadWeek=p.lastDeloadWeek||0;ST.reactiveDeloadForWeek=p.reactiveDeloadForWeek||{};ST.weeklyVolume=p.weeklyVolume||{};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
+  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.removedExercises=p.removedExercises||{};ST.addedExercises=p.addedExercises||{};ST.deloadEvery=p.deloadEvery||3;ST.deloadOverrides=p.deloadOverrides||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};ST.formulaSplit=!!p.formulaSplit;ST.formulaRestDays=Array.isArray(p.formulaRestDays)?p.formulaRestDays:['sat'];ST.deloadHistory=p.deloadHistory||[];ST.lastDeloadWeek=p.lastDeloadWeek||0;ST.reactiveDeloadForWeek=p.reactiveDeloadForWeek||{};ST.weeklyVolume=p.weeklyVolume||{};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('adamCustomEx');
@@ -1886,7 +1905,7 @@ function loadST(){
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},formulaSplit:!!ST.formulaSplit,deloadHistory:ST.deloadHistory||[],lastDeloadWeek:ST.lastDeloadWeek||0,reactiveDeloadForWeek:ST.reactiveDeloadForWeek||{},weeklyVolume:ST.weeklyVolume||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
+function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},formulaSplit:!!ST.formulaSplit,formulaRestDays:ST.formulaRestDays||['sat'],deloadHistory:ST.deloadHistory||[],lastDeloadWeek:ST.lastDeloadWeek||0,reactiveDeloadForWeek:ST.reactiveDeloadForWeek||{},weeklyVolume:ST.weeklyVolume||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
 function saveST(){saveSTLocal();fbSaveSettings()}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
 function saveLogsLocal(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
@@ -2596,12 +2615,14 @@ function renderBodyTracker(){
     </div>`;
   }
   const targ=WEEKLY_TARGETS;
+  const usePrescribedTarget=ST.formulaSplit&&ST.wk>=4;
   const R=16,C=2*Math.PI*R;
   let wtHtml='<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--b1);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Weekly Targets</div><div class="wt-grid">';
   for(const bp of Object.keys(targ)){
     const a=actu[bp]||0;
-    const t=targ[bp].target;
-    const status=targ[bp].status;
+    const t=usePrescribedTarget?(pres[bp]||targ[bp].target):targ[bp].target;
+    if(t===0)continue;
+    const status=usePrescribedTarget?'maintained':targ[bp].status;
     const pct=Math.min(100,Math.round((a/t)*100));
     const offset=C-C*(pct/100);
     const ringColor=a>=t?'var(--grn2)':status==='lagging'?'var(--red)':status==='reduced'?'var(--gold)':'var(--blue2)';
@@ -4516,7 +4537,7 @@ function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
 function fbSaveSettings(){
   if(!fbReady)return;
   try{
-    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},formulaSplit:!!ST.formulaSplit,deloadHistory:ST.deloadHistory||[],lastDeloadWeek:ST.lastDeloadWeek||0,reactiveDeloadForWeek:ST.reactiveDeloadForWeek||{},weeklyVolume:ST.weeklyVolume||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
+    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},formulaSplit:!!ST.formulaSplit,formulaRestDays:ST.formulaRestDays||['sat'],deloadHistory:ST.deloadHistory||[],lastDeloadWeek:ST.lastDeloadWeek||0,reactiveDeloadForWeek:ST.reactiveDeloadForWeek||{},weeklyVolume:ST.weeklyVolume||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
     fbRef('settings').set(data);
   }catch(e){console.warn('FB settings write failed:',e)}
 }
@@ -4584,7 +4605,7 @@ async function fbPullAll(){
     // Merge settings (Firebase wins if newer)
     if(data.settings){
       const fb=data.settings;
-      const keys=['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','removedExercises','addedExercises','deloadEvery','deloadOverrides','formulaSplit','deloadHistory','lastDeloadWeek','reactiveDeloadForWeek','weeklyVolume','profile'];
+      const keys=['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','removedExercises','addedExercises','deloadEvery','deloadOverrides','formulaSplit','formulaRestDays','deloadHistory','lastDeloadWeek','reactiveDeloadForWeek','weeklyVolume','profile'];
       keys.forEach(k=>{if(fb[k]!==undefined){ST[k]=fb[k];changed=true}});
       if(fb.url)ST.url=fb.url;
     }
@@ -4621,7 +4642,7 @@ function fbListenForChanges(){
 
       if(data.settings){
         const fb=data.settings;
-        ['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','removedExercises','addedExercises','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
+        ['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','removedExercises','addedExercises','formulaRestDays','profile'].forEach(k=>{if(fb[k]!==undefined)ST[k]=fb[k]});
         if(fb.url)ST.url=fb.url;
         saveSTLocal();
       }
