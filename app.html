@@ -112,6 +112,7 @@ body{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 40%,var(--bg) 100
 .sched-day{width:85px;font-weight:600;color:var(--tx);font-size:13px;flex-shrink:0}
 .sched-sel{flex:1;padding:10px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--tx);font-size:12px;font-family:var(--fb);-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7a8f'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:26px}
 .sched-sel:focus{border-color:var(--blue);outline:none}
+.sched-ev-label{flex:1;font-size:12px;color:var(--tx2);font-weight:500}
 .sched-btn{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;padding:6px 12px;color:var(--tx2);font-size:11px;font-family:var(--fb);cursor:pointer;margin:8px 14px 0;transition:border-color .2s}
 .sched-btn:hover{border-color:var(--blue);color:var(--tx)}
 .sched-copy{display:flex;align-items:center;gap:8px;padding:12px 16px 4px;font-size:11px;color:var(--tx2);cursor:pointer}
@@ -626,9 +627,16 @@ select{color-scheme:dark}
 <div class="overlay" id="SCHED" style="display:none">
   <div class="opanel" style="max-width:420px">
     <div class="ohdr"><span id="SCHED_TITLE">Customize Schedule</span><button class="cbtn" onclick="closeSchedule()">&times;</button></div>
+    <div style="padding:12px 16px;border-bottom:1px solid var(--b2,#333);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+        <input type="checkbox" id="sched-formula-cb" onchange="toggleFormulaSplit()">
+        <span>Use formula split (W4+)</span>
+      </label>
+      <span id="SCHED_FORMULA_HINT" style="font-size:11px;color:var(--tx3,#888);display:none">Mon Legs, Tue Chest+Back+Shoulders, Wed Arms, Thu Legs Posterior, Fri Upper Volume, Sat Rest, Sun Legs</span>
+    </div>
     <div class="sched-hint">Assign any workout to any day. Drag your rest day around or swap workouts freely.</div>
     <div id="SCHED_BODY"></div>
-    <div style="padding:0 16px 16px"><button class="btn" onclick="saveSchedule()" style="width:100%">Save Schedule</button></div>
+    <div id="SCHED_FOOTER" style="padding:0 16px 16px"><button class="btn" onclick="saveSchedule()" style="width:100%">Save Schedule</button></div>
   </div>
 </div>
 
@@ -738,7 +746,7 @@ select{color-scheme:dark}
     <div class="wo-row">
       <button class="bk" onclick="showPg('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
       <div class="wo-t" id="WT">Workout</div>
-      <select class="wo-wk-sel" id="WWS" onchange="ST.logWk=parseInt(this.value);renderWO();const db=document.getElementById('WODLB');if(db){db.style.display=isDeloadWk(ST.logWk)?'block':'none';if(isDeloadWk(ST.logWk)){db.innerHTML='<strong>★ DELOAD WEEK (W'+ST.logWk+')</strong> — Mon &amp; Thu full body · Session 1: same load, ~50% sets/reps · Session 2: ~50% load · RIR 4-5 · No eccentrics · No loaded stretches · No drop sets.'}}" title="Log as week"
+      <select class="wo-wk-sel" id="WWS" onchange="ST.logWk=parseInt(this.value);renderWO();updateDeloadBannerForWk()" title="Log as week"
         style="background:var(--s2);border:1px solid var(--b2);border-radius:3px;padding:6px 10px;font-family:var(--fm);font-size:12px;color:var(--tx2);min-width:52px">
         <!-- filled by JS -->
       </select>
@@ -944,11 +952,58 @@ function getDeloadPct(dk){
     const sched=getScheduleForWeek(wk);
     const mapped=sched[dk]||dk;
     if(mapped==='deload_thu')return 0.50;
+    if(/^formula_dl_/.test(mapped))return 0.60;
   }
   return 0.75;
 }
-// Backward-compat shim — all DLOADS.has(w) calls still work
-const DLOADS={has:w=>isDeloadWk(w)};
+const DLOADS={has:w=>isDeloadWk(w)||isFormulaReactiveDeloadWk(w)};
+// Formula split (evidence21week + evidence-formula) — W4+, reactive deload, block-based
+const FORMULA_SCHED={mon:'formula_mon',tue:'formula_tue',wed:'formula_wed',thu:'formula_thu',fri:'formula_fri',sat:'rest',sun:'formula_sun'};
+const FORMULA_DL_SCHED={mon:'formula_dl_mon',tue:'formula_dl_tue',wed:'formula_dl_wed',thu:'formula_dl_thu',fri:'formula_dl_fri',sat:'rest',sun:'formula_dl_sun'};
+function getFormulaBlock(wk){
+  if(!wk||wk<4)return 'b1';
+  if(wk>=20)return 'peak';
+  const cnt=ST.deloadHistory?ST.deloadHistory.length:0;
+  if(cnt===0)return 'b1';
+  if(cnt===1)return 'b2';
+  return 'b3';
+}
+function isFormulaReactiveDeloadWk(wk){ return ST.formulaSplit&&wk>=4&&!!(ST.reactiveDeloadForWeek||{})[wk]; }
+function buildFormulaSession(block,dayKey){
+  const d=dayKey.toLowerCase();
+  const toEx=(arr,prefix)=>(arr||[]).map((e,i)=>({id:(prefix||'f')+'_'+(i+1),name:e.name||'',sets:e.sets||3,reps:e.reps||'',rest:e.rest||90,type:'n',cue:e.cue||'',mech:'',bodyPart:'other'}));
+  const COLORS={legs:'#ff6b35',upper:'#4ecdc4',arms:'#45b7d1',rest:'#333'};
+  if(d==='sat')return {focus:'Rest & Recovery',color:'#333',rest:true,exercises:[]};
+  if(block==='dl'){
+    const dlEx={mon:[{name:'Pendulum Squat',sets:2,reps:'5–8 @ 60%',cue:''},{name:'Seated Leg Curl',sets:1,reps:'8–10',cue:''},{name:'Standing Calf Raise',sets:2,reps:'8–10',cue:''},{name:'Hip Abductor',sets:1,reps:'12',cue:''}],tue:[{name:'Barbell Bench Press',sets:2,reps:'5 @ 60%',cue:''},{name:'Incline Machine Press',sets:1,reps:'10',cue:''},{name:'Lateral Raise Machine',sets:2,reps:'12–15',cue:''},{name:'Cable Pushdown',sets:1,reps:'12–15',cue:''}],wed:[{name:'Lat Pulldown',sets:2,reps:'8–10 @ 60%',cue:''},{name:'Seated Cable Row',sets:1,reps:'10',cue:''},{name:'Barbell Curl',sets:1,reps:'8',cue:''},{name:'Face Pull',sets:1,reps:'15',cue:''}],thu:[{name:'Romanian Deadlift',sets:2,reps:'6–8 @ 60%',cue:''},{name:'Belt Squat',sets:1,reps:'10',cue:''},{name:'Lying Leg Curl',sets:1,reps:'10',cue:''},{name:'Seated Calf Raise',sets:2,reps:'12',cue:''}],fri:[{name:'Cable Fly',sets:1,reps:'12',cue:''},{name:'Lat Pulldown',sets:1,reps:'12',cue:''},{name:'Rear Delt Fly',sets:2,reps:'15',cue:''},{name:'Incline Dumbbell Curl',sets:2,reps:'12',cue:''},{name:'Overhead Tricep Extension',sets:1,reps:'15',cue:''}],sun:[{name:'Leg Press',sets:2,reps:'12–15 @ 50%',cue:''},{name:'Leg Extension',sets:1,reps:'15',cue:''},{name:'Seated Calf Raise',sets:2,reps:'15',cue:''}]};
+    const ex=dlEx[d];if(!ex)return null;
+    return {focus:'Reactive Deload — '+d,color:'#e63946',exercises:toEx(ex,'fdl')};
+  }
+  if(block==='peak'){
+    const pw=Math.max(1,Math.min(5,(ST.wk||1)-19));
+    if(d==='mon')return {focus:'Bridge/Taper — Legs',color:COLORS.legs,exercises:toEx(pw<=2?[{name:'Hack Squat',sets:4,reps:'5',cue:'~80% e1RM'},{name:'Leg Extension',sets:2,reps:'10–12',cue:''},{name:'Seated Leg Curl',sets:2,reps:'10–12',cue:''},{name:'Standing Calf Raise',sets:3,reps:'10–12',cue:''}]:[{name:'Hack Squat',sets:pw===3?2:1,reps:'3',cue:'~82–85%'},{name:'Standing Calf Raise',sets:2,reps:'10',cue:''}],'fp')};
+    if(d==='tue')return {focus:'Bridge/Taper — Upper',color:COLORS.upper,exercises:toEx(pw<=2?[{name:'Barbell Bench Press',sets:4,reps:pw===1?'4':'2',cue:'~82–88%'},{name:'Incline Press',sets:2,reps:'8–10',cue:''},{name:'Weighted Pull-Up',sets:3,reps:'6–8',cue:''},{name:'Shoulder Press',sets:2,reps:'8–10',cue:''},{name:'Face Pull',sets:2,reps:'15',cue:''}]:[{name:'Barbell Bench Press',sets:pw===3?3:1,reps:pw===3?'2':'1',cue:'~90–93%'},{name:'Face Pull',sets:2,reps:'15',cue:''}],'fp')};
+    if(d==='wed')return {focus:pw>=3?'Rest':'Arms Light',color:COLORS.arms,exercises:toEx(pw<=2?[{name:'Barbell Curl',sets:3,reps:'8–10',cue:''},{name:'Overhead Tricep Extension',sets:2,reps:'10–12',cue:''},{name:'Cable Pushdown',sets:2,reps:'12–15',cue:''}]:[],'fp')};
+    if(d==='thu')return {focus:'Bridge/Taper — Legs',color:COLORS.legs,exercises:toEx(pw<=2?[{name:'Romanian Deadlift',sets:4,reps:'6–8',cue:'~80%'},{name:'Leg Press',sets:3,reps:'10–12',cue:''},{name:'Seated Calf Raise',sets:2,reps:'12–15',cue:''}]:[{name:'Romanian Deadlift',sets:pw===3?2:1,reps:pw===3?'4':'3',cue:'~75–78%'}],'fp')};
+    if(d==='fri')return {focus:'Rest',color:'#333',rest:true,exercises:[]};
+    if(d==='sun')return {focus:pw<=2?'Legs Light':'Rest',color:COLORS.legs,exercises:toEx(pw<=2?[{name:'Leg Press',sets:3,reps:'12–15',cue:''},{name:'Leg Extension',sets:2,reps:'15–20',cue:''},{name:'Standing Calf Raise',sets:2,reps:'15–20',cue:''}]:[],'fp')};
+  }
+  const monB1=[{name:'Pendulum Squat',sets:4,reps:'5–8',cue:'True depth, 3s eccentric'},{name:'Hack Squat',sets:3,reps:'8–10',cue:'Full ROM'},{name:'Leg Extension',sets:3,reps:'10–15',cue:'Reclined seat'},{name:'Seated Leg Curl',sets:3,reps:'10–12',cue:'Lean forward'},{name:'Standing Calf Raise',sets:4,reps:'10–15',cue:'Full dorsiflexion'},{name:'Hip Abductor Machine',sets:3,reps:'12–15',cue:''}];
+  const monB2=[{name:'Hack Squat',sets:4,reps:'5–8',cue:'PRIMARY anchor'},{name:'Pendulum Squat',sets:3,reps:'8–10',cue:'Secondary'},{name:'Leg Extension',sets:3,reps:'10–15',cue:'Lengthened partials'},{name:'Seated Leg Curl',sets:3,reps:'10–12',cue:''},{name:'Standing Calf Raise',sets:4,reps:'10–15',cue:''},{name:'Hip Abductor Machine',sets:3,reps:'12–15',cue:''}];
+  const tueB1=[{name:'Barbell Bench Press',sets:4,reps:'3–5',cue:'Strength anchor'},{name:'Incline Dumbbell Press',sets:3,reps:'8–10',cue:''},{name:'Cable Fly',sets:3,reps:'12–15',cue:''},{name:'Lat Pulldown',sets:4,reps:'6–8',cue:''},{name:'Dumbbell Row',sets:3,reps:'8–10',cue:''},{name:'Lat Pullover',sets:2,reps:'12–15',cue:''},{name:'Iso-Lateral Shoulder Press',sets:3,reps:'8–10',cue:''},{name:'Lateral Raise Machine',sets:3,reps:'12–15',cue:''},{name:'Rear Delt Fly',sets:3,reps:'12–15',cue:''}];
+  const tueB2=[{name:'Barbell Bench Press',sets:4,reps:'3–5',cue:''},{name:'Incline Dumbbell Press',sets:3,reps:'8–10',cue:''},{name:'Cable Fly',sets:3,reps:'12–15',cue:''},{name:'Weighted Pull-Up',sets:4,reps:'6–8',cue:'Replaces pulldown'},{name:'Plate Loaded Machine Row',sets:3,reps:'8–10',cue:'Replaces DB row'},{name:'Iso-Lateral Shoulder Press',sets:3,reps:'8–10',cue:''},{name:'Lateral Raise Machine',sets:3,reps:'12–15',cue:''},{name:'Rear Delt Fly',sets:3,reps:'12–15',cue:''}];
+  const wedB1=[{name:'Barbell Curl',sets:3,reps:'8–10',cue:''},{name:'Incline Dumbbell Curl',sets:3,reps:'10–12',cue:''},{name:'Cable Hammer Curl',sets:3,reps:'12–15',cue:''},{name:'Overhead Tricep Extension',sets:3,reps:'8–10',cue:''},{name:'Skull Crusher',sets:3,reps:'10–12',cue:''},{name:'Cable Pushdown',sets:3,reps:'12–15',cue:''}];
+  const wedB2=[{name:'Barbell Curl',sets:3,reps:'8–10',cue:''},{name:'Incline Dumbbell Curl',sets:3,reps:'10–12',cue:''},{name:'Cable Hammer Curl',sets:3,reps:'12–15',cue:''},{name:'Overhead Tricep Extension',sets:3,reps:'8–10',cue:'Cable version'},{name:'Skull Crusher',sets:3,reps:'10–12',cue:''},{name:'Cable Pushdown',sets:3,reps:'12–15',cue:''}];
+  const thuB1=[{name:'Romanian Deadlift',sets:4,reps:'8–12',cue:'Full hamstring stretch'},{name:'Belt Squat',sets:3,reps:'10–15',cue:''},{name:'Lying Leg Curl',sets:3,reps:'10–15',cue:''},{name:'Leg Press',sets:3,reps:'10–15',cue:'High foot'},{name:'Seated Calf Raise',sets:3,reps:'12–15',cue:''},{name:'Face Pull',sets:2,reps:'15–20',cue:''}];
+  const thuB2=[{name:'Romanian Deadlift',sets:4,reps:'8–12',cue:''},{name:'Pendulum Squat',sets:3,reps:'10–15',cue:'Moderate, replaces belt'},{name:'Lying Leg Curl',sets:3,reps:'10–15',cue:''},{name:'Leg Press',sets:3,reps:'10–15',cue:''},{name:'Seated Calf Raise',sets:3,reps:'12–15',cue:''},{name:'Face Pull',sets:2,reps:'15–20',cue:''}];
+  const friB1=[{name:'Cable Fly',sets:3,reps:'10–15',cue:''},{name:'Lateral Raise Machine',sets:3,reps:'12–15',cue:''},{name:'Rear Delt Fly',sets:3,reps:'12–15',cue:''},{name:'Incline Dumbbell Curl',sets:3,reps:'10–15',cue:''},{name:'Cable Hammer Curl',sets:2,reps:'15–20',cue:''},{name:'Cable Pushdown',sets:3,reps:'10–15',cue:''},{name:'Overhead Tricep Extension',sets:2,reps:'15–20',cue:''}];
+  const sunB1=[{name:'Leg Press',sets:4,reps:'15–20',cue:''},{name:'Pendulum Squat',sets:3,reps:'12–20',cue:'Light'},{name:'Leg Extension',sets:3,reps:'15–25',cue:''},{name:'Seated Leg Curl',sets:3,reps:'15–20',cue:''},{name:'Standing Calf Raise',sets:3,reps:'15–20',cue:''},{name:'Seated Calf Raise',sets:2,reps:'15–25',cue:''}];
+  const sunB2=[{name:'Leg Press',sets:4,reps:'15–20',cue:''},{name:'Hack Squat',sets:3,reps:'12–20',cue:'Light'},{name:'Leg Extension',sets:3,reps:'15–25',cue:'LP'},{name:'Lying Leg Curl',sets:3,reps:'15–20',cue:''},{name:'Standing Calf Raise',sets:3,reps:'15–20',cue:''},{name:'Seated Calf Raise',sets:2,reps:'15–25',cue:''}];
+  const exMap={mon:block==='b1'?monB1:monB2,tue:block==='b1'?tueB1:tueB2,wed:block==='b1'?wedB1:wedB2,thu:block==='b1'?thuB1:thuB2,fri:friB1,sun:block==='b1'?sunB1:sunB2};
+  const ex=exMap[d];if(!ex)return null;
+  const labels={mon:'Legs — Quad Focus',tue:'Chest + Back + Shoulders',wed:'Arms',thu:'Legs — Posterior',fri:'Upper Volume',sun:'Legs — Volume'};
+  return {focus:labels[d]||'',color:COLORS.legs,exercises:toEx(ex,'f')};
+}
 // Block phases (W1–9 Block 1, W10–15 Block 2, W16–24 Block 3)
 function getBlockPhase(wk){
   if(isDeloadWk(wk)) return {block:wk<=9?1:wk<=15?2:3,name:wk<=9?'Block 1 — Hypertrophy':wk<=15?'Block 2 — Strength':'Block 3 — Peak Hypertrophy',phase:'★ DELOAD ★'};
@@ -1523,7 +1578,10 @@ function escHtml(s){
 }
 
 function getScheduleForWeek(wk){
-  // Deload weeks: always use deload schedule (Mon + Thu full body only) — overrides custom schedules
+  if(ST.formulaSplit&&wk>=4){
+    if(isFormulaReactiveDeloadWk(wk))return {...FORMULA_DL_SCHED};
+    return {...FORMULA_SCHED};
+  }
   if(isDeloadWk(wk)){
     return {mon:'deload_mon',tue:'rest',wed:'rest',thu:'deload_thu',fri:'rest',sat:'rest',sun:'rest'};
   }
@@ -1535,18 +1593,25 @@ function getScheduleForWeek(wk){
   return def;
 }
 function syncRestDaysFromSchedule(wk){
+  if(ST.formulaSplit&&wk>=4){ST.restDays=['sat'];return;}
   const sched=getScheduleForWeek(wk);
   ST.restDays=DO.filter(dk=>sched[dk]==='rest');
   if(!ST.restDays.length)ST.restDays=['fri'];
 }
 
 function getDayProgram(dk){
-  const sched=getScheduleForWeek(ST.wk);
+  const wk=ST.logWk||ST.wk;
+  const sched=getScheduleForWeek(wk);
   const mapped=sched[dk]||dk;
   if(mapped==='rest')return {key:dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
+  if(/^formula/.test(mapped)){
+    const block=isFormulaReactiveDeloadWk(wk)?'dl':getFormulaBlock(wk);
+    const f=buildFormulaSession(block,dk);
+    if(!f)return {key:dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
+    return {key:dk,name:DAY_NAMES[dk],...f,exercises:f.exercises||[]};
+  }
   const base=P[mapped];
   if(!base||base.rest)return {key:dk,name:DAY_NAMES[dk],rest:true,focus:'Rest & Recovery',color:'#333',exercises:[]};
-  // Deload days: use template as-is, no added exercises (strict protocol)
   if(base.isDeloadDay)return {...base,key:dk,name:DAY_NAMES[dk]};
   const added=(ST.addedExercises||{})[dk]||[];
   const merged=base.exercises.concat(added.map(a=>({id:'ae_'+a.name.replace(/\s/g,'_'),name:a.name,sets:a.sets||3,reps:'8–12',rest:90,type:'n',cue:'Run perfect reps. Full ROM.',mech:'Custom.',bodyPart:a.bodyPart||'other',isAdded:true})));
@@ -1627,19 +1692,59 @@ function toggleDeloadOverride(wk){
   renderHome();
 }
 
+function cancelReactiveDeload(wk){
+  if(ST.reactiveDeloadForWeek&&ST.reactiveDeloadForWeek[wk]){delete ST.reactiveDeloadForWeek[wk];saveST();renderHome();}
+}
+function scheduleReactiveDeload(){
+  const nw=(ST.wk||1)+1;
+  if(nw>24)return;
+  if(!ST.reactiveDeloadForWeek)ST.reactiveDeloadForWeek={};
+  ST.reactiveDeloadForWeek[nw]=true;
+  if(!ST.deloadHistory)ST.deloadHistory=[];
+  ST.deloadHistory.push({wk:nw,trigger:'manual'});
+  ST.lastDeloadWeek=nw;
+  saveST();
+  renderHome();
+  openScheduleEditor();
+}
+function toggleFormulaSplit(){
+  const cb=document.getElementById('sched-formula-cb');
+  if(!cb)return;
+  ST.formulaSplit=!!cb.checked;
+  saveST();
+  syncRestDaysFromSchedule(ST.wk);
+  renderHome();
+  renderBodyTracker();
+  openScheduleEditor();
+}
 function openScheduleEditor(){
   const wk=ST.wk;
-  const sched=getScheduleForWeek(wk);
-  const workouts=DO.filter(dk=>P[dk]&&!P[dk].rest).map(dk=>({key:dk,label:P[dk].focus}));
-  workouts.push({key:'rest',label:'Rest & Recovery'});
   const body=document.getElementById('SCHED_BODY');
+  const hint=document.getElementById('SCHED_FORMULA_HINT');
+  const footer=document.getElementById('SCHED_FOOTER');
+  const evCb=document.getElementById('sched-formula-cb');
   document.getElementById('SCHED_TITLE').textContent='Week '+wk+' Schedule';
-  body.innerHTML=DO.map(dk=>{
-    const cur=sched[dk]||dk;
-    const opts=workouts.map(o=>`<option value="${o.key}"${o.key===cur?' selected':''}>${o.label}</option>`).join('');
-    return `<div class="sched-row"><span class="sched-day">${DAY_NAMES[dk]}</span><select class="sched-sel" id="sched-${dk}">${opts}</select></div>`;
-  }).join('');
-  body.innerHTML+=`<label class="sched-copy"><input type="checkbox" id="sched-copy-all"> Apply to all future weeks (W${wk}–24)</label>`;
+  if(evCb)evCb.checked=!!ST.formulaSplit;
+  if(hint)hint.style.display=ST.formulaSplit?'inline':'none';
+  if(ST.formulaSplit){
+    const labels={mon:'Legs — Quad Focus',tue:'Chest + Back + Shoulders',wed:'Arms',thu:'Legs — Posterior',fri:'Upper Volume',sat:'Rest',sun:'Legs — Volume'};
+    body.innerHTML=DO.map(dk=>`<div class="sched-row"><span class="sched-day">${DAY_NAMES[dk]}</span><span class="sched-ev-label">${labels[dk]||'Rest'}</span></div>`).join('');
+    const nextWk=wk+1;
+    const hasDl=nextWk<=24&&(ST.reactiveDeloadForWeek||{})[nextWk];
+    body.innerHTML+=`<p style="font-size:11px;color:var(--tx3,#888);margin:12px 0 0;padding:0 16px">Formula split active for weeks 4–24. Reactive deload. Toggle off above to return to default.</p><p style="margin:8px 0 0;padding:0 16px">${hasDl?`<span style="color:var(--red);font-size:11px">W${nextWk} reactive deload scheduled</span> <button type="button" class="ex-act-btn" onclick="cancelReactiveDeload(${nextWk});openScheduleEditor()" style="font-size:10px">Cancel</button>`:`<button type="button" class="ex-act-btn" onclick="scheduleReactiveDeload()" style="font-size:11px">Schedule reactive deload for W${nextWk}</button>`}</p>`;
+    if(footer)footer.style.display='none';
+  }else{
+    const sched=getScheduleForWeek(wk);
+    const workouts=DO.filter(dk=>P[dk]&&!P[dk].rest).map(dk=>({key:dk,label:P[dk].focus}));
+    workouts.push({key:'rest',label:'Rest & Recovery'});
+    body.innerHTML=DO.map(dk=>{
+      const cur=sched[dk]||dk;
+      const opts=workouts.map(o=>`<option value="${o.key}"${o.key===cur?' selected':''}>${o.label}</option>`).join('');
+      return `<div class="sched-row"><span class="sched-day">${DAY_NAMES[dk]}</span><select class="sched-sel" id="sched-${dk}">${opts}</select></div>`;
+    }).join('');
+    body.innerHTML+=`<label class="sched-copy"><input type="checkbox" id="sched-copy-all"> Apply to all future weeks (W${wk}–24)</label>`;
+    if(footer)footer.style.display='block';
+  }
   document.getElementById('SCHED').style.display='flex';
 }
 function saveSchedule(){
@@ -1673,8 +1778,8 @@ let EL=[
   {n:'Hip Thrust',m:'Glutes'},{n:'Barbell Bench Press',m:'Chest'},
   {n:'Incline Barbell Press',m:'Chest — Upper'},{n:'Incline Dumbbell Press',m:'Chest — Upper'},
   {n:'Plate Loaded Incline Machine Press',m:'Chest — Upper'},{n:'Dumbbell Bench Press',m:'Chest'},{n:'Cable Fly',m:'Chest'},{n:'Pec Deck',m:'Chest'},
-  {n:'Weighted Pull-Up',m:'Back — Lats'},{n:'Lat Pulldown',m:'Back — Lats'},
-  {n:'Plate Loaded Machine Row',m:'Back — Mid'},{n:'Barbell Row',m:'Back — Mid'},
+  {n:'Weighted Pull-Up',m:'Back — Lats'},{n:'Lat Pulldown',m:'Back — Lats'},{n:'Close Grip Pulldown',m:'Back — Lats'},
+  {n:'Plate Loaded Machine Row',m:'Back — Mid'},{n:'Barbell Row',m:'Back — Mid'},{n:'Seated Cable Row',m:'Back — Mid'},
   {n:'Dumbbell Row',m:'Back — Mid'},{n:'Lat Pullover',m:'Back — Lats'},
   {n:'Face Pull',m:'Rear Delt'},{n:'Barbell Curl',m:'Biceps'},{n:'EZ Bar Curl',m:'Biceps'},
   {n:'Incline Dumbbell Curl',m:'Biceps — Long Head'},{n:'Cable Curl',m:'Biceps'},
@@ -1684,7 +1789,8 @@ let EL=[
   {n:'Skull Crusher',m:'Triceps'},{n:'Overhead Tricep Extension',m:'Triceps — Long'},
   {n:'Dumbbell Overhead Extension',m:'Triceps — Long'},{n:'Cable Pushdown',m:'Triceps'},
   {n:'Lateral Raise Machine',m:'Delts — Mid'},{n:'Dumbbell Lateral Raise',m:'Delts — Mid'},
-  {n:'Rear Delt Fly',m:'Delts — Post'}
+  {n:'Rear Delt Fly',m:'Delts — Post'},{n:'Iso-Lateral Shoulder Press',m:'Delts'},{n:'Incline Machine Press',m:'Chest — Upper'},
+  {n:'RDL',m:'Hamstrings'},{n:'Hip Abductor',m:'Glutes'}
 ];
 
 // Historic data
@@ -1760,7 +1866,8 @@ const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbyKSyFyEdT
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
   cueCollapsed:{},restDays:['fri'],weekSchedules:{},weekOverride:{},weekAnchors:{},removedExercises:{},workoutsSinceBackupReminder:0,
-  deloadEvery:3,deloadOverrides:{},
+  deloadEvery:3,deloadOverrides:{},formulaSplit:false,
+  deloadHistory:[],lastDeloadWeek:0,reactiveDeloadForWeek:{},weeklyVolume:{},
   profile:{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}
 };
 let CHS={};
@@ -1768,7 +1875,7 @@ let CHS={};
 function genId(){return 'ex_'+Date.now()+'_'+Math.random().toString(36).substr(2,5)}
 
 function loadST(){
-  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.removedExercises=p.removedExercises||{};ST.addedExercises=p.addedExercises||{};ST.deloadEvery=p.deloadEvery||3;ST.deloadOverrides=p.deloadOverrides||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
+  try{const s=localStorage.getItem('adamv3');if(s){const p=JSON.parse(s);ST.wk=p.wk||1;ST.bl=p.bl||1;ST.url=p.url||SHEETS_URL;ST.ovr=p.ovr||{};ST.restDays=Array.isArray(p.restDays)?p.restDays:(p.restDay?[p.restDay]:['fri']);ST.weekSchedules=p.weekSchedules||{};ST.weekOverride=p.weekOverride||{};ST.weekAnchors=p.weekAnchors||{};ST.removedExercises=p.removedExercises||{};ST.addedExercises=p.addedExercises||{};ST.deloadEvery=p.deloadEvery||3;ST.deloadOverrides=p.deloadOverrides||{};ST.profile=p.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}};ST.formulaSplit=!!p.formulaSplit;ST.deloadHistory=p.deloadHistory||[];ST.lastDeloadWeek=p.lastDeloadWeek||0;ST.reactiveDeloadForWeek=p.reactiveDeloadForWeek||{};ST.weeklyVolume=p.weeklyVolume||{};if(p.dayMap&&!p.weekSchedules){ST.weekSchedules={};for(let w=1;w<=24;w++)ST.weekSchedules[w]={...p.dayMap}}}}catch(e){ST.url=SHEETS_URL}
   try{
     // Load custom exercises
     const ce=localStorage.getItem('adamCustomEx');
@@ -1779,7 +1886,7 @@ function loadST(){
   if(document.getElementById('SUI'))document.getElementById('SUI').value=ST.url;
   if(ST.url)setSS('conn')
 }
-function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
+function saveSTLocal(){localStorage.setItem('adamv3',JSON.stringify({wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},formulaSplit:!!ST.formulaSplit,deloadHistory:ST.deloadHistory||[],lastDeloadWeek:ST.lastDeloadWeek||0,reactiveDeloadForWeek:ST.reactiveDeloadForWeek||{},weeklyVolume:ST.weeklyVolume||{},profile:ST.profile||{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}}))}
 function saveST(){saveSTLocal();fbSaveSettings()}
 function saveLogs(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
 function saveLogsLocal(){localStorage.setItem('adamlogs',JSON.stringify(ST.logs))}
@@ -2634,10 +2741,9 @@ function openWO(dk){
 
   document.getElementById('WT').textContent=d.name;
   document.getElementById('WF').textContent=d.focus;
-  const dlBanner=document.getElementById('WODLB');
-  if(dlBanner){dlBanner.style.display=isDeloadWk(ST.wk)?'block':'none';if(isDeloadWk(ST.wk)){dlBanner.innerHTML=`<strong>★ DELOAD WEEK (W${ST.wk})</strong> — Mon &amp; Thu full body · Session 1: same load, ~50% sets/reps · Session 2: ~50% load · RIR 4–5 · No eccentrics · No loaded stretches · No drop sets`}}
+  updateDeloadBannerForWk();
   const wws=document.getElementById('WWS');
-  if(wws){wws.innerHTML=Array.from({length:24},(_,i)=>`<option value="${i+1}" ${i+1===ST.wk?'selected':''}>W${i+1}${isDeloadWk(i+1)?' 🔄':''}</option>`).join('');wws.value=ST.wk}
+  if(wws){const lw=ST.logWk||ST.wk;wws.innerHTML=Array.from({length:24},(_,i)=>{const w=i+1;const dl=isDeloadWk(w)||isFormulaReactiveDeloadWk(w);return`<option value="${w}" ${w===lw?'selected':''}>W${w}${dl?' 🔄':''}</option>`}).join('');wws.value=lw}
   renderWO();
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
   document.getElementById('pg-wo').classList.add('on');
@@ -2645,6 +2751,16 @@ function openWO(dk){
   window.scrollTo(0,0);
 }
 
+function updateDeloadBannerForWk(){
+  const db=document.getElementById('WODLB');
+  if(!db)return;
+  const wk=ST.logWk||ST.wk;
+  const showFormDl=isFormulaReactiveDeloadWk(wk);
+  const showDefDl=!showFormDl&&isDeloadWk(wk);
+  db.style.display=showFormDl||showDefDl?'block':'none';
+  if(showFormDl){db.innerHTML=`<strong>★ REACTIVE DELOAD (W${wk})</strong> — 50% volume · Same loads · RIR 4–5 · No intensifiers`}
+  else if(showDefDl){db.innerHTML=`<strong>★ DELOAD WEEK (W${wk})</strong> — Mon &amp; Thu full body · Session 1: same load, ~50% sets/reps · Session 2: ~50% load · RIR 4–5 · No eccentrics · No loaded stretches · No drop sets`}
+}
 function renderWO(){
   const wc=document.getElementById('WC');wc.innerHTML='';
   let totalSets=0,totalVol=0,completedSets=0;
@@ -4400,7 +4516,7 @@ function fbRef(path){return fbDB.ref(FB_ROOT+'/'+path)}
 function fbSaveSettings(){
   if(!fbReady)return;
   try{
-    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
+    const data={wk:ST.wk,bl:ST.bl,url:ST.url,ovr:ST.ovr,restDays:ST.restDays||['fri'],weekSchedules:ST.weekSchedules||{},weekOverride:ST.weekOverride,weekAnchors:ST.weekAnchors||{},removedExercises:ST.removedExercises||{},addedExercises:ST.addedExercises||{},deloadEvery:ST.deloadEvery||3,deloadOverrides:ST.deloadOverrides||{},formulaSplit:!!ST.formulaSplit,deloadHistory:ST.deloadHistory||[],lastDeloadWeek:ST.lastDeloadWeek||0,reactiveDeloadForWeek:ST.reactiveDeloadForWeek||{},weeklyVolume:ST.weeklyVolume||{},profile:ST.profile||{},_updatedAt:firebase.database.ServerValue.TIMESTAMP};
     fbRef('settings').set(data);
   }catch(e){console.warn('FB settings write failed:',e)}
 }
@@ -4468,7 +4584,7 @@ async function fbPullAll(){
     // Merge settings (Firebase wins if newer)
     if(data.settings){
       const fb=data.settings;
-      const keys=['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','removedExercises','addedExercises','deloadEvery','deloadOverrides','profile'];
+      const keys=['wk','bl','ovr','restDays','weekSchedules','weekOverride','weekAnchors','removedExercises','addedExercises','deloadEvery','deloadOverrides','formulaSplit','deloadHistory','lastDeloadWeek','reactiveDeloadForWeek','weeklyVolume','profile'];
       keys.forEach(k=>{if(fb[k]!==undefined){ST[k]=fb[k];changed=true}});
       if(fb.url)ST.url=fb.url;
     }
