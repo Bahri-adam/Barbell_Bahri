@@ -1584,6 +1584,14 @@ function escHtml(s){
     .replace(/'/g,'&#39;');
 }
 
+function sanitizeScheduleFromFormula(sched){
+  if(!sched)return sched;
+  const hasFormula=DO.some(dk=>{const v=(sched[dk]||'').toString();return /^formula(_dl)?_/.test(v);});
+  if(!hasFormula)return sched;
+  const out={};
+  DO.forEach(dk=>{let v=(sched[dk]||dk).toString();if(/^formula(_dl)?_/.test(v))v=v.replace(/^formula_dl_/,'').replace(/^formula_/,'');out[dk]=v;});
+  return out;
+}
 function getScheduleForWeek(wk){
   if(ST.formulaSplit&&wk>=4){
     return getFormulaSchedule(isFormulaReactiveDeloadWk(wk));
@@ -1592,7 +1600,7 @@ function getScheduleForWeek(wk){
     return {mon:'deload_mon',tue:'rest',wed:'rest',thu:'deload_thu',fri:'rest',sat:'rest',sun:'rest'};
   }
   const s=(ST.weekSchedules||{})[wk];
-  if(s)return s;
+  if(s)return sanitizeScheduleFromFormula(s);
   const def={};
   const rds=new Set(ST.restDays||['fri']);
   DO.forEach(dk=>{def[dk]=rds.has(dk)?'rest':dk});
@@ -1727,7 +1735,17 @@ function scheduleReactiveDeload(){
 function toggleFormulaSplit(){
   const cb=document.getElementById('sched-formula-cb');
   if(!cb)return;
+  const wasFormula=!!ST.formulaSplit;
   ST.formulaSplit=!!cb.checked;
+  if(wasFormula&&!ST.formulaSplit){
+    for(let w=4;w<=24;w++){
+      const s=(ST.weekSchedules||{})[w];
+      if(s&&DO.some(dk=>/^formula(_dl)?_/.test((s[dk]||'').toString()))){
+        if(!ST.weekSchedules)ST.weekSchedules={};
+        ST.weekSchedules[w]=sanitizeScheduleFromFormula(s);
+      }
+    }
+  }
   saveST();
   syncRestDaysFromSchedule(ST.wk);
   renderHome();
@@ -1756,8 +1774,11 @@ function openScheduleEditor(){
     const sched=getScheduleForWeek(wk);
     const workouts=DO.filter(dk=>P[dk]&&!P[dk].rest).map(dk=>({key:dk,label:P[dk].focus}));
     workouts.push({key:'rest',label:'Rest & Recovery'});
+    const validKeys=new Set(workouts.map(o=>o.key));
     body.innerHTML=DO.map(dk=>{
-      const cur=sched[dk]||dk;
+      let cur=(sched[dk]||dk).toString();
+      if(/^formula(_dl)?_/.test(cur))cur=cur.replace(/^formula_dl_/,'').replace(/^formula_/,'');
+      if(!validKeys.has(cur))cur=dk;
       const opts=workouts.map(o=>`<option value="${o.key}"${o.key===cur?' selected':''}>${o.label}</option>`).join('');
       return `<div class="sched-row"><span class="sched-day">${DAY_NAMES[dk]}</span><select class="sched-sel" id="sched-${dk}">${opts}</select></div>`;
     }).join('');
