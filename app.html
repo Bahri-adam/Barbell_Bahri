@@ -1661,7 +1661,6 @@ function toggleRestDay(dk){
     sched[dk]=sched[dk]==='rest'?(FORMULA_DAY_MAP[dk]||dk):'rest';
     if(!ST.formulaWeekSchedules)ST.formulaWeekSchedules={};
     ST.formulaWeekSchedules[wk]=sched;
-    syncRestDaysFromSchedule(wk);
     saveST();
     renderRestDayBtns();
     renderHome();
@@ -1672,7 +1671,6 @@ function toggleRestDay(dk){
   const sched={...getScheduleForWeek(wk)};
   sched[dk]=sched[dk]==='rest'?dk:'rest';
   ST.weekSchedules[wk]=sched;
-  syncRestDaysFromSchedule(wk);
   saveST();
   renderRestDayBtns();
   renderHome();
@@ -1771,7 +1769,6 @@ function toggleFormulaSplit(){
     }
   }
   saveST();
-  syncRestDaysFromSchedule(ST.wk);
   renderHome();
   renderBodyTracker();
   openScheduleEditor();
@@ -1828,7 +1825,7 @@ function saveSchedule(){
     if(!ST.weekSchedules)ST.weekSchedules={};
     if(copyAll){for(let w=wk;w<=24;w++)ST.weekSchedules[w]={...newMap};}else{ST.weekSchedules[wk]=newMap;}
   }
-  syncRestDaysFromSchedule(wk);
+  if(copyAll)syncRestDaysFromSchedule(wk);
   saveST();
   renderHome();
   renderBodyTracker();
@@ -2031,7 +2028,7 @@ function renderHome(){
     const p=document.createElement('button');
     p.className='wpill'+(w===ST.wk?' on':'')+(DLOADS.has(w)?' dl':'');
     p.textContent=DLOADS.has(w)?`W${w}🔄`:`W${w}`;
-    const ww=w;p.onclick=()=>{ST.wk=ww;syncRestDaysFromSchedule(ww);saveST();renderHome();renderBodyTracker()};
+    const ww=w;p.onclick=()=>{ST.wk=ww;saveST();renderHome();renderBodyTracker()};
     ws.appendChild(p);
   }
   setTimeout(()=>{const a=ws.querySelector('.wpill.on');if(a)a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'})},50);
