@@ -630,7 +630,7 @@ select{color-scheme:dark}
     <div style="padding:12px 16px;border-bottom:1px solid var(--b2,#333);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
         <input type="checkbox" id="sched-formula-cb" onchange="toggleFormulaSplit()">
-        <span>Use formula split (W4+)</span>
+        <span>Use formula split</span>
       </label>
       <span id="SCHED_FORMULA_HINT" style="font-size:11px;color:var(--tx3,#888);display:none">Mon Legs, Tue Chest+Back+Shoulders, Wed Arms, Thu Legs Posterior, Fri Upper Volume, Sat Rest, Sun Legs</span>
     </div>
@@ -988,7 +988,7 @@ function getFormulaBlock(wk){
   if(cnt===1)return 'b2';
   return 'b3';
 }
-function isFormulaReactiveDeloadWk(wk){ return ST.formulaSplit&&wk>=4&&!!(ST.reactiveDeloadForWeek||{})[wk]; }
+function isFormulaReactiveDeloadWk(wk){ return ST.formulaSplit&&!!(ST.reactiveDeloadForWeek||{})[wk]; }
 function buildFormulaSession(block,dayKey){
   const d=(dayKey||'').toLowerCase();
   const toEx=(arr,prefix)=>(arr||[]).map((e,i)=>({id:(prefix||'f')+'_'+(i+1),name:e.name||'',sets:e.sets||3,reps:e.reps||'',rest:e.rest||90,type:'n',cue:e.cue||'',mech:'',bodyPart:'other'}));
@@ -1608,7 +1608,7 @@ function sanitizeScheduleFromFormula(sched){
 const DELOAD_SCHED={mon:'deload_mon',tue:'rest',wed:'rest',thu:'deload_thu',fri:'rest',sat:'rest',sun:'rest'};
 function isDeloadSchedule(s){if(!s)return false;return DO.every(dk=>(s[dk]||'')===(DELOAD_SCHED[dk]||''));}
 function getScheduleForWeek(wk){
-  if(ST.formulaSplit&&wk>=4){
+  if(ST.formulaSplit){
     return getFormulaSchedule(wk,isFormulaReactiveDeloadWk(wk));
   }
   const s=(ST.weekSchedules||{})[wk];
@@ -1624,7 +1624,7 @@ function getScheduleForWeek(wk){
   return def;
 }
 function syncRestDaysFromSchedule(wk){
-  if(ST.formulaSplit&&wk>=4){
+  if(ST.formulaSplit){
     const sched=getScheduleForWeek(wk);
     ST.formulaRestDays=DO.filter(dk=>sched[dk]==='rest');
     if(!ST.formulaRestDays.length)ST.formulaRestDays=['sat'];
@@ -1656,7 +1656,7 @@ function getDayProgram(dk){
 }
 function toggleRestDay(dk){
   const wk=ST.wk;
-  if(ST.formulaSplit&&wk>=4){
+  if(ST.formulaSplit){
     const sched={...getScheduleForWeek(wk)};
     sched[dk]=sched[dk]==='rest'?(FORMULA_DAY_MAP[dk]||dk):'rest';
     if(!ST.formulaWeekSchedules)ST.formulaWeekSchedules={};
@@ -1760,7 +1760,7 @@ function toggleFormulaSplit(){
   const wasFormula=!!ST.formulaSplit;
   ST.formulaSplit=!!cb.checked;
   if(wasFormula&&!ST.formulaSplit){
-    for(let w=4;w<=24;w++){
+    for(let w=1;w<=24;w++){
       const s=(ST.weekSchedules||{})[w];
       if(s&&DO.some(dk=>/^formula(_dl)?_/.test((s[dk]||'').toString()))){
         if(!ST.weekSchedules)ST.weekSchedules={};
@@ -1794,7 +1794,7 @@ function openScheduleEditor(){
     body.innerHTML+=`<label class="sched-copy"><input type="checkbox" id="sched-copy-all"> Apply to all future weeks (W${wk}–24)</label>`;
     const nextWk=wk+1;
     const hasDl=nextWk<=24&&(ST.reactiveDeloadForWeek||{})[nextWk];
-    body.innerHTML+=`<p style="font-size:11px;color:var(--tx3,#888);margin:12px 0 0;padding:0 16px">Formula split active for weeks 4–24. Assign workouts to any day. Toggle off above to return to default.</p><p style="margin:8px 0 0;padding:0 16px" title="Replaces next week with lighter sessions (~60% load, fewer sets) for recovery">${hasDl?`<span style="color:var(--red);font-size:11px">W${nextWk} reactive deload scheduled</span> <button type="button" class="ex-act-btn" onclick="cancelReactiveDeload(${nextWk});openScheduleEditor()" style="font-size:10px">Cancel</button>`:`<button type="button" class="ex-act-btn" onclick="scheduleReactiveDeload()" style="font-size:11px" title="Replaces next week with lighter sessions for recovery">Schedule reactive deload for W${nextWk}</button>`}</p>`;
+    body.innerHTML+=`<p style="font-size:11px;color:var(--tx3,#888);margin:12px 0 0;padding:0 16px">Formula split — assign workouts to any day for any week. Toggle off above to return to default.</p><p style="margin:8px 0 0;padding:0 16px" title="Replaces next week with lighter sessions (~60% load, fewer sets) for recovery">${hasDl?`<span style="color:var(--red);font-size:11px">W${nextWk} reactive deload scheduled</span> <button type="button" class="ex-act-btn" onclick="cancelReactiveDeload(${nextWk});openScheduleEditor()" style="font-size:10px">Cancel</button>`:`<button type="button" class="ex-act-btn" onclick="scheduleReactiveDeload()" style="font-size:11px" title="Replaces next week with lighter sessions for recovery">Schedule reactive deload for W${nextWk}</button>`}</p>`;
     if(footer)footer.style.display='block';
   }else{
     const sched=getScheduleForWeek(wk);
@@ -1818,7 +1818,7 @@ function saveSchedule(){
   DO.forEach(dk=>{newMap[dk]=document.getElementById('sched-'+dk).value});
   const wk=ST.wk;
   const copyAll=document.getElementById('sched-copy-all')&&document.getElementById('sched-copy-all').checked;
-  if(ST.formulaSplit&&wk>=4){
+  if(ST.formulaSplit){
     if(!ST.formulaWeekSchedules)ST.formulaWeekSchedules={};
     if(copyAll){for(let w=wk;w<=24;w++)ST.formulaWeekSchedules[w]={...newMap};}else{ST.formulaWeekSchedules[wk]=newMap;}
   }else{
@@ -2028,7 +2028,7 @@ function renderHome(){
     const p=document.createElement('button');
     p.className='wpill'+(w===ST.wk?' on':'')+(DLOADS.has(w)?' dl':'');
     p.textContent=DLOADS.has(w)?`W${w}🔄`:`W${w}`;
-    const ww=w;p.onclick=()=>{ST.wk=ww;saveST();renderHome();renderBodyTracker()};
+    const ww=w;p.onclick=()=>{ST.wk=ww;ST.logWk=ww;saveST();renderHome();renderBodyTracker()};
     ws.appendChild(p);
   }
   setTimeout(()=>{const a=ws.querySelector('.wpill.on');if(a)a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'})},50);
@@ -2663,7 +2663,7 @@ function renderBodyTracker(){
     </div>`;
   }
   const targ=WEEKLY_TARGETS;
-  const usePrescribedTarget=ST.formulaSplit&&ST.wk>=4;
+  const usePrescribedTarget=!!ST.formulaSplit;
   const R=16,C=2*Math.PI*R;
   let wtHtml='<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--b1);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Weekly Targets</div><div class="wt-grid">';
   for(const bp of Object.keys(targ)){
