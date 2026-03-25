@@ -2888,30 +2888,30 @@ function renderWO(){
     function oneSetRow(e,s,si,prev,setAlLogged){
       const ps=prev[si];
       const dn=e.displayName||e.name;
-      let rec=null, recLabel='Rec:', recHint='';
-      if(setAlLogged){
-        const best=getBestEverDisplay(dn,si);
-        if(best){rec={w:best.w,r:best.r};recLabel='Best:';recHint='(personal best in log)';}
-      }else{
+      const bestEver=getBestEverDisplay(dn,si);
+      let rec=null, recHint='';
+      if(!setAlLogged){
         const del=getRec(dn,ST.aday,si);
         const po=getProgOverloadRec(dn,ST.aday,si);
         rec=del||po;
         if(rec)recHint=del?'(deload)':'(+overload)';
       }
       const canDel=(e===ex?sets:sets2).length>1;
+      const bits=[];
+      if(ps)bits.push(`Prev: <span class="pv">${ps.w?ps.w+'×':''}${ps.r}</span>${ps.e1?` · e1RM <span class="pv">${ps.e1}</span>`:''}`);
+      if(bestEver)bits.push(`Best: <span class="pv">${bestEver.w}×${bestEver.r}</span>${bestEver.e1?` · e1RM <span class="pv">${bestEver.e1}</span>`:''} <span class="rec-hint">(all-time)</span>`);
+      if(rec&&!setAlLogged)bits.push(`Rec: <span class="pv rec">${rec.w}×${rec.r}</span>${recHint?` <span class="rec-hint">${recHint}</span>`:''}`);
       let footer='';
-      if(ps||rec){footer='<div class="prev" id="pv-'+e.id+'-'+si+'">';
-        if(ps)footer+=`Prev: <span class="pv">${ps.w?ps.w+'×':''}${ps.r}</span>${ps.e1?` · e1RM <span class="pv">${ps.e1}</span>`:''}`;
-        if(rec)footer+=`${ps?' · ':''}${recLabel} <span class="pv rec">${rec.w}×${rec.r}</span>${recHint?` <span class="rec-hint">${recHint}</span>`:''}`;
-        footer+='</div>';
-      }
+      if(bits.length)footer='<div class="prev" id="pv-'+e.id+'-'+si+'">'+bits.join(' · ')+'</div>';
+      const phW=rec?rec.w:(bestEver?bestEver.w:(ps?ps.w:''));
+      const phR=rec?rec.r:(bestEver?bestEver.r:(ps?ps.r:''));
       return `<div class="srow" id="sr-${e.id}-${si}">
         <div class="snum">${si+1}</div>
         <div class="ig"><div class="ilbl">LBS</div>
-          <input type="number" inputmode="decimal" class="sinp${s.w?' ok':''}" id="iw-${e.id}-${si}" value="${s.w}" placeholder="${rec?rec.w:(ps?ps.w:'')}" onchange="upS('${e.id}',${si},'w',this.value)" onfocus="this.select()">
+          <input type="number" inputmode="decimal" class="sinp${s.w?' ok':''}" id="iw-${e.id}-${si}" value="${s.w}" placeholder="${phW}" onchange="upS('${e.id}',${si},'w',this.value)" onfocus="this.select()">
         </div>
         <div class="ig"><div class="ilbl">REPS</div>
-          <input type="number" inputmode="decimal" class="sinp${s.r?' ok':''}" id="ir-${e.id}-${si}" value="${s.r}" placeholder="${rec?rec.r:(ps?ps.r:'')}" onchange="upS('${e.id}',${si},'r',this.value)" onfocus="this.select()">
+          <input type="number" inputmode="decimal" class="sinp${s.r?' ok':''}" id="ir-${e.id}-${si}" value="${s.r}" placeholder="${phR}" onchange="upS('${e.id}',${si},'r',this.value)" onfocus="this.select()">
         </div>
         <div class="ig rpe-ig"><div class="ilbl">RPE</div>
           <input type="number" inputmode="decimal" class="sinp rpe-inp${s.rpe?' ok':''} ${getRPEClass(s.rpe,e.type)}" id="ie-${e.id}-${si}" value="${s.rpe}" placeholder="7-9" min="1" max="10" step="0.5" onchange="upS('${e.id}',${si},'rpe',this.value)" onfocus="this.select()" title="RPE 7-9 = hard set for hypertrophy. Powers Smart engine.">
@@ -3632,10 +3632,27 @@ function stopRest(){
 // ═══════════════════════════════════════════════════════════
 // PREVIOUS SET LOOKUP
 // ═══════════════════════════════════════════════════════════
+// Same movement, different wording in logs vs swap picker — share Prev/Best/Rec lookups
+const EX_LOG_LOOKUP_GROUPS=[
+  ['incline bench press','incline barbell press','incline dumbbell press','plate loaded incline machine press','incline machine press','incline press'],
+  ['close grip bench press','close-grip bench press','close grip bench','cg bench'],
+  ['cable pushdown','cable tricep pushdown','tricep pushdown','triceps pushdown','rope pushdown'],
+  ['overhead tricep extension','dumbbell overhead extension','cable overhead extension','overhead extension'],
+  ['skull crusher','skullcrusher','lying tricep extension','lying triceps extension'],
+  ['barbell bench press','bench press','flat bench press'],
+];
+function expandExerciseNamesForLogLookup(exName){
+  const base=String(exName||'').trim().toLowerCase();
+  const set=new Set([base]);
+  for(const g of EX_LOG_LOOKUP_GROUPS){
+    if(g.some(x=>x===base))g.forEach(x=>set.add(x));
+  }
+  return set;
+}
 function logMatchesExerciseName(l,exName){
   if(!exName)return false;
-  const t=String(exName).trim().toLowerCase();
-  return String(l.ex||'').trim().toLowerCase()===t;
+  const allowed=expandExerciseNamesForLogLookup(exName);
+  return allowed.has(String(l.ex||'').trim().toLowerCase());
 }
 function getPrev(exName,dk,origName){
   const names=new Set([exName]);
