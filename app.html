@@ -1932,7 +1932,7 @@ const HL=[
 const SHEETS_URL='https://script.google.com/a/macros/umich.edu/s/AKfycbyKSyFyEdTkZhfnMrKF66zPUNn8Lf5ppYz5bAZviRzGAcN8YGZx5-hAEvIN03wTW5Ex/exec';
 let ST={wk:1,bl:1,url:'',logs:[],ovr:{},aday:null,
   aws:{},awExs:[],ri:null,atab:'perf',swt:null,sws:'week',swtab:'lib',isAddEx:false,
-  cueCollapsed:{},restDays:['fri'],weekSchedules:{},weekOverride:{},weekAnchors:{},removedExercises:{},workoutsSinceBackupReminder:0,
+  lastOwnWipNonce:null,cueCollapsed:{},restDays:['fri'],weekSchedules:{},weekOverride:{},weekAnchors:{},removedExercises:{},workoutsSinceBackupReminder:0,
   deloadEvery:3,deloadOverrides:{},formulaSplit:false,formulaRestDays:['sat'],
   deloadHistory:[],lastDeloadWeek:0,reactiveDeloadForWeek:{},weeklyVolume:{},formulaWeekSchedules:{},
   profile:{name:'Adam Bahri',age:22,bodyweight:225,bodyweightByWeek:{}}
@@ -2814,16 +2814,33 @@ function openWO(dk){
     ST.woStartTime=null; // timer starts only when user taps Start
   }
 
-  document.getElementById('WT').textContent=d.name;
-  document.getElementById('WF').textContent=d.focus;
-  updateDeloadBannerForWk();
-  const wws=document.getElementById('WWS');
-  if(wws){const lw=ST.logWk||ST.wk;wws.innerHTML=Array.from({length:24},(_,i)=>{const w=i+1;const dl=isDeloadWk(w)||isFormulaReactiveDeloadWk(w);return`<option value="${w}" ${w===lw?'selected':''}>W${w}${dl?' 🔄':''}</option>`}).join('');wws.value=lw}
-  renderWO();
-  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
-  document.getElementById('pg-wo').classList.add('on');
-  document.getElementById('nb-home').classList.add('on');
-  window.scrollTo(0,0);
+  const localWipTs=(useWip&&wip&&wip.wipUpdatedAt)||0;
+  const finishOpenWO=()=>{
+    document.getElementById('WT').textContent=d.name;
+    document.getElementById('WF').textContent=d.focus;
+    updateDeloadBannerForWk();
+    const wws=document.getElementById('WWS');
+    if(wws){const lw=ST.logWk||ST.wk;wws.innerHTML=Array.from({length:24},(_,i)=>{const w=i+1;const dl=isDeloadWk(w)||isFormulaReactiveDeloadWk(w);return`<option value="${w}" ${w===lw?'selected':''}>W${w}${dl?' 🔄':''}</option>`}).join('');wws.value=lw}
+    renderWO();
+    document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+    document.getElementById('pg-wo').classList.add('on');
+    document.getElementById('nb-home').classList.add('on');
+    window.scrollTo(0,0);
+  };
+
+  // In-progress workout (reorder, swaps, partial sets) syncs via Firebase — pull newer than local WIP
+  if(fbReady&&finalizedLogs.length===0){
+    fbRef('wip').once('value').then(snap=>{
+      const w=snap.val();
+      if(w&&w.dk===dk&&Number(w.wk)===Number(wk)&&(w._updatedAt||0)>localWipTs&&Array.isArray(w.awExs)){
+        ST.awExs=w.awExs;
+        ST.aws=w.aws&&typeof w.aws==='object'?w.aws:{};
+        if(w.woStartTime!=null)ST.woStartTime=w.woStartTime;
+        try{localStorage.setItem('adamWIP',JSON.stringify({dk,wk,aws:ST.aws,awExs:ST.awExs,woStartTime:ST.woStartTime||null,wipUpdatedAt:w._updatedAt||Date.now()}))}catch(e){}
+      }
+      finishOpenWO();
+    }).catch(()=>finishOpenWO());
+  }else finishOpenWO();
 }
 
 function updateDeloadBannerForWk(){
@@ -3048,12 +3065,24 @@ function upS(id,si,f,v){
 }
 function saveWorkoutProgress(){
   if(!ST.aday)return;
-  try{localStorage.setItem('adamWIP',JSON.stringify({dk:ST.aday,wk:ST.logWk||ST.wk,aws:ST.aws,awExs:ST.awExs,woStartTime:ST.woStartTime}))}catch(e){}
+  const wk=ST.logWk||ST.wk;
+  const wipUpdatedAt=Date.now();
+  const payload={dk:ST.aday,wk,aws:ST.aws,awExs:ST.awExs,woStartTime:ST.woStartTime||null,wipUpdatedAt};
+  try{localStorage.setItem('adamWIP',JSON.stringify(payload))}catch(e){}
+  if(!fbReady)return;
+  try{
+    const nonce=Date.now()+'_'+Math.random().toString(36).slice(2,10);
+    ST.lastOwnWipNonce=nonce;
+    fbRef('wip').set({...payload,_updatedAt:wipUpdatedAt,clientNonce:nonce});
+  }catch(e){console.warn('FB wip save:',e)}
 }
 function loadWorkoutProgress(dk){
   try{const s=localStorage.getItem('adamWIP');if(!s)return null;const d=JSON.parse(s);if(d.dk===dk&&d.wk===(ST.logWk||ST.wk))return d}catch(e){}return null;
 }
-function clearWorkoutProgress(){try{localStorage.removeItem('adamWIP')}catch(e){}}
+function clearWorkoutProgress(){
+  try{localStorage.removeItem('adamWIP')}catch(e){}
+  if(fbReady)try{fbRef('wip').remove()}catch(e){}
+}
 function hasSetData(s){return s.done||(s.w!==''&&s.w!=null&&s.r!==''&&s.r!=null)}
 function updateSummary(){
   let totalVol=0,totalSets=0,completedSets=0;
@@ -4765,6 +4794,25 @@ function fbListenForChanges(){
           if(e&&e.n&&!EL.find(x=>x.n===e.n))EL.push({n:e.n,m:e.m||'Custom',custom:true});
         });
         saveCustomExLocal();
+      }
+
+      if(data.wip&&data.wip.dk&&data.wip.awExs){
+        const w=data.wip;
+        if(w.clientNonce&&w.clientNonce===ST.lastOwnWipNonce){/* echo of our write */}
+        else if(w.dk===ST.aday&&Number(w.wk)===Number(ST.logWk||ST.wk)){
+          const wo=document.getElementById('pg-wo');
+          if(wo&&wo.classList.contains('on')){
+            let localTs=0;
+            try{const raw=localStorage.getItem('adamWIP');if(raw){const p=JSON.parse(raw);localTs=p.wipUpdatedAt||0}}catch(e){}
+            if((w._updatedAt||0)>localTs&&Array.isArray(w.awExs)){
+              ST.awExs=w.awExs;
+              ST.aws=w.aws&&typeof w.aws==='object'?w.aws:{};
+              if(w.woStartTime!==undefined)ST.woStartTime=w.woStartTime;
+              try{localStorage.setItem('adamWIP',JSON.stringify({dk:w.dk,wk:w.wk,aws:ST.aws,awExs:ST.awExs,woStartTime:ST.woStartTime||null,wipUpdatedAt:w._updatedAt||Date.now()}))}catch(e){}
+              renderWO();
+            }
+          }
+        }
       }
 
       renderHome();
