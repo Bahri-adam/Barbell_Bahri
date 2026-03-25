@@ -2887,13 +2887,22 @@ function renderWO(){
 
     function oneSetRow(e,s,si,prev,setAlLogged){
       const ps=prev[si];
-      const rec=setAlLogged?null:(getRec(e.displayName,ST.aday,si)||getProgOverloadRec(e.displayName,ST.aday,si));
-      const isDeload=setAlLogged?false:!!getRec(e.displayName,ST.aday,si);
+      const dn=e.displayName||e.name;
+      let rec=null, recLabel='Rec:', recHint='';
+      if(setAlLogged){
+        const best=getBestEverDisplay(dn,si);
+        if(best){rec={w:best.w,r:best.r};recLabel='Best:';recHint='(personal best in log)';}
+      }else{
+        const del=getRec(dn,ST.aday,si);
+        const po=getProgOverloadRec(dn,ST.aday,si);
+        rec=del||po;
+        if(rec)recHint=del?'(deload)':'(+overload)';
+      }
       const canDel=(e===ex?sets:sets2).length>1;
       let footer='';
       if(ps||rec){footer='<div class="prev" id="pv-'+e.id+'-'+si+'">';
         if(ps)footer+=`Prev: <span class="pv">${ps.w?ps.w+'×':''}${ps.r}</span>${ps.e1?` · e1RM <span class="pv">${ps.e1}</span>`:''}`;
-        if(rec)footer+=`${ps?' · ':''}Rec: <span class="pv rec">${rec.w}×${rec.r}</span> <span class="rec-hint">${isDeload?'(deload)':'(+overload)'}</span>`;
+        if(rec)footer+=`${ps?' · ':''}${recLabel} <span class="pv rec">${rec.w}×${rec.r}</span>${recHint?` <span class="rec-hint">${recHint}</span>`:''}`;
         footer+='</div>';
       }
       return `<div class="srow" id="sr-${e.id}-${si}">
@@ -3623,26 +3632,48 @@ function stopRest(){
 // ═══════════════════════════════════════════════════════════
 // PREVIOUS SET LOOKUP
 // ═══════════════════════════════════════════════════════════
+function logMatchesExerciseName(l,exName){
+  if(!exName)return false;
+  const t=String(exName).trim().toLowerCase();
+  return String(l.ex||'').trim().toLowerCase()===t;
+}
 function getPrev(exName,dk,origName){
   const names=new Set([exName]);
   if(origName)names.add(origName);
   const ovrVals=Object.values(ST.ovr||{});
   ST.logs.forEach(l=>{if(l.origEx&&names.has(l.origEx))names.add(l.ex)});
   ovrVals.forEach(v=>{if(names.has(v))names.add(v)});
-  const rows=ST.logs.filter(l=>l.dk===dk && names.has(l.ex) && l.w!=null && l.r!=null).sort((a,b)=>(a.date<b.date?1:-1));
+  const namesLc=new Set([...names].map(n=>String(n).toLowerCase()));
+  const rows=ST.logs.filter(l=>l.dk===dk && namesLc.has(String(l.ex||'').toLowerCase()) && l.w!=null && l.r!=null).sort((a,b)=>(a.date<b.date?1:-1));
   if(!rows.length) return [];
   const lastDate=rows[0].date;
   const last=rows.filter(r=>r.date===lastDate).sort((a,b)=>a.sn-b.sn);
   return last.map(r=>({w:r.w||'',r:r.r||'',e1:r.e1rm||null}));
 }
+// Last session for this lift: prefer same weekday, else most recent anywhere (helps swaps + schedule changes)
 function getPrevExact(exName,dk){
-  const rows=ST.logs
-    .filter(l=>(!dk||l.dk===dk) && l.ex===exName && l.w!=null && l.r!=null)
-    .sort((a,b)=>(a.date<b.date?1:-1));
+  const ok=l=>logMatchesExerciseName(l,exName)&&l.w!=null&&l.r!=null;
+  let rows=ST.logs.filter(l=>ok(l)&&(!dk||l.dk===dk)).sort((a,b)=>(a.date<b.date?1:-1));
+  if(!rows.length&&dk)rows=ST.logs.filter(ok).sort((a,b)=>(a.date<b.date?1:-1));
   if(!rows.length)return [];
   const lastDate=rows[0].date;
   const last=rows.filter(r=>r.date===lastDate).sort((a,b)=>a.sn-b.sn);
   return last.map(r=>({w:r.w||'',r:r.r||'',e1:r.e1rm||null}));
+}
+// Best historical set by e1RM (any day) — motivator when re-opening or all sets already checked
+function getBestEverDisplay(exName,setIdx){
+  const allRows=ST.logs.filter(l=>logMatchesExerciseName(l,exName)&&l.w!=null&&l.r!=null&&parseFloat(l.w)>0);
+  if(!allRows.length)return null;
+  const forSetIdx=allRows.filter(l=>l.sn===setIdx+1);
+  const pool=forSetIdx.length?forSetIdx:allRows;
+  const best=pool.reduce((a,b)=>{
+    const ae=(a.e1rm&&parseFloat(a.e1rm))||parseFloat(a.w)*1.27;
+    const be=(b.e1rm&&parseFloat(b.e1rm))||parseFloat(b.w)*1.27;
+    return be>ae?b:a;
+  });
+  const pw=parseFloat(best.w);
+  if(!pw||isNaN(pw))return null;
+  return {w:pw,r:parseInt(best.r,10)||8,e1:best.e1rm};
 }
 // Deload recommended weight — Session 1: ~75% of best (lower end of working range), Session 2: ~50%
 function getRec(exName,dk,setIdx){
@@ -3651,7 +3682,7 @@ function getRec(exName,dk,setIdx){
   const pct=getDeloadPct(dk);
   // Search ALL days for best-ever (deload exercises may come from different training days)
   const allRows=ST.logs
-    .filter(l=>l.ex===exName && l.w!=null && l.r!=null && parseFloat(l.w)>0);
+    .filter(l=>logMatchesExerciseName(l,exName) && l.w!=null && l.r!=null && parseFloat(l.w)>0);
   if(!allRows.length) return null;
   const forSetIdx=allRows.filter(l=>l.sn===setIdx+1);
   const pool=forSetIdx.length?forSetIdx:allRows;
@@ -3730,9 +3761,10 @@ function getProgOverloadRec(exName,dk,setIdx){
   const wk=ST.logWk||ST.wk;
   if(isDeloadWk(wk)) return null; // deload has its own rec
 
-  // Gather ALL logged sets for this exercise on this day-of-week (exact name match)
-  const allRows=ST.logs
-    .filter(l=>(!dk||l.dk===dk) && l.ex===exName && l.w!=null && l.r!=null && parseFloat(l.w)>0);
+  // Same weekday first (progression context); if none, use best on this lift anywhere (swaps / moves)
+  let allRows=ST.logs
+    .filter(l=>(!dk||l.dk===dk) && logMatchesExerciseName(l,exName) && l.w!=null && l.r!=null && parseFloat(l.w)>0);
+  if(!allRows.length&&dk)allRows=ST.logs.filter(l=>logMatchesExerciseName(l,exName)&&l.w!=null&&l.r!=null&&parseFloat(l.w)>0);
   if(!allRows.length) return null;
 
   // Prefer the best set matching this set-index; fall back to the overall best by e1RM
