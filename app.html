@@ -2729,18 +2729,26 @@ function openWO(dk){
     // Pre-fill from logs if this day was already logged this week
     const weekLogs=ST.logs.filter(l=>l.wk===wk&&l.dk===dk);
     if(weekLogs.length>0){
+      // Match logs to the program SLOT (template name), not the performed exercise name.
+      // Otherwise Bench→Leg Extension and the real Leg Extension row both match the same logs and sets double on re-open/finish.
       const getLogsForExercise=(ex)=>{
-        const names=new Set([ex.displayName,ex.name].filter(Boolean));
-        const rows=weekLogs.filter(l=>{
-          const exName=l.ex||'';
-          const orig=l.origEx||'';
-          return names.has(exName)||names.has(orig);
+        const tmpl=(ex.name||'').trim();
+        const tmplLc=tmpl.toLowerCase();
+        const dispLc=(ex.displayName||ex.name||'').trim().toLowerCase();
+        const nameLc=(ex.name||'').trim().toLowerCase();
+        return weekLogs.filter(l=>{
+          const orig=(l.origEx!=null&&l.origEx!=='')?String(l.origEx).trim():'';
+          if(orig)return orig.toLowerCase()===tmplLc;
+          const exName=String(l.ex||'').trim().toLowerCase();
+          return exName===dispLc||exName===nameLc;
         }).sort((a,b)=>a.sn-b.sn);
-        return rows;
       };
 
+      const logAssignKey=l=>l.id||`${l.ex}|${l.sn}|${l.date||''}|${l.wk}|${l.dk}`;
+      const assignedLogKeys=new Set();
       ST.awExs.forEach(ex=>{
         const exLogs=getLogsForExercise(ex);
+        exLogs.forEach(l=>assignedLogKeys.add(logAssignKey(l)));
         if(exLogs.length>0){
           // If this exercise was swapped on another device, the log's ex field holds
           // the actual exercise name that was performed. Update displayName to match
@@ -2758,18 +2766,16 @@ function openWO(dk){
         }
       });
 
-      // If cloud/local logs contain extra exercises not in the current template (custom/swap),
-      // attach them so desktop always shows what was actually logged on phone.
+      // Orphan logs only (not already attached to a template row) — custom / other device
+      const orphanLogs=weekLogs.filter(l=>!assignedLogKeys.has(logAssignKey(l)));
       const knownNames=new Set();
       ST.awExs.forEach(ex=>{
         if(ex.displayName)knownNames.add(ex.displayName.toLowerCase());
         if(ex.name)knownNames.add(ex.name.toLowerCase());
       });
-      // Also register origEx values (swap targets) so they don't get double-added.
-      weekLogs.forEach(l=>{if(l.origEx)knownNames.add(String(l.origEx).toLowerCase())});
-      const extras=Array.from(new Set(weekLogs.map(l=>l.ex).filter(n=>n&&!knownNames.has(String(n).toLowerCase()))));
+      const extras=Array.from(new Set(orphanLogs.map(l=>l.ex).filter(n=>n&&!knownNames.has(String(n).toLowerCase()))));
       extras.forEach(name=>{
-        const rows=weekLogs.filter(l=>l.ex===name).sort((a,b)=>a.sn-b.sn);
+        const rows=orphanLogs.filter(l=>l.ex===name).sort((a,b)=>a.sn-b.sn);
         const id=genId();
         const sets=Math.max(1,rows.length||3);
         const ex={
@@ -3767,15 +3773,20 @@ function finWO(){
   }
 
   // Preserve original id/ts/date for existing sets; only NEW sets get current timestamp
+  // Key by template slot (origEx), not performed name — two slots can both be "Leg Extension" after swaps.
   const existing=ST.logs.filter(l=>l.dk===dk&&l.wk===wk);
   const existingByKey={};
-  existing.forEach(l=>{existingByKey[`${l.ex}|${l.sn}`]=l});
+  existing.forEach(l=>{
+    const slot=(l.origEx!=null&&l.origEx!=='')?String(l.origEx).trim():String(l.ex||'').trim();
+    existingByKey[`${slot.toLowerCase()}|${l.sn}`]=l;
+  });
 
   const mergedRows=[];
   const newRowsOnly=[];
 
   ST.awExs.forEach(ex=>{
     const sets=ST.aws[ex.id]||[];
+    const slotKey=String((ex.name!=null&&ex.name!=='')?ex.name:ex.displayName||'').trim().toLowerCase();
     sets.forEach((s,idx)=>{
       const hasReps = s.r!=='' && s.r!=null;
       const hasWeight = s.w!=='' && s.w!=null;
@@ -3788,7 +3799,7 @@ function finWO(){
       const e1rm=Math.round(w*(1+r/30));
       const rpe=s.rpe?parseFloat(s.rpe):null;
       const dur=ST.woStartTime?Math.round((Date.now()-ST.woStartTime)/60000):null;
-      const key=`${ex.displayName}|${idx+1}`;
+      const key=`${slotKey}|${idx+1}`;
       const prev=existingByKey[key];
 
       let row;
